@@ -2,12 +2,14 @@
 A tiny x86 kernel written in modern C++ and Assembly.
 
 ## Depdendencies
+If you want to build with Docker, then as it would turn out, all you need is:
+* Docker
+
+Building natively requires:
 * A working i686 cross compiler ([see here for prebuilt binaries](https://github.com/lordmilko/i686-elf-tools))
 * Grub 2.0
 * NASM
 * Make
-OR
-* Docker
 
 ## Building with Docker
 First downlaod the project and build the toolchain with:
