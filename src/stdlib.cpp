@@ -11,6 +11,6 @@ size_t pow(const size_t number, const size_t power)
 {
     if (power == 0) return 1;
     size_t i = 1;
-    for (int j = 0; j < power; ++j) i *= number;
+    for (size_t j = 0; j < power; ++j) i *= number;
     return i;
 }

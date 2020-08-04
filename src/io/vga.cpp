@@ -1,6 +1,6 @@
 #include "vga.h"
 #include "../stdlib.h"
-#include "serial.h"
+#include "io.h"
 
 VGA_Entry* VGA_BUFFER = (VGA_Entry*)0xB8000;
 size_t VGA_ROW = 0;
@@ -56,7 +56,7 @@ void VGA_DisableCursor()
 
 void VGA_MoveCursor(size_t x, size_t y)
 {
-    uint16_t pos = (y + 1) * VGA_WIDTH + (x);
+    size_t pos = (y + 1) * VGA_WIDTH + (x);
     
     //if (x >= VGA_WIDTH) pos = (y+2) * VGA_WIDTH;
 

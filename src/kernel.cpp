@@ -1,5 +1,5 @@
+#include "kernel.h"
 #include "io/vga.h"
-#include "io/serial.h"
 
 extern "C" void kernel_main(void) 
 {
