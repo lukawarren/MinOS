@@ -61,7 +61,7 @@ void VGA_printf(T data, bool newLine = true, uint8_t colour = VGA_COLOUR_WHITE)
     size_t nDigits = 1;
      while (i/=(hex ? 16 : 10)) nDigits++;
 
-    auto digitToASCII = [](const size_t number) { return '0' + number; };
+    auto digitToASCII = [](const size_t number) { return (char)('0' + number); };
     auto hexToASCII = [](const size_t number) 
     {
         char value = number % 16 + 48;
@@ -80,7 +80,7 @@ void VGA_printf(T data, bool newLine = true, uint8_t colour = VGA_COLOUR_WHITE)
         for (size_t d = 0; d < nDigits; ++d) { VGA_WriteChar(digitToASCII(getNthDigit(data, nDigits - d - 1, 10)), VGA_ROW, VGA_COLUMN, colour); VGA_ROW++; }
     }
 
-    if (newLine) { VGA_COLUMN = 0; VGA_ROW++; }
+    if (newLine) { VGA_ROW = 0; VGA_COLUMN++; }
 
     VGA_MoveCursor(VGA_ROW, VGA_COLUMN);
 }
