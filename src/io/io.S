@@ -4,9 +4,11 @@ global inb
 
 inb:
     push ebp ; push ebp onto stack
+    push dx
     mov ebp, esp ; move stack pointer to ebp
     mov dx, [ebp + 8] ; use stack pointer to move argument to dx
     in eax, dx ; in with argument into eax
+    pop dx
     pop ebp ; restore ebp
     ret
 
