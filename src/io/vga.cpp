@@ -9,7 +9,7 @@ size_t VGA_COLUMN = 0;
 void VGA_WriteChar(char c, size_t x, size_t y, uint8_t colour)
 {
     const size_t index = y * VGA_WIDTH + x;
-    VGA_BUFFER[index] = {static_cast<uint8_t>(c), colour | VGA_COLOUR_BLUE << 4};
+    VGA_BUFFER[index] = {static_cast<uint8_t>(c), colour};
 }
 
 void VGA_WriteString(char const* string, bool newLine, uint8_t colour)
