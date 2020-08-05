@@ -15,14 +15,13 @@ LoadGDT:
     lgdt  [gdtr]
 
     ; Reload CS register containing code selector:
-    jmp   0x08:reload_CS ; 0x08 points at the new code selector
-
-    mov ax, 0x18
-	ltr ax
+    jmp   0x08:ReloadCS ; 0x08 points at the new code selector
 
     ret
    
-reload_CS:
+global ReloadCS
+
+ReloadCS:
 
    ; Reload data segment registers:
    MOV   AX, 0x10 ; 0x10 points at the new data selector

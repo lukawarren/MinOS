@@ -46,6 +46,8 @@
                      SEG_LONG(0)     | SEG_SIZE(1) | SEG_GRAN(1) | \
                      SEG_PRIV(3)     | SEG_DATA_RDWR
 
+#define TSS_PL0      SEG_PRES(1)     | SEG_SIZE(1) | SEG_CODE_EXA
+
 inline constexpr uint64_t CreateGDTEntry(const uint32_t base, const uint32_t limit, const uint16_t flag)
 {
     uint64_t descriptor = 0;
@@ -69,6 +71,7 @@ inline constexpr uint64_t CreateGDTEntry(const uint32_t base, const uint32_t lim
 extern "C"
 {
     extern void LoadGDT(const uint64_t* GDT, const size_t size);
+    extern void ReloadCS(void);
 }
 
 #endif
