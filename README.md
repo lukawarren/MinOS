@@ -27,7 +27,7 @@ docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd c
 ```
 git clone https://github.com/TheUltimateKerbonaut/MinOS
 cd MinOS
-mkdir -p build/io && make
+mkdir -p build/io && mkdir -p build/memory && make
 ```
 
 ## Running

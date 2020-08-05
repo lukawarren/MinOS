@@ -59,7 +59,7 @@ void VGA_printf(T data, bool newLine = true, uint8_t colour = VGA_COLOUR_WHITE)
     // Get number of digits
     size_t i = data;
     size_t nDigits = 1;
-     while (i/=(hex ? 16 : 10)) nDigits++;
+    while (i/=(hex ? 16 : 10)) nDigits++;
 
     auto digitToASCII = [](const size_t number) { return (char)('0' + number); };
     auto hexToASCII = [](const size_t number) 
@@ -84,6 +84,9 @@ void VGA_printf(T data, bool newLine = true, uint8_t colour = VGA_COLOUR_WHITE)
 
     VGA_MoveCursor(VGA_ROW, VGA_COLUMN);
 }
+
+template <>
+void VGA_printf<uint64_t, true>(uint64_t data, bool newLine, uint8_t colour);
 
 void VGA_Clear(uint8_t colour = VGA_COLOUR_WHITE | VGA_COLOUR_BLACK << 4);
 

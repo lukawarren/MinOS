@@ -5,3 +5,4 @@ minos_toolchain.tar.gz
 toolchain/
 .vscode
 build/
+bochs/

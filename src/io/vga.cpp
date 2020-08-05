@@ -65,3 +65,22 @@ void VGA_MoveCursor(size_t x, size_t y)
     outb(0x3D4, 0x0E);
     outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
+
+template <>
+void VGA_printf<uint64_t, true>(uint64_t data, bool newLine, uint8_t colour)
+{
+    auto hexToASCII = [](const uint64_t number) 
+    {
+        char value = number % 16 + 48;
+        if (value > 57) value += 7;
+        return value;
+    };
+    auto getNthDigit = [](const uint64_t number, const size_t digit) { return (number >> (digit*4)) & 0xF; };
+
+    VGA_WriteString("0x", false, colour); 
+    for (size_t d = 0; d < 16; ++d) { VGA_WriteChar(hexToASCII(getNthDigit(data, 16 - d - 1)), VGA_ROW, VGA_COLUMN, colour); VGA_ROW++; }
+
+    if (newLine) { VGA_ROW = 0; VGA_COLUMN++; }
+
+    VGA_MoveCursor(VGA_ROW, VGA_COLUMN);
+}

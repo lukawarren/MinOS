@@ -1,7 +1,7 @@
 NAME := MinOS
 
 PROJDIRS := src
-INCLUDEDIRS := -Iinclude -Iinclude/io
+INCLUDEDIRS := -Iinclude -Iinclude/io -Iinclude/memory
 
 CPPFILES := $(shell find $(PROJDIRS) -type f -name "*.cpp")
 CFILES += $(shell find $(PROJDIRS) -type f -name "*.c")
