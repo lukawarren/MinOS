@@ -3,6 +3,12 @@
 #include "io/uart.h"
 #include "memory/GDT.h"
 #include "memory/TSS.h"
+#include "memory/IDT.h"
+
+void jeff(void)
+{
+    VGA_printf("bob!");
+}
 
 extern "C" void kernel_main(void) 
 {
@@ -44,4 +50,15 @@ extern "C" void kernel_main(void)
     LoadTSS((uint32_t)&GDTTable[3] - (uint32_t)&GDTTable);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
+
+    // IDT descriptor
+    IDTDescriptor descriptor = IDTDescriptor(idt);
+
+    // Create IDT entries
+    IDT idt[256]; for (size_t i = 0; i < 256; ++i) idt[i] = CreateIDTEntry((uint32_t) &jeff, 0x8, DISABLED_R0_INTERRUPT);
+
+    // Load IDT and enable interrupts
+    LoadIDT(&descriptor);
+    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
+    VGA_printf("IDT sucessfully loaded");
 }

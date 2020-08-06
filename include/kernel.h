@@ -4,4 +4,6 @@
 
 extern "C" void kernel_main(void);
 
+extern "C" void jeff(void);
+
 #endif
