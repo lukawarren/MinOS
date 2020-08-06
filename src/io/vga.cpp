@@ -26,7 +26,7 @@ void VGA_WriteString(char const* string, bool newLine, uint8_t colour)
     if (newLine)
     {
         VGA_ROW = 0;
-        VGA_COLUMN++;
+        if (++VGA_COLUMN > VGA_HEIGHT) { VGA_COLUMN = 0; VGA_Clear(); }
     }
     VGA_MoveCursor(VGA_ROW, VGA_COLUMN);
 }

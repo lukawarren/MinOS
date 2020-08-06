@@ -47,6 +47,8 @@ void VGA_MoveCursor(size_t x, size_t y);
 void VGA_WriteChar(char c, size_t x, size_t y, uint8_t colour = VGA_COLOUR_WHITE);
 void VGA_WriteString(char const* string, bool newLine = true, uint8_t colour = VGA_COLOUR_WHITE);
 
+void VGA_Clear(uint8_t colour = VGA_COLOUR_WHITE | VGA_COLOUR_BLACK << 4);
+
 template <typename T>
 void VGA_printf(T* data, bool newLine = true, uint8_t colour = VGA_COLOUR_WHITE)
 {
@@ -80,14 +82,16 @@ void VGA_printf(T data, bool newLine = true, uint8_t colour = VGA_COLOUR_WHITE)
         for (size_t d = 0; d < nDigits; ++d) { VGA_WriteChar(digitToASCII(getNthDigit(data, nDigits - d - 1, 10)), VGA_ROW, VGA_COLUMN, colour); VGA_ROW++; }
     }
 
-    if (newLine) { VGA_ROW = 0; VGA_COLUMN++; }
+    if (newLine)
+    { 
+        VGA_ROW = 0; 
+        if (++VGA_COLUMN > VGA_HEIGHT) { VGA_COLUMN = 0; VGA_Clear(); } 
+    }
 
     VGA_MoveCursor(VGA_ROW, VGA_COLUMN);
 }
 
 template <>
 void VGA_printf<uint64_t, true>(uint64_t data, bool newLine, uint8_t colour);
-
-void VGA_Clear(uint8_t colour = VGA_COLOUR_WHITE | VGA_COLOUR_BLACK << 4);
 
 #endif

@@ -2,8 +2,10 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include "stddef.h"
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
+
+#include "../io/pic.h"
 
 /*
     0x00 Divide by zero
@@ -37,7 +39,7 @@
 #define GATE_TRAP_32        0xF
 
 #define DISABLED_R0_INTERRUPT   IDT_ENABLED(0) | MIN_PRIV(0) | GATE_INTERRUPT_32
-#define ENABLED_R0_INTERRUPT    IDT_ENABLED(0) | MIN_PRIV(0) | GATE_INTERRUPT_32
+#define ENABLED_R0_INTERRUPT    IDT_ENABLED(1) | MIN_PRIV(0) | GATE_INTERRUPT_32
 
 struct IDT
 {
@@ -54,7 +56,7 @@ inline constexpr IDT CreateIDTEntry(uint32_t entrypoint, uint16_t selector, uint
     idt.offsetLower = entrypoint & 0xFFFF;
     idt.selector = selector;
     idt.zero = 0;
-    idt.typeAttribute = 0x8e;
+    idt.typeAttribute = attributes;
     idt.offsetHigher = (uint16_t)((entrypoint & 0xFFFF0000) >> 16);
     return idt;
 }
@@ -71,9 +73,31 @@ struct IDTDescriptor
     }
 } __attribute__((packed));
 
+#include "../io/vga.h"
+
 extern "C"
 {
-   extern void LoadIDT(const IDTDescriptor* IDTDescriptor);
+    extern void LoadIDT(const IDTDescriptor* IDTDescriptor);
+    void HandleInterrupts(uint8_t irq, uint8_t unknown);
+
+    extern void IRQ0();
+    extern void IRQ1();
+    extern void IRQ2();
+    extern void IRQ3();
+    extern void IRQ4();
+    extern void IRQ5();
+    extern void IRQ6();
+    extern void IRQ7();
+    extern void IRQ8();
+    extern void IRQ9();
+    extern void IRQ10();
+    extern void IRQ11();
+    extern void IRQ12();
+    extern void IRQ13();
+    extern void IRQ14();
+    extern void IRQ15();
+
+    extern void IRQUnknown();
 }
 
 #endif

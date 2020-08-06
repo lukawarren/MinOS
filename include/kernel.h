@@ -4,6 +4,7 @@
 
 extern "C" void kernel_main(void);
 
-extern "C" void jeff(void);
+#include <stdint.h>
+void jeff(uint8_t irq);
 
 #endif

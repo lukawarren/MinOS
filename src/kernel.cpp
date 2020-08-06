@@ -1,14 +1,12 @@
 #include "kernel.h"
 #include "io/vga.h"
 #include "io/uart.h"
-#include "memory/GDT.h"
-#include "memory/TSS.h"
-#include "memory/IDT.h"
-
-void jeff(void)
-{
-    VGA_printf("bob!");
-}
+#include "io/pic.h"
+#include "io/io.h"
+#include "memory/gdt.h"
+#include "memory/tss.h"
+#include "memory/idt.h"
+#include "interrupts/interrupts.h"
 
 extern "C" void kernel_main(void) 
 {
@@ -51,14 +49,10 @@ extern "C" void kernel_main(void)
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
 
-    // IDT descriptor
-    IDTDescriptor descriptor = IDTDescriptor(idt);
-
-    // Create IDT entries
-    IDT idt[256]; for (size_t i = 0; i < 256; ++i) idt[i] = CreateIDTEntry((uint32_t) &jeff, 0x8, DISABLED_R0_INTERRUPT);
-
-    // Load IDT and enable interrupts
-    LoadIDT(&descriptor);
+    // Init PIC, create IDT entries and enable interrupts
+    InitInterrupts();
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
+
+    while (true) { asm("hlt"); }
 }
