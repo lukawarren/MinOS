@@ -1,9 +1,8 @@
 #include "cli.h"
 
 #include "io/vga.h"
-#include "stdlib.h"
 
-CLI::CLI() { }
+CLI::CLI(void (*_OnCommand)(char*)) { OnCommand = _OnCommand; }
 
 void CLI::Update(uint8_t scancode)
 {
@@ -43,7 +42,7 @@ void CLI::Update(uint8_t scancode)
     {
         // Execute command
         VGA_printf("");
-        OnCommand();
+        OnCommand(commandBuffer);
 
         // Clear buffer, new line
         for (int i = 2; i < MAX_COMMAND_LENGTH; ++i) commandBuffer[i] = '\0';
@@ -60,17 +59,6 @@ void CLI::Update(uint8_t scancode)
 
     // Print command
     PrintPrompt();
-}
-
-void CLI::OnCommand()
-{
-    if (strcmp(commandBuffer, "$ help")) VGA_printf("Commands: whoami", false);
-    else if (strcmp(commandBuffer, "$ whoami")) VGA_printf("root I guess", false);
-
-    else 
-    {
-        VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
-    }
 }
 
 CLI::~CLI() { }

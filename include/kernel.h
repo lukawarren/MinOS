@@ -5,5 +5,6 @@
 #include <stdint.h>
 
 extern "C" void kernel_main(void);
+void OnCommand(char* buffer);
 
 #endif

@@ -9,6 +9,7 @@
 #include "interrupts/interrupts.h"
 #include "interrupts/keyboard.h"
 #include "cli.h"
+#include "stdlib.h"
 
 TSS tssEntry;
 uint64_t GDTTable[4];
@@ -52,7 +53,7 @@ extern "C" void kernel_main(void)
     VGA_printf("TSS sucessfully loaded");
 
     // Init PIC, create IDT entries and enable interrupts, as well as create CLI
-    CLI cli;
+    CLI cli = CLI(OnCommand);
     Keyboard keyboard(&cli);
     InitInterrupts(&keyboard);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
@@ -63,4 +64,20 @@ extern "C" void kernel_main(void)
 
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }
+}
+
+void OnCommand(char* buffer)
+{
+    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, idt, tss", false);
+    else if (strcmp(buffer, "$ gdt"))
+    {
+        VGA_printf("GDT loaded at address ", false);
+        VGA_printf<size_t, true>((size_t)&GDTTable, false);
+        VGA_printf(" with ", false);
+        VGA_printf(sizeof(GDTTable) / sizeof(GDTTable[0]), false);
+        VGA_printf(" entries:");
+        for (size_t i = 0; i < sizeof(GDTTable) / sizeof(GDTTable[0]); ++i) VGA_printf<uint64_t, true>(GDTTable[i]);
+    }
+
+    else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
 }

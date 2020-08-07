@@ -11,15 +11,15 @@ constexpr uint8_t CLI_BEGIN = 2;
 class CLI
 {
 public:
-    CLI();
+    CLI(void (*_OnCommand)(char*));
     ~CLI();
 
     void Update(uint8_t scancode);
-    void OnCommand();
 
 private:
     char commandBuffer[MAX_COMMAND_LENGTH];
     unsigned int bufferCount = CLI_BEGIN;
+    void (*OnCommand)(char*);
 };
 
 #endif
