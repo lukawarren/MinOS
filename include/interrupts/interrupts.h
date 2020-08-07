@@ -6,7 +6,8 @@
 #include <stdint.h>
 
 #include "../memory/idt.h"
+#include "keyboard.h"
 
-void InitInterrupts();
+void InitInterrupts(Keyboard* k);
 
 #endif

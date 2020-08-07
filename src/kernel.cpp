@@ -7,6 +7,8 @@
 #include "memory/tss.h"
 #include "memory/idt.h"
 #include "interrupts/interrupts.h"
+#include "interrupts/keyboard.h"
+#include "cli.h"
 
 extern "C" void kernel_main(void) 
 {
@@ -49,10 +51,16 @@ extern "C" void kernel_main(void)
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
 
-    // Init PIC, create IDT entries and enable interrupts
-    InitInterrupts();
+    // Init PIC, create IDT entries and enable interrupts, as well as create CLI
+    CLI cli;
+    Keyboard keyboard(&cli);
+    InitInterrupts(&keyboard);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
 
+    VGA_printf("");
+    keyboard.OnKeyUpdate('\0');
+
+    // Hang and wait for interrupts
     while (true) { asm("hlt"); }
 }

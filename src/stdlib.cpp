@@ -14,3 +14,15 @@ size_t pow(const size_t number, const size_t power)
     for (size_t j = 0; j < power; ++j) i *= number;
     return i;
 }
+
+size_t strcmp(const char *X, const char *Y)
+{
+	while(*X)
+	{
+		if (*X != *Y)
+			break;
+
+		X++; Y++;
+	}
+	return (*(const unsigned char*)X - *(const unsigned char*)Y) == 0;
+}

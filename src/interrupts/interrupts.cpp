@@ -5,12 +5,15 @@
 #include "../io/io.h"
 
 static IDT idt[256];
+static Keyboard* keyboard;
 
-void InitInterrupts()
+void InitInterrupts(Keyboard* k)
 {
+    keyboard = k;
+
     // Init PIC with mask
     //PIC_Init(0, 0); //PIC_Init(0xfd, 0xff);
-    PIC_Init(0, 0);
+    PIC_Init(0xfd, 0xff);
 
     constexpr int offset = 0x20; // PIC has an offset that must be accounted for
 
@@ -50,9 +53,11 @@ void HandleInterrupts(uint8_t irq, uint8_t unknown)
         break;
 
         case 0x1:
-            VGA_printf("Keyboard interrupt with scancode ", false);
-            VGA_printf(inb(0x60));
-        break;
+        {
+            uint8_t scancode = inb(0x60);
+            keyboard->OnKeyUpdate(scancode);
+            break;
+        }
 
         default:
             VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
