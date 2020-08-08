@@ -6,6 +6,7 @@
 #include "memory/gdt.h"
 #include "memory/tss.h"
 #include "memory/idt.h"
+#include "memory/paging.h"
 #include "interrupts/interrupts.h"
 #include "interrupts/keyboard.h"
 #include "cli.h"
@@ -67,19 +68,34 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
         which extends from 0x1000000 (16mb) to just before memory mapped PCI devices (if any)
     */
     multiboot_memory_map_t* entry = (multiboot_memory_map_t *)(mbd->mmap_addr);
+    uint32_t maxMemoryRange = 0;
     while ((multiboot_uint32_t) entry < mbd->mmap_addr + mbd->mmap_length)
     {
         if (entry->addr == 0x100000)
         {
             VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
             VGA_printf("Extended memory block detected with length ", false);
-            VGA_printf<size_t, true>(entry->len, false);
+            VGA_printf<uint64_t, true>(entry->len, false);
             VGA_printf(" (", false);
-            VGA_printf(entry->len / 1024 / 1024, false);
+            VGA_printf((uint32_t)(entry->len / 1024 / 1024), false);
             VGA_printf(" MB)");
+
+            maxMemoryRange = (uint32_t)entry->addr + (uint32_t)entry->len;
         }
         entry = (multiboot_memory_map_t *) ((unsigned int) entry + entry->size + sizeof(entry->size));
     }
+    if (maxMemoryRange == 0)
+    {
+        VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_GREEN);
+        VGA_printf("Memory mapping failed!");
+    }
+
+    // Page frame allocation
+    VGA_printf("Allocating page frame from ", false);
+    VGA_printf<uint32_t, true>(((uint32_t) &__kernel_end), false);
+    VGA_printf(" to", false);
+    VGA_printf<uint32_t, true>(maxMemoryRange);
+    InitPaging(maxMemoryRange);
 
     // Start prompt and hang
     VGA_printf("");
