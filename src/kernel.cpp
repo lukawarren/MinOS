@@ -14,7 +14,7 @@
 TSS tssEntry;
 uint64_t GDTTable[4];
 
-extern "C" void kernel_main(void) 
+extern "C" void kernel_main(multiboot_info_t* mbd) 
 {
     VGA_Clear();
     VGA_EnableCursor();
@@ -59,6 +59,29 @@ extern "C" void kernel_main(void)
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
 
+    // Read memory map from GRUB
+    if ((mbd->flags & 6) == 0) {  VGA_printf("[Failure] Multiboot error!", true, VGA_COLOUR_LIGHT_RED); }
+
+    /*
+        Let's use the second block of extended memory,
+        which extends from 0x1000000 (16mb) to just before memory mapped PCI devices (if any)
+    */
+    multiboot_memory_map_t* entry = (multiboot_memory_map_t *)(mbd->mmap_addr);
+    while ((multiboot_uint32_t) entry < mbd->mmap_addr + mbd->mmap_length)
+    {
+        if (entry->addr == 0x100000)
+        {
+            VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
+            VGA_printf("Extended memory block detected with length ", false);
+            VGA_printf<size_t, true>(entry->len, false);
+            VGA_printf(" (", false);
+            VGA_printf(entry->len / 1024 / 1024, false);
+            VGA_printf(" MB)");
+        }
+        entry = (multiboot_memory_map_t *) ((unsigned int) entry + entry->size + sizeof(entry->size));
+    }
+
+    // Start prompt and hang
     VGA_printf("");
     keyboard.OnKeyUpdate('\0');
 

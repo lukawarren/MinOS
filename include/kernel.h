@@ -4,7 +4,12 @@
 
 #include <stdint.h>
 
-extern "C" void kernel_main(void);
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include "multiboot.h"
+#pragma GCC diagnostic pop
+
+extern "C" void kernel_main(multiboot_info_t* mbd);
 void OnCommand(char* buffer);
 
 #endif
