@@ -96,7 +96,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf(" to", false);
     VGA_printf<uint32_t, true>(maxMemoryRange);
     InitPaging(maxMemoryRange);
-
+    
     // Start prompt and hang
     VGA_printf("");
     keyboard.OnKeyUpdate('\0');
