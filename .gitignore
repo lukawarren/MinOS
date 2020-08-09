@@ -1,0 +1,8 @@
+build.sh
+buildToolchain.bat
+compile.bat
+minos_toolchain.tar.gz
+toolchain/
+.vscode
+build/
+bochs/
