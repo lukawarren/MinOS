@@ -19,7 +19,7 @@ Building natively requires:
 * Make
 
 ## Building with Docker
-First downlaod the project and build the toolchain with:
+First download the project and build the toolchain with:
 ```
 git clone https://github.com/TheUltimateKerbonaut/MinOS
 cd MinOS
@@ -34,7 +34,7 @@ docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd c
 ```
 git clone https://github.com/TheUltimateKerbonaut/MinOS
 cd MinOS
-mkdir -p build/io && mkdir -p build/memory && make
+mkdir -p build/io && mkdir -p build/memory && mkdir -p build/interrupts make
 ```
 
 ## Running
