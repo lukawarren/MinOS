@@ -1,6 +1,13 @@
 # MinOS
 A tiny x86 kernel written in modern C++ and Assembly.
 
+## Features
+* Multiboot 2 compliant kernel
+* Interrupts
+* Paging
+* VGA text mode output
+* Serial UART output
+
 ## Depdendencies
 If you want to build with Docker, then as it would turn out, all you need is:
 * Docker
