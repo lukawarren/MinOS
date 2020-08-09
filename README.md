@@ -41,4 +41,4 @@ mkdir -p build/io && mkdir -p build/memory && make
 Just build the project and either run the iso in the build directory as a virtual machine or burn to a disk with something like:
 ```
 sudo dd if=/path/to/MinOS.iso of=/dev/sdx && sync
-``
+```
