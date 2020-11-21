@@ -37,6 +37,17 @@ struct Page
     inline uint32_t GetAddress() { return pageIdentifier & 0b11111111111111111111111111111000; }
 };
 
-void InitPaging(uint32_t maxAddress);
+// Page directory struct
+struct PageDirectory
+{
+    uint32_t directoryEntry;
+
+    PageDirectory(uint32_t pageTableAddress, uint32_t flags)
+    {
+        directoryEntry = pageTableAddress | flags;
+    }
+};
+
+void InitPaging(const uint32_t maxAddress);
 
 #endif

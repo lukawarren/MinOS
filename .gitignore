@@ -1,6 +1,7 @@
 build.sh
 buildToolchain.bat
 compile.bat
+compile.sh
 minos_toolchain.tar.gz
 toolchain/
 .vscode

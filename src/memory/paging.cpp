@@ -2,88 +2,76 @@
 #include "mmu.h"
 #include "../io/vga.h"
 
-void InitPaging(uint32_t maxAddress)
+constexpr uint32_t pageDirectorySize = 0x400000;
+
+void InitPaging(const uint32_t maxAddress)
 {
-    // Address from linker is aligned to nearest 4K
-    uint32_t pagingBegin = (uint32_t)(&__kernel_end);
+    /*
+        Whilst the page table, page directories, etc could be much smaller on systems with less
+        physical RAM, I have decided to have enough space to address the maximum 4GB so that the
+        kernel will be a similar size on all systems, making identity-mapped kernel space and its
+        affected user space much easier. That means that paging takes 16 MB of memory, followed by
+        a further 4 MB for the page list array (I think).
+    */
+
+    const uint32_t numDirectories = 1024;
+    const uint32_t numPages = 1024;
+
+    // Knowing memory size will allow for allocation in pageListArray later
+    uint32_t pagingBegin = (uint32_t)(&__kernel_end); // Address from linker is aligned to nearest 4K
     uint32_t memorySize = maxAddress - pagingBegin;
-    uint32_t numPages = memorySize / PAGE_SIZE;
+    uint32_t maxPhysicalPages = memorySize / PAGE_SIZE;
 
-    /*
-        Allocate one entire page for the page directory - 1024 entries,
-        each 4 bytes large.
-    */
+    // Allocate enough space for all page tables and page directories
+    // Then create pointer to page list
     volatile uint32_t* pageDirectory = (uint32_t*)pagingBegin;
-    for (int i = 0; i < 1024; ++i) pageDirectory[i] = PD_PRESENT(0) | PD_READWRITE(1) | PD_SUPERVISOR(1);
-    pagingBegin += PAGE_SIZE;
+    uint32_t sizeOfAllPageDirectoriesAndTables = (sizeof(uint32_t) * numPages) * (sizeof(uint32_t) * numDirectories);
+    Page* pageListArray = (Page*) pagingBegin + sizeOfAllPageDirectoriesAndTables;
 
-    /*
-        Create a first page table, mapping up to 4MB of memory.
-        As the address is page aligned in the loop below,
-        it will always leave 12 bytes zerod - the perfect
-        place for attributes. This page will be identity mapped
-        (1:1), and will house all the important kernel data.
-    */
-    volatile uint32_t* identityMappedKernel = (uint32_t*)(pagingBegin);
-    for (int i = 0; i < 1024; ++i) identityMappedKernel[i] = (i * PAGE_SIZE) | (PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1));
-    pageDirectory[0] = ((unsigned int)identityMappedKernel) |  (PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1));
-    pagingBegin += PAGE_SIZE;
+    auto AllocatePageDirectory = [&](uint32_t physicalAddress, uint32_t offset, uint32_t flags, bool kernel)
+    {
+        // Find page directory to be changed - ignore divide by 0
+        unsigned int pageDirectoryIndex = (physicalAddress == 0) ? 0 : (physicalAddress / pageDirectorySize);
 
-    /* 
-        Allocate next 4MB for user space, yet in such a way that
-        user space begins at 16MB (0x1000000), leaving space in the future
-        for a larger kernel, and perhaps memory mapped peripherals.
-    */
-    volatile uint32_t* identityMappedUserspace = (uint32_t*)(pagingBegin);
-    for (int i = 0; i < 1024; ++i) identityMappedUserspace[i] = (0x1000000 + i * PAGE_SIZE) | (PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1));
-    pageDirectory[1] = ((unsigned int)identityMappedUserspace) |  (PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1));
-    pagingBegin += PAGE_SIZE;
+        // Page tables exist after all page directories
+        uint32_t* tables = (uint32_t*) (pagingBegin + (sizeof(uint32_t) * numDirectories) + (sizeof(uint32_t) * pageDirectoryIndex));
 
-    /*
-        Load page directory - as our kernel is identity mapped and lies
-        at the start of memory (or 1MB) anyway, nothing needs to change
-        as far as the kernel is concerned.
-    */
-    LoadPageDirectory((uint32_t)&(pageDirectory[0]));
+        // Fill all tables then fill directory with entry to table
+        for (int i = 0; i < 1024; ++i) tables[i] = (i * PAGE_SIZE + physicalAddress + offset) | flags;
+        pageDirectory[pageDirectoryIndex] = ((unsigned int)tables) |  flags;
+
+        // Add information to pageListArray
+        //for (uint32_t i = physicalAddress / PAGE_SIZE; i < (physicalAddress + pageDirectorySize) / PAGE_SIZE; ++i) 
+        //    pageListArray[i] = Page(i * PAGE_SIZE + physicalAddress + offset, allocated, kernel);
+
+        LoadPageDirectory((uint32_t)&pageDirectory[pageDirectoryIndex]);
+    };
+
+    auto DeallocatePageDirectory = [&](uint32_t physicalAddress)
+    {
+        // Find page directory to be changed - ignore divide by 0
+        unsigned int pageDirectoryIndex = (physicalAddress == 0) ? 0 : (physicalAddress / pageDirectorySize);
+
+        // Set flags to not present
+        pageDirectory[pageDirectoryIndex] = PD_SUPERVISOR(1) | PD_READWRITE(1) | PD_PRESENT(0);
+        
+        // Update page list array
+
+        LoadPageDirectory((uint32_t)&pageDirectory[pageDirectoryIndex]);
+    };
+
+    // Set all pages as empty
+    for (uint32_t i = 0; i < 1024; ++i) DeallocatePageDirectory(i * pageDirectorySize);
+
+    // Allocate 32 MB (8 page directories) identity mapped for kernel
+    //for (uint32_t i = 0; i < 8; ++i) AllocatePageDirectory(i * pageDirectorySize, 0, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+    AllocatePageDirectory(0,                    0, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+    AllocatePageDirectory(pageDirectorySize,    0, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+
+    // User space will begin at 0x40000000 (1 GB) virtually
+    //AllocatePageDirectory(0x1000000, 0x40000000, PD_PRESENT(1) | PD_READWRITE(0) | PD_SUPERVISOR(0), false);
+    
+    // Build page list array to keep track of which pages are being used
+
     EnablePaging();
-
-    /*
-        Create an array of pages, keeping track of virtual
-        addresses and other information such as if the page
-        is used. Such a structure will exist after all
-        the page descriptors and page tables. For now the
-        maximum amount of pages is capped to allow the
-        structure to fit within the remaining memory of the
-        kernel's 4 MB page.
-    */
-    Page* pageListArray = (Page*)(pagingBegin);
-    if (sizeof(Page) * numPages > 1024 * 1024 * 4) // If too much memory to fit, panic!
-    {
-        // (yes this is because I am lazy)
-        VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
-        VGA_printf(" Too much memory to fit within paging limits!");
-    }
-    pagingBegin += sizeof(Page) * numPages;
-
-    // Kernel pages
-    for (int i = 0; i < 0x400000 / PAGE_SIZE; ++i) pageListArray[i] = Page(i * PAGE_SIZE, i  * PAGE_SIZE < pagingBegin, true);
-
-    // User pages
-    for (int i = 0x400000 / PAGE_SIZE; i < 0x800000 / PAGE_SIZE; ++i) pageListArray[i] = Page(i * PAGE_SIZE, false, false);
-
-    VGA_printf("Allocated ", false);
-    VGA_printf<uint32_t, false>(0x400000 / PAGE_SIZE, false);
-    VGA_printf(" pages for kernel space and ", false);
-    VGA_printf<uint32_t, false>(0x400000 / PAGE_SIZE, false);
-    VGA_printf(" for user space");
-
-    for (int i = 0; i < 0x400000 / PAGE_SIZE; ++i)
-    {
-        if (pageListArray[i].IsAllocated() == false && pageListArray[i].IsKernel())
-        {
-            VGA_printf("First free kernel page found at ", false);
-            VGA_printf<uint32_t, true>(pageListArray[i].GetAddress());
-            break;
-        }
-    }
 }
