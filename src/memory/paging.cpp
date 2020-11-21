@@ -1,6 +1,8 @@
 #include "paging.h"
-#include "mmu.h"
 #include "../io/vga.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
 
 constexpr uint32_t pageDirectorySize = 0x400000;
 
@@ -22,29 +24,28 @@ void InitPaging(const uint32_t maxAddress)
     uint32_t memorySize = maxAddress - pagingBegin;
     uint32_t maxPhysicalPages = memorySize / PAGE_SIZE;
 
-    // Allocate enough space for all page tables and page directories
-    // Then create pointer to page list
-    volatile uint32_t* pageDirectory = (uint32_t*)pagingBegin;
-    uint32_t sizeOfAllPageDirectoriesAndTables = (sizeof(uint32_t) * numPages) * (sizeof(uint32_t) * numDirectories);
-    Page* pageListArray = (Page*) pagingBegin + sizeOfAllPageDirectoriesAndTables;
+    // Allocate enough space for all page tables and page directories, then create pointer to page list
+    // uint32_t pageDirectories[numDirectories], uint32_t pageTables[numPages*numDirectories]
+    uint32_t* pageDirectories = (uint32_t*)pagingBegin;
+    uint32_t* pageTables = pageDirectories + numDirectories;
+    //Page* pageListArray = (Page*) pageTables + numDirectories*numPages; 
 
-    auto AllocatePageDirectory = [&](uint32_t physicalAddress, uint32_t offset, uint32_t flags, bool kernel)
+    auto AllocatePageDirectory = [&](uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags, bool kernel)
     {
         // Find page directory to be changed - ignore divide by 0
         unsigned int pageDirectoryIndex = (physicalAddress == 0) ? 0 : (physicalAddress / pageDirectorySize);
 
-        // Page tables exist after all page directories
-        uint32_t* tables = (uint32_t*) (pagingBegin + (sizeof(uint32_t) * numDirectories) + (sizeof(uint32_t) * pageDirectoryIndex));
+        // Get page directory and page tables
+        uint32_t* pageDirectory = &pageDirectories[pageDirectoryIndex];
+        uint32_t* pageTable = pageTables + numPages*pageDirectoryIndex;
 
         // Fill all tables then fill directory with entry to table
-        for (int i = 0; i < 1024; ++i) tables[i] = (i * PAGE_SIZE + physicalAddress + offset) | flags;
-        pageDirectory[pageDirectoryIndex] = ((unsigned int)tables) |  flags;
+        for (int i = 0; i < 1024; ++i) pageTable[i] = (i * PAGE_SIZE + virtualAddress) | flags;
+        *pageDirectory = (uint32_t)pageTable | flags;
 
-        // Add information to pageListArray
-        //for (uint32_t i = physicalAddress / PAGE_SIZE; i < (physicalAddress + pageDirectorySize) / PAGE_SIZE; ++i) 
-        //    pageListArray[i] = Page(i * PAGE_SIZE + physicalAddress + offset, allocated, kernel);
+        // TODO: Add information to pageListArray
 
-        LoadPageDirectory((uint32_t)&pageDirectory[pageDirectoryIndex]);
+        LoadPageDirectory((uint32_t)pageDirectory);
     };
 
     auto DeallocatePageDirectory = [&](uint32_t physicalAddress)
@@ -52,12 +53,12 @@ void InitPaging(const uint32_t maxAddress)
         // Find page directory to be changed - ignore divide by 0
         unsigned int pageDirectoryIndex = (physicalAddress == 0) ? 0 : (physicalAddress / pageDirectorySize);
 
-        // Set flags to not present
-        pageDirectory[pageDirectoryIndex] = PD_SUPERVISOR(1) | PD_READWRITE(1) | PD_PRESENT(0);
+        // Clear page directory
+        pageDirectories[pageDirectoryIndex] = (PD_SUPERVISOR(1) | PD_READWRITE(1) | PD_PRESENT(0));
         
-        // Update page list array
+        // TODO: Update page list array
 
-        LoadPageDirectory((uint32_t)&pageDirectory[pageDirectoryIndex]);
+        LoadPageDirectory((uint32_t)&pageDirectories[pageDirectoryIndex]);
     };
 
     // Set all pages as empty
@@ -65,13 +66,15 @@ void InitPaging(const uint32_t maxAddress)
 
     // Allocate 32 MB (8 page directories) identity mapped for kernel
     //for (uint32_t i = 0; i < 8; ++i) AllocatePageDirectory(i * pageDirectorySize, 0, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
-    AllocatePageDirectory(0,                    0, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
-    AllocatePageDirectory(pageDirectorySize,    0, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+    AllocatePageDirectory(0,                    0,                  PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+    AllocatePageDirectory(pageDirectorySize,    pageDirectorySize,  PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
 
-    // User space will begin at 0x40000000 (1 GB) virtually
-    //AllocatePageDirectory(0x1000000, 0x40000000, PD_PRESENT(1) | PD_READWRITE(0) | PD_SUPERVISOR(0), false);
+    // User space will begin at 0x40000000 (1 GB) virtually, but physically at (what is currently) 16MB
+    AllocatePageDirectory(0x1000000, 0x40000000, PD_PRESENT(1) | PD_READWRITE(0) | PD_SUPERVISOR(0), false);
     
-    // Build page list array to keep track of which pages are being used
+    // TODO: Build page list array to keep track of which pages are being used
 
     EnablePaging();
 }
+
+#pragma GCC diagnostic pop
