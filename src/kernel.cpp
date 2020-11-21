@@ -14,9 +14,12 @@
 
 TSS tssEntry;
 uint64_t GDTTable[4];
+multiboot_info_t* pMultiboot;
 
 extern "C" void kernel_main(multiboot_info_t* mbd) 
 {
+    pMultiboot = mbd;
+    
     VGA_Clear();
     VGA_EnableCursor();
 
@@ -91,10 +94,6 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     }
 
     // Page frame allocation
-    VGA_printf("Allocating page frame from ", false);
-    VGA_printf<uint32_t, true>(((uint32_t) &__kernel_end), false);
-    VGA_printf(" to", false);
-    VGA_printf<uint32_t, true>(maxMemoryRange);
     InitPaging(maxMemoryRange);
     
     // Start prompt and hang
@@ -107,7 +106,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
 void OnCommand(char* buffer)
 {
-    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, idt, tss", false);
+    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot", false);
     else if (strcmp(buffer, "$ gdt"))
     {
         VGA_printf("GDT loaded at address ", false);
@@ -116,6 +115,19 @@ void OnCommand(char* buffer)
         VGA_printf(sizeof(GDTTable) / sizeof(GDTTable[0]), false);
         VGA_printf(" entries:");
         for (size_t i = 0; i < sizeof(GDTTable) / sizeof(GDTTable[0]); ++i) VGA_printf<uint64_t, true>(GDTTable[i]);
+    }
+    else if (strcmp(buffer, "$ multiboot"))
+    {
+        VGA_printf("Multiboot header at ", false);
+        VGA_printf<uint32_t, true>((uint32_t)pMultiboot);
+        VGA_printf("");
+        VGA_printf("Framebuffer information:");
+        VGA_printf("Resolution: ", false); 
+        VGA_printf(pMultiboot->framebuffer_width, false);
+        VGA_printf("x", false);
+        VGA_printf(pMultiboot->framebuffer_height, false);
+        VGA_printf("x", false);
+        VGA_printf(pMultiboot->framebuffer_pitch / pMultiboot->framebuffer_width * 8);
     }
 
     else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
