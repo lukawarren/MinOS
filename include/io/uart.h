@@ -62,6 +62,7 @@ public:
 
     COM m_Com;
 
+    static UART* pCOM;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "interrupts.h"
+#include "timer.h"
 #include "../memory/idt.h"
 #include "../io/pic.h"
 #include "../io/vga.h"
@@ -7,13 +8,12 @@
 static IDT idt[256];
 static Keyboard* keyboard;
 
-void InitInterrupts(Keyboard* k)
+void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k)
 {
     keyboard = k;
 
-    // Init PIC with mask
-    //PIC_Init(0, 0); //PIC_Init(0xfd, 0xff);
-    PIC_Init(0xfd, 0xff);
+    // Init PIC with masks
+    PIC_Init(mask1, mask2);
 
     constexpr int offset = 0x20; // PIC has an offset that must be accounted for
 
@@ -49,11 +49,12 @@ void HandleInterrupts(uint8_t irq, uint8_t unknown)
     switch (irq)
     {
         case 0x0:
-            VGA_printf("PIT says tick tock!");
+            OnTimerInterrupt();
         break;
 
-        case 0x1:
+        case 0x1: // Keyboard
         {
+            if (keyboard == nullptr) break;
             uint8_t scancode = inb(0x60);
             keyboard->OnKeyUpdate(scancode);
             break;

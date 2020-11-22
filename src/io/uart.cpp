@@ -3,6 +3,8 @@
 #include "vga.h"
 #include "../stdlib.h"
 
+UART* UART::pCOM = nullptr;
+
 UART::UART(COM com)
 {
     m_Com = com;

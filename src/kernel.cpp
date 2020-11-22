@@ -3,6 +3,7 @@
 #include "io/uart.h"
 #include "io/pic.h"
 #include "io/io.h"
+#include "io/pit.h"
 #include "memory/gdt.h"
 #include "memory/tss.h"
 #include "memory/idt.h"
@@ -31,6 +32,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Start COM1 serial port
     UART COM1 = UART(UART::COM1);
+    UART::pCOM = &COM1;
     COM1.printf("MinOS running from COM1 at ", false);
     COM1.printf<uint16_t, true>((uint16_t)UART::COM1);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
@@ -56,10 +58,15 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
 
-    // Init PIC, create IDT entries and enable interrupts, as well as create CLI
+    // Create keyboard
     CLI cli = CLI(OnCommand);
     Keyboard keyboard(&cli);
-    InitInterrupts(&keyboard);
+
+    // Setup PIT
+    InitPIT();
+
+    // Init PIC, create IDT entries and enable interrupts
+    InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL, &keyboard);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
 

@@ -8,6 +8,6 @@
 #include "../memory/idt.h"
 #include "keyboard.h"
 
-void InitInterrupts(Keyboard* k);
+void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k = nullptr);
 
 #endif

@@ -27,6 +27,13 @@
 #define ICW4_BUF_MASTER	0x0C		/* Buffered mode/master */
 #define ICW4_SFNM	    0x10		/* Special fully nested (not) */
 
+#define PIC_MASK_PIT_CODE               0x1
+#define PIC_MASK_KEYBOARD_CODE          0x2
+#define PIC_MASK_PIT                    0xff ^ PIC_MASK_PIT_CODE
+#define PIC_MASK_KEYBOARD               0xff ^ PIC_MASK_KEYBOARD_CODE
+#define PIC_MASK_PIT_AND_KEYBOARD       0xff ^ PIC_MASK_PIT_CODE ^ PIC_MASK_KEYBOARD_CODE
+#define PIC_MASK_ALL                    0xff
+
 void PIC_Init(uint8_t mask1 = 0xff, uint8_t mask2 = 0xff);
 void PIC_EndInterrupt(uint8_t irq);
 

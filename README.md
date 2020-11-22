@@ -27,7 +27,7 @@ docker build -t minos/toolchain:1.0 .
 ```
 Then compile the kernel:
 ```
-docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd code && make clean && mkdir -p build/io && mkdir -p build/interrupts && make"
+docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd code && make clean && mkdir -p build/io && mkdir -p build/interrupts && mkdir -p build/memory && make"
 ```
 
 ## Building natively
