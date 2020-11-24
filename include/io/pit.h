@@ -31,7 +31,15 @@
 #define MODE_BINARY_16_BIT      0
 #define MODE_BINARY_FOUR_DIGIT  1
 
+#define PC_SPEAKER_IO_PORT      0x61
+#define PC_SPEAKER_ENABLE       0b11
+#define PC_SPEAKER_DISABLE      0xfc
+
 void InitPIT();
-void SetReloadValue(uint16_t value);
+void SetReloadValue(uint16_t channel, uint16_t value);
+void SetReloadValueInHz(uint16_t channel, uint16_t value);
+
+void EnablePCSpeaker();
+void DisablePCSpeaker();
 
 #endif

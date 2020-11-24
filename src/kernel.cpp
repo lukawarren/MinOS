@@ -10,6 +10,7 @@
 #include "memory/paging.h"
 #include "interrupts/interrupts.h"
 #include "interrupts/keyboard.h"
+#include "interrupts/timer.h"
 #include "cli.h"
 #include "stdlib.h"
 
@@ -113,7 +114,11 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
 void OnCommand(char* buffer)
 {
+    #if DO_SOUND_DEMO
+    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot, jingle", false);
+    #else
     if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot", false);
+    #endif
     else if (strcmp(buffer, "$ gdt"))
     {
         VGA_printf("GDT loaded at address ", false);
@@ -136,6 +141,12 @@ void OnCommand(char* buffer)
         VGA_printf("x", false);
         VGA_printf(pMultiboot->framebuffer_pitch / pMultiboot->framebuffer_width * 8);
     }
+    #if DO_SOUND_DEMO
+    else if (strcmp(buffer, "$ jingle"))
+    {
+        EnablePCSpeaker();
+    }
+    #endif
 
     else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
 }
