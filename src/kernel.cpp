@@ -21,7 +21,24 @@ multiboot_info_t* pMultiboot;
 extern "C" void kernel_main(multiboot_info_t* mbd) 
 {
     pMultiboot = mbd;
-    
+
+    uint32_t* bob = (uint32_t*)pMultiboot->framebuffer_addr;
+    for (uint32_t x = 0; x < pMultiboot->framebuffer_width; ++x)
+    {
+        for (uint32_t y = 0; y < pMultiboot->framebuffer_height; ++y)
+        {
+            uint8_t r = 255;
+            uint8_t g = 215;
+            uint8_t b = 0;
+            unsigned int where = x*4 + y*pMultiboot->framebuffer_pitch;
+            uint32_t colour = (r << 16) | (g << 8) | (b);
+            *(uint32_t*)((uint32_t)bob + where) = colour;
+
+            //bob[where+0] = 0xff;
+            //bob[where+1] = 0xff;
+        }
+    }
+
     VGA_Clear();
     VGA_EnableCursor();
 
