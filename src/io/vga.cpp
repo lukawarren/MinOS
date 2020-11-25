@@ -14,7 +14,7 @@ uint32_t VGA_column = 0;
 void VGA_Init(Framebuffer fb)
 {
     VGA_framebuffer = fb;
-    VGA_charRows = fb.height / CHAR_HEIGHT;
+    VGA_charRows = fb.height / CHAR_HEIGHT*CHAR_SCALE;
     VGA_charColumns = fb.width / CHAR_WIDTH;
 }
 
@@ -24,14 +24,14 @@ void VGA_WriteChar(char c, size_t x, size_t y, uint32_t colour)
 
     for (int w = 0; w < CHAR_WIDTH; ++w)
     {
-        for (int h = 0; h < CHAR_HEIGHT; ++h)
+        for (int h = 0; h < CHAR_HEIGHT*CHAR_SCALE; ++h)
         {
             uint8_t mask = 1 << (w);
 
             size_t xPos = x * CHAR_WIDTH + w;
-            size_t yPos = y * CHAR_HEIGHT + h;
+            size_t yPos = y * CHAR_HEIGHT*CHAR_SCALE + h;
             size_t index = xPos*4 + yPos*VGA_framebuffer.pitch;
-            if (bitmap[h] & mask) *(uint32_t*)((uint32_t)VGA_framebuffer.address + index) = colour;
+            if (bitmap[h/CHAR_SCALE] & mask) *(uint32_t*)((uint32_t)VGA_framebuffer.address + index) = colour;
             else *(uint32_t*)((uint32_t)VGA_framebuffer.address + index) = VGA_COLOUR_BLACK;       
         }
     }
