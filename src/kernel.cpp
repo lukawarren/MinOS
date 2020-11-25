@@ -21,7 +21,7 @@ multiboot_info_t* pMultiboot;
 extern "C" void kernel_main(multiboot_info_t* mbd) 
 {
     pMultiboot = mbd;
-
+    /*
     uint32_t* bob = (uint32_t*)pMultiboot->framebuffer_addr;
     for (uint32_t x = 0; x < pMultiboot->framebuffer_width; ++x)
     {
@@ -32,20 +32,22 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
             uint8_t b = 0;
             unsigned int where = x*4 + y*pMultiboot->framebuffer_pitch;
             uint32_t colour = (r << 16) | (g << 8) | (b);
-            *(uint32_t*)((uint32_t)bob + where) = colour;
+            //*(uint32_t*)((uint32_t)bob + where) = colour;
 
             //bob[where+0] = 0xff;
             //bob[where+1] = 0xff;
         }
     }
+    */
 
+    VGA_Init({  pMultiboot->framebuffer_width, pMultiboot->framebuffer_height, 
+                pMultiboot->framebuffer_pitch, (uint32_t*)pMultiboot->framebuffer_addr });
     VGA_Clear();
-    VGA_EnableCursor();
 
     // Welcome message
-    VGA_printf("---------------------------------------------------------------------------------", false, VGA_COLOUR_GREEN);
-    VGA_printf("                                      MinOS                                      ", false, VGA_COLOUR_GREEN);
-    VGA_printf("--------------------------------------------------------------------------------", false, VGA_COLOUR_GREEN);
+    VGA_printf("--------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
+    VGA_printf("                                      MinOS                                     ", true, VGA_COLOUR_GREEN);
+    VGA_printf("--------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
     VGA_printf(" ");
 
     // Start COM1 serial port
@@ -103,7 +105,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
         {
             VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
             VGA_printf("Extended memory block detected with length ", false);
-            VGA_printf<uint64_t, true>(entry->len, false);
+            VGA_printf<uint32_t, true>((uint32_t)entry->len, false);
             VGA_printf(" (", false);
             VGA_printf((uint32_t)(entry->len / 1024 / 1024), false);
             VGA_printf(" MB)");
@@ -120,7 +122,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Page frame allocation
     InitPaging(maxMemoryRange);
-    
+
     // Start prompt and hang
     VGA_printf("");
     keyboard.OnKeyUpdate('\0');

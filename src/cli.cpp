@@ -13,17 +13,15 @@ void CLI::Update(uint8_t scancode)
 
     auto PrintPrompt = [&]()
     {
-        VGA_ROW = 0;
+        VGA_column = 0;
         VGA_printf(commandBuffer, false);
 
         // Insert null terminator after prompt to print it seperately
         char lastChar = commandBuffer[2];
         commandBuffer[2] = '\0';
-        VGA_ROW = 0;
+        VGA_column = 0;
         VGA_printf(commandBuffer, false, VGA_COLOUR_LIGHT_GREEN);
         commandBuffer[2] = lastChar;
-        
-        VGA_MoveCursor(bufferCount, VGA_COLUMN);
     };
 
     if (scancode == '\0') { PrintPrompt(); return; }
@@ -47,13 +45,13 @@ void CLI::Update(uint8_t scancode)
         // Clear buffer, new line
         for (int i = 2; i < MAX_COMMAND_LENGTH; ++i) commandBuffer[i] = '\0';
         bufferCount = 2;
-        VGA_COLUMN++;
+        VGA_row++;
         PrintPrompt();
         return;
     }
 
     // Append command to command buffer if within current line
-    if (bufferCount >= VGA_WIDTH) return;
+    if (bufferCount >= VGA_charColumns) return;
     commandBuffer[bufferCount] = scancode;
     bufferCount++;
 
