@@ -1,6 +1,5 @@
 #include "cli.h"
-
-#include "io/vga.h"
+#include "gfx/vga.h"
 
 CLI::CLI(void (*_OnCommand)(char*)) { OnCommand = _OnCommand; }
 

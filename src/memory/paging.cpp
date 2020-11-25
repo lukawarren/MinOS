@@ -1,5 +1,5 @@
 #include "paging.h"
-#include "../io/vga.h"
+#include "../gfx/vga.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"

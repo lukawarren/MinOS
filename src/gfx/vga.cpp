@@ -1,7 +1,7 @@
 #include "vga.h"
 #include "../stdlib.h"
-#include "io.h"
-#include "../charset.h"
+#include "../io/io.h"
+#include "charset.h"
 
 Framebuffer VGA_framebuffer;
 

@@ -1,5 +1,5 @@
 #include "kernel.h"
-#include "io/vga.h"
+#include "gfx/vga.h"
 #include "io/uart.h"
 #include "io/pic.h"
 #include "io/io.h"
@@ -28,7 +28,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Welcome message
     VGA_printf("--------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
-    VGA_printf("                                      MinOS                                     ", true, VGA_COLOUR_GREEN);
+    VGA_printf("                                     MinOS                                      ", true, VGA_COLOUR_GREEN);
     VGA_printf("--------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
     VGA_printf(" ");
 

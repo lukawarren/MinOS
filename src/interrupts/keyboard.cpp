@@ -1,5 +1,5 @@
 #include "keyboard.h"
-#include "../io/vga.h"
+#include "../gfx/vga.h"
 
 Keyboard::Keyboard(CLI* _cli)
 {

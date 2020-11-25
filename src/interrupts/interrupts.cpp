@@ -2,8 +2,8 @@
 #include "timer.h"
 #include "../memory/idt.h"
 #include "../io/pic.h"
-#include "../io/vga.h"
 #include "../io/io.h"
+#include "../gfx/vga.h"
 
 static IDT idt[256];
 static Keyboard* keyboard;

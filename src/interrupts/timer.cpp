@@ -1,5 +1,5 @@
 #include "timer.h"
-#include "../io/vga.h"
+#include "../gfx/vga.h"
 #include "../io/pit.h"
 
 #if DO_SOUND_DEMO

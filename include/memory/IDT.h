@@ -73,8 +73,6 @@ struct IDTDescriptor
     }
 } __attribute__((packed));
 
-#include "../io/vga.h"
-
 extern "C"
 {
     extern void LoadIDT(const IDTDescriptor* IDTDescriptor);
