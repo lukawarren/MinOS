@@ -1,8 +1,8 @@
 section text
 
-global LoadPageDirectory
+global LoadPageDirectories
 
-LoadPageDirectory:
+LoadPageDirectories:
     push ebp
     mov ebp, esp
     mov eax, [esp + 8]

@@ -108,6 +108,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     // Start prompt and hang
     VGA_printf("");
     keyboard.OnKeyUpdate('\0');
+    keyboard.OnKeyUpdate('\0');
 
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }

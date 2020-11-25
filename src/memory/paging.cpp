@@ -56,6 +56,7 @@ void InitPaging(const uint32_t maxAddress)
         AllocatePage(aligendFramebufferAddress + i * pageSize, kernelMemorySoFar + i*pageSize, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
     VGA_framebuffer.address = (uint32_t*)(kernelMemorySoFar + framebufferAlignmentDifference);
 
+    LoadPageDirectories((uint32_t)pageDirectories);
     EnablePaging();
 
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
@@ -76,10 +77,6 @@ void AllocatePage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t fl
     // Fill table then add informmation to pageListArray
     *pageTable = physicalAddress | flags;
     pageListArray[pageTableIndex] = Page(physicalAddress, true, kernel);
-
-    // Get page directory to (re)load
-    unsigned int pageDirectoryIndex = ((virtualAddress & 0xFFFF0000) == 0) ? 0 : ((virtualAddress & 0xFFFF0000) / pageDirectorySize);
-    LoadPageDirectory((uint32_t)&pageDirectories[pageDirectoryIndex]);
 }
 
 void DeallocatePage(uint32_t virtualAddress)
@@ -90,10 +87,6 @@ void DeallocatePage(uint32_t virtualAddress)
     // Fill table then add informmation to pageListArray
     *pageTable = PD_PRESENT(0);
     pageListArray[pageTableIndex].ClearAllocated();
-
-    // Get page directory to (re)load
-    unsigned int pageDirectoryIndex = (virtualAddress == 0) ? 0 : (virtualAddress / pageDirectorySize);
-    LoadPageDirectory((uint32_t)&pageDirectories[pageDirectoryIndex]);
 }
 
 void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags, bool kernel)
@@ -114,8 +107,6 @@ void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, ui
     {
         pageListArray[1024*pageDirectoryIndex+i] = Page(i * pageSize + physicalAddress, true, kernel);
     }
-
-    LoadPageDirectory((uint32_t)pageDirectory);
 }
 
 void DeallocatePageDirectory(uint32_t virtualAddress)
@@ -135,8 +126,6 @@ void DeallocatePageDirectory(uint32_t virtualAddress)
         // Still tell it the address, as we want things at a known state before any allocation has occurred
         pageListArray[1024*pageDirectoryIndex+i] = Page(i * pageSize, false, false);
     }
-
-    LoadPageDirectory((uint32_t)&pageDirectories[pageDirectoryIndex]);
 }
 
 #pragma GCC diagnostic pop

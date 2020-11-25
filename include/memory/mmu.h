@@ -8,7 +8,7 @@
 
 extern "C"
 {
-    extern void LoadPageDirectory(uint32_t pageDirectoryAddr);
+    extern void LoadPageDirectories(uint32_t pageDirectoryAddr);
     extern void EnablePaging();
 }
 
