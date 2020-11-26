@@ -18,9 +18,9 @@ struct Page
 {
     uint32_t pageIdentifier;
 
-    Page(uint32_t virtualAddress, bool allocated, bool kernel)
+    Page(uint32_t physicalAddress, bool allocated, bool kernel)
     {
-        pageIdentifier = virtualAddress;
+        pageIdentifier = physicalAddress;
         pageIdentifier |= (allocated & 0b1) << 1;
         pageIdentifier |= (kernel & 0b1);
     }
@@ -45,5 +45,7 @@ void DeallocatePage(uint32_t physicalAddress);
 void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags, bool kernel);
 void DeallocatePageDirectory(uint32_t physicalAddress);
 
+void* kmalloc(uint32_t bytes);
+void  kfree(void* ptr, uint32_t bytes);
 
 #endif

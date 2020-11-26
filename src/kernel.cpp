@@ -11,6 +11,7 @@
 #include "interrupts/interrupts.h"
 #include "interrupts/keyboard.h"
 #include "interrupts/timer.h"
+#include "multitask/multitask.h"
 #include "cli.h"
 #include "stdlib.h"
 
@@ -60,18 +61,6 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
 
-    // Create keyboard
-    CLI cli = CLI(OnCommand);
-    Keyboard keyboard(&cli);
-
-    // Setup PIT
-    InitPIT();
-
-    // Init PIC, create IDT entries and enable interrupts
-    InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL, &keyboard);
-    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-    VGA_printf("IDT sucessfully loaded");
-
     // Read memory map from GRUB
     if ((mbd->flags & 6) == 0) {  VGA_printf("[Failure] Multiboot error!", true, VGA_COLOUR_LIGHT_RED); }
 
@@ -104,6 +93,18 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Page frame allocation
     InitPaging(maxMemoryRange);
+
+    // Create keyboard
+    CLI cli = CLI(OnCommand);
+    Keyboard keyboard(&cli);
+
+    // Setup PIT
+    InitPIT();
+
+    // Init PIC, create IDT entries and enable interrupts
+    InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL, &keyboard);
+    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
+    VGA_printf("IDT sucessfully loaded");
 
     // Start prompt and hang
     VGA_printf("");

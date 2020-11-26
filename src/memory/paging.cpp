@@ -21,13 +21,14 @@ const uint32_t numPages = 1024;
 static uint32_t* pageDirectories;
 static uint32_t* pageTables;
 static Page* pageListArray;
+uint32_t maxPhysicalPages;
 
 void InitPaging(const uint32_t maxAddress)
 {
     // Knowing memory size will allow for allocation in pageListArray later
     uint32_t pagingBegin = (uint32_t)(&__kernel_end); // Address from linker is aligned to nearest 4K
     uint32_t memorySize = maxAddress - pagingBegin;
-    uint32_t maxPhysicalPages = memorySize / pageSize;
+    maxPhysicalPages = memorySize / pageSize;
 
     // Allocate enough space for all page tables and page directories, then create pointer to page list
     // uint32_t pageDirectories[numDirectories], uint32_t pageTables[numPages*numDirectories]
@@ -36,7 +37,7 @@ void InitPaging(const uint32_t maxAddress)
     pageListArray = (Page*) pageTables + numDirectories*numPages; 
 
     // Set all pages as empty and fill them with correct values 
-    for (uint32_t i = 0; i < 1024; ++i) DeallocatePageDirectory(i * pageDirectorySize);
+    for (uint32_t i = 0; i < numDirectories; ++i) DeallocatePageDirectory(i * pageDirectorySize);
 
     // Allocate enough pages to cover memory usage of above memory management
     // Should already be aligned to nearest 4kb
@@ -73,7 +74,7 @@ void AllocatePage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t fl
 {
     unsigned int pageTableIndex = (virtualAddress == 0) ? 0 : (virtualAddress / pageSize);
     uint32_t* pageTable = pageTables + pageTableIndex;
-    
+
     // Fill table then add informmation to pageListArray
     *pageTable = physicalAddress | flags;
     pageListArray[pageTableIndex] = Page(physicalAddress, true, kernel);
@@ -83,7 +84,7 @@ void DeallocatePage(uint32_t virtualAddress)
 {
     unsigned int pageTableIndex = (virtualAddress == 0) ? 0 : (virtualAddress / pageSize);
     uint32_t* pageTable = pageTables + pageTableIndex;
-    
+
     // Fill table then add informmation to pageListArray
     *pageTable = PD_PRESENT(0);
     pageListArray[pageTableIndex].ClearAllocated();
@@ -123,9 +124,64 @@ void DeallocatePageDirectory(uint32_t virtualAddress)
     // Update page list array for all pages
     for (int i = 0; i < 1024; ++i)
     {
-        // Still tell it the address, as we want things at a known state before any allocation has occurred
-        pageListArray[1024*pageDirectoryIndex+i] = Page(i * pageSize, false, false);
+        pageListArray[1024*pageDirectoryIndex+i] = Page(0, false, false);
     }
+}
+
+void* kmalloc(uint32_t bytes)
+{
+    // Yes, I *know* this is very inefficient, wastteful, etc but...
+    // Links lists are booooooooring
+
+    auto RoundUpToNextPageSize = [&](uint32_t number)
+    {
+        int remainder = number % pageSize;
+        if (remainder == 0)
+            return number;
+        return number + pageSize - remainder;
+    };
+
+    uint32_t pagesRequired = RoundUpToNextPageSize(bytes) / pageSize;
+
+    // Go through each page until a group of pages are found that satisfy the size requirements
+    // TODO: Optimise - if the next X pages are full, simply skip them
+    for (uint32_t i = 0; i < maxPhysicalPages; ++i)
+    {
+        if (!pageListArray[i].IsAllocated())
+        {
+            bool contigousPagesFound = true;
+            for (uint32_t p = 1; p < pagesRequired; ++p)
+            {
+                if (pageListArray[pagesRequired+p].IsAllocated()) { contigousPagesFound = false; break; }
+            }
+
+            if (contigousPagesFound)
+            {
+                uint32_t pageAddress = pageSize*i;
+
+                for (uint32_t p = 0; p < pagesRequired; ++p)
+                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+            }
+        }
+    }
+
+    return NULL;
+}
+
+void kfree(void* ptr, uint32_t bytes)
+{
+    auto RoundUpToNextPageSize = [&](uint32_t number)
+    {
+        int remainder = number % pageSize;
+        if (remainder == 0)
+            return number;
+        return number + pageSize - remainder;
+    };
+
+    uint32_t pagesRequired = RoundUpToNextPageSize(bytes) / pageSize;
+
+    for (uint32_t i = 0; i < pagesRequired; ++i)
+        DeallocatePage((uint32_t)ptr + i*pageSize);
 }
 
 #pragma GCC diagnostic pop
