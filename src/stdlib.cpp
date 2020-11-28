@@ -36,12 +36,10 @@ char* strncpy(char* dest, const char* src, size_t maxLength)
 
 void memset(void* b, int c, int len)
 {
-    int i;
     unsigned char* p = (unsigned char*) b;
-    i = 0;
     while(len > 0)
     {
-        *p = c;
+        *p = (unsigned char)c;
         p++;
         len--;
     }

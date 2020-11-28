@@ -15,4 +15,10 @@ struct Task
 
 Task* CreateTask(char const* sName, uint32_t entry);
 
+extern "C"
+{
+    extern void SwitchToTask(Task* task);
+}
+
+
 #endif

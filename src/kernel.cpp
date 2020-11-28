@@ -19,6 +19,8 @@ TSS tssEntry;
 uint64_t GDTTable[4];
 multiboot_info_t* pMultiboot;
 
+Task* task1;
+Task* task2;
 void Process1();
 void Process2(); 
 
@@ -112,8 +114,10 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("");
 
     // Multiprocessing test
-    CreateTask("Process1", (uint32_t) &Process1);
-    CreateTask("Process2", (uint32_t) &Process2);
+    task1 = CreateTask("Process1", (uint32_t) &Process1);
+    task2 = CreateTask("Process2", (uint32_t) &Process2);
+
+    SwitchToTask((Task*)task1->pStack);
 
     // Start prompt and hang
     VGA_printf("");
@@ -165,10 +169,14 @@ void OnCommand(char* buffer)
 
 void Process1()
 {
-
+    VGA_printf("Hello from process 1");
+    SwitchToTask((Task*)task2->pStack);
+    while (true) { asm("hlt"); }
 }
 
 void Process2()
 {
-
+    VGA_printf("Hello from process 2");
+    //SwitchToTask((Task*)task1->pStack);
+    while (true) { asm("hlt"); }
 }
