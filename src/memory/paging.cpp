@@ -161,9 +161,17 @@ void* kmalloc(uint32_t bytes)
 
                 for (uint32_t p = 0; p < pagesRequired; ++p)
                     AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+                
+                // Clear pages too
+                memset((void*)pageAddress, 0, pageSize*pagesRequired);
+
+                return (void*)pageAddress;
             }
         }
     }
+
+    VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
+    VGA_printf("kmalloc ran out of pages!");
 
     return NULL;
 }

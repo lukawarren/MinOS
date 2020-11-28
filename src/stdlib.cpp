@@ -26,3 +26,23 @@ size_t strcmp(const char *X, const char *Y)
 	}
 	return (*(const unsigned char*)X - *(const unsigned char*)Y) == 0;
 }
+
+char* strncpy(char* dest, const char* src, size_t maxLength)
+{
+    char *temp = dest;
+    while(maxLength-- && (*dest++ = *src++)); // or while((*strDest++=*strSrc++) != '\0');
+    return temp;
+}
+
+void memset(void* b, int c, int len)
+{
+    int i;
+    unsigned char* p = (unsigned char*) b;
+    i = 0;
+    while(len > 0)
+    {
+        *p = c;
+        p++;
+        len--;
+    }
+}

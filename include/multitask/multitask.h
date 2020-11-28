@@ -8,9 +8,11 @@
 struct Task
 {
     char sName[32];
-    uint32_t esp;
+    uint32_t* pStack;
+    Task* pPrevTask = nullptr;
+    Task* pNextTask = nullptr;
 };
 
-Task CreateTask(char* sName);
+Task* CreateTask(char const* sName, uint32_t entry);
 
 #endif

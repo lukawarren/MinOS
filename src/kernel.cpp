@@ -19,6 +19,9 @@ TSS tssEntry;
 uint64_t GDTTable[4];
 multiboot_info_t* pMultiboot;
 
+void Process1();
+void Process2(); 
+
 extern "C" void kernel_main(multiboot_info_t* mbd) 
 {
     pMultiboot = mbd;
@@ -28,9 +31,9 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_Clear();
 
     // Welcome message
-    VGA_printf("--------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
-    VGA_printf("                                     MinOS                                      ", true, VGA_COLOUR_GREEN);
-    VGA_printf("--------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
+    VGA_printf("-------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
+    VGA_printf("                                    MinOS                                      ", true, VGA_COLOUR_GREEN);
+    VGA_printf("-------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
     VGA_printf(" ");
 
     // Start COM1 serial port
@@ -106,6 +109,12 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
 
+    VGA_printf("");
+
+    // Multiprocessing test
+    CreateTask("Process1", (uint32_t) &Process1);
+    CreateTask("Process2", (uint32_t) &Process2);
+
     // Start prompt and hang
     VGA_printf("");
     keyboard.OnKeyUpdate('\0');
@@ -152,4 +161,14 @@ void OnCommand(char* buffer)
     #endif
 
     else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
+}
+
+void Process1()
+{
+
+}
+
+void Process2()
+{
+
 }
