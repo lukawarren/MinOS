@@ -14,7 +14,7 @@ uint32_t VGA_column = 0;
 void VGA_Init(Framebuffer fb)
 {
     VGA_framebuffer = fb;
-    VGA_charRows = fb.height / CHAR_HEIGHT*CHAR_SCALE;
+    VGA_charRows = fb.height / (CHAR_HEIGHT*CHAR_SCALE);
     VGA_charColumns = fb.width / CHAR_WIDTH;
 }
 
@@ -42,16 +42,16 @@ void VGA_WriteString(char const* string, bool newLine, uint32_t colour)
     for (size_t i = 0; i < strlen(string); ++i) 
     {
         VGA_WriteChar(string[i], VGA_column, VGA_row, colour);
-        if (++VGA_column > VGA_charColumns)
+        if (++VGA_column >= VGA_charColumns)
         {
             VGA_column = 0;
-            if (++VGA_row > VGA_charRows) VGA_row = 0;
+            if (++VGA_row >= VGA_charRows-1) VGA_row = 0;
         }
     }
     if (newLine)
     {
         VGA_column = 0;
-        if (++VGA_row > VGA_framebuffer.height) { VGA_row = 0; VGA_Clear(); }
+        if (++VGA_row >= VGA_charRows-1) { VGA_row = 0; VGA_Clear(); }
     }
 }
 
@@ -78,10 +78,10 @@ void VGA_printf<uint64_t, true>(uint64_t data, bool newLine, uint32_t colour)
     for (size_t d = 0; d < 16; ++d) 
     { 
         VGA_WriteChar(hexToASCII(getNthDigit(data, 16 - d - 1)), VGA_column, VGA_row, colour); 
-        if (++VGA_column > VGA_charColumns)
+        if (++VGA_column >= VGA_charColumns)
 		{
 			VGA_column = 0;
-			if (++VGA_row > VGA_charRows) VGA_row = 0;
+			if (++VGA_row >= VGA_charRows-1) VGA_row = 0;
 		}
     }
 

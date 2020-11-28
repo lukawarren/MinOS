@@ -64,10 +64,10 @@ void VGA_printf(T data, bool newLine = true, uint32_t colour = VGA_COLOUR_WHITE)
         for (size_t d = 0; d < nDigits; ++d)
 		{ 
 			VGA_WriteChar(hexToASCII(getNthDigit(data, nDigits - d - 1, 16)), VGA_column, VGA_row, colour);
-			if (++VGA_column > VGA_charColumns)
+			if (++VGA_column >= VGA_charColumns)
 			{
 				VGA_column = 0;
-				if (++VGA_row > VGA_charRows) VGA_row = 0;
+				if (++VGA_row >= VGA_charRows-1) VGA_row = 0;
 			}
 		}
     }
@@ -79,7 +79,7 @@ void VGA_printf(T data, bool newLine = true, uint32_t colour = VGA_COLOUR_WHITE)
 			if (++VGA_column > VGA_charColumns)
 			{
 				VGA_column = 0;
-				if (++VGA_row > VGA_charRows) VGA_row = 0;
+				if (++VGA_row >= VGA_charRows-1) VGA_row = 0;
 			}
 		}
     }
@@ -87,7 +87,7 @@ void VGA_printf(T data, bool newLine = true, uint32_t colour = VGA_COLOUR_WHITE)
     if (newLine)
     { 
         VGA_column = 0; 
-        if (++VGA_row > VGA_framebuffer.height) { VGA_row = 0; VGA_Clear(); } 
+        if (++VGA_row >= VGA_charRows-1) { VGA_row = 0; VGA_Clear(); } 
     }
 }
 

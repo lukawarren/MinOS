@@ -34,7 +34,7 @@ void CLI::Update(uint8_t scancode)
         return;
     } else if (scancode == '\r') { return; }
 
-    // If newline, it's a command!
+    // Newline
     if (scancode == '\n')
     {
         // Execute command
