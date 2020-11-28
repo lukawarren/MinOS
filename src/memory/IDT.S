@@ -1,8 +1,8 @@
 extern IRQReturnAddress
 
 section data
-global bIRQShouldJump
 
+global bIRQShouldJump
 bIRQShouldJump:
     db 0
 
@@ -21,6 +21,7 @@ extern HandleInterrupts
 %macro IRQHandler 1
 global IRQ%1
 IRQ%1:
+    cli
     push    eax                 ; Preserve state
     push    dword 0             ; This is not an error
     push    dword %1            ; Push interrupt id
@@ -36,13 +37,13 @@ IRQ%1:
 PerformIRQJump%1:
     push eax
     mov eax, [IRQReturnAddress]
-    mov [esp+4], eax ; Move to return address the required process
+    mov [esp+4], eax ; Set the return address to the required process
     pop eax
 
-    ; Set bIRQShouldJump to false
-    mov [bIRQShouldJump], byte 0
+    mov [bIRQShouldJump], byte 0 ; Set bIRQShouldJump to false
 FinishJump%1:
-    iret                        ; Return
+    sti
+    iret    ; Return
 %endmacro
 
 IRQHandler 0

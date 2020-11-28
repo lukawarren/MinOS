@@ -57,7 +57,7 @@ void DisableScheduler() { bEnableMultitasking = false; }
 
 void OnMultitaskPIT()
 {
-    if (nTasks == 0 || !bEnableMultitasking) return;
+    if (nTasks == 0 || !bEnableMultitasking) { bIRQShouldJump = false; return; }
 
     // If one task, switch to it if nessecary
     if (nTasks == 1 && pCurrentTask == nullptr) 
@@ -70,8 +70,9 @@ void OnMultitaskPIT()
     }
     else if (nTasks > 1)
     {
+        /*
         if (pCurrentTask == nullptr) pCurrentTask = pTaskListHead;
-
+        
         oldTask = pCurrentTask;
         newTask = pCurrentTask->pNextTask;
 
@@ -81,8 +82,9 @@ void OnMultitaskPIT()
             while (newTask == nullptr || newTask->pPrevTask != nullptr) newTask = oldTask->pPrevTask;
         }
 
-        pCurrentTask = newTask;
+        pCurrentTask = newTask;*/
 
+        pCurrentTask = pTaskListHead->pPrevTask;
         oldTask = pCurrentTask;
         newTask = pCurrentTask;
         bIRQShouldJump = true;
@@ -91,7 +93,7 @@ void OnMultitaskPIT()
 
 void OnIRQReturn()
 {
-    VGA_printf((uint32_t)&oldTask->pStack);
-    VGA_printf((uint32_t)newTask->pStack);
+    VGA_printf<uint32_t, true>((uint32_t)pCurrentTask);
+    while (true) { asm("nop"); }
     SwitchToTask((uint32_t)&oldTask->pStack, (uint32_t)newTask->pStack);
 }
