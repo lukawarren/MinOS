@@ -41,6 +41,7 @@ PerformIRQJump%1:
     pop eax
 
     mov [bIRQShouldJump], byte 0 ; Set bIRQShouldJump to false
+    
 FinishJump%1:
     sti
     iret    ; Return
