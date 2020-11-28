@@ -17,7 +17,7 @@ Task* CreateTask(char const* sName, uint32_t entry);
 
 extern "C"
 {
-    extern void SwitchToTask(Task* task);
+    extern void SwitchToTask(uint32_t oldStack, uint32_t newStack);
 }
 
 

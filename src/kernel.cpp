@@ -117,7 +117,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     task1 = CreateTask("Process1", (uint32_t) &Process1);
     task2 = CreateTask("Process2", (uint32_t) &Process2);
 
-    SwitchToTask((Task*)task1->pStack);
+    SwitchToTask((uint32_t)&task1->pStack, (uint32_t)task1->pStack);
 
     // Start prompt and hang
     VGA_printf("");
@@ -169,14 +169,20 @@ void OnCommand(char* buffer)
 
 void Process1()
 {
-    VGA_printf("Hello from process 1");
-    SwitchToTask((Task*)task2->pStack);
-    while (true) { asm("hlt"); }
+    while (true)
+    {
+        VGA_printf("Hello from process 1");
+        for (int i = 0; i < 0xFFFFFFF; ++i) asm("nop");
+        SwitchToTask((uint32_t)&task1->pStack, (uint32_t)task2->pStack);
+    }
 }
 
 void Process2()
 {
-    VGA_printf("Hello from process 2");
-    //SwitchToTask((Task*)task1->pStack);
-    while (true) { asm("hlt"); }
+    while (true)
+    {
+        VGA_printf("Hello from process 2");
+        for (int i = 0; i < 0xFFFFFFF; ++i) asm("nop");
+        SwitchToTask((uint32_t)&task2->pStack, (uint32_t)task1->pStack);
+    }
 }

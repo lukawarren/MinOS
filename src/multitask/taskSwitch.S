@@ -16,11 +16,12 @@ SwitchToTask:
     push esi
     push ebp
 
-    ; Get address of new stack
-    mov esi, [esp+4+7*4] ; contains address of new stack
+    ; Save esp of previous task
+    mov edx, [esp+4+7*4] ; contains pointer to old stack in process struct
+    mov [edx], esp
 
     ; Switch to new task
-    mov esp, esi
+    mov esp, [esp+4+8*4] ; contains address of new stack
     
     pop ebp
     pop esi
