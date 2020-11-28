@@ -57,6 +57,12 @@ void DisableScheduler() { bEnableMultitasking = false; }
 
 void OnMultitaskPIT()
 {
+    /*
+        So.... two processes breaks it.
+        But why? Even with nothing below it still breaks - *but check that*.
+        So.... something that CreateTask does?
+    */
+
     if (nTasks == 0 || !bEnableMultitasking) { bIRQShouldJump = false; return; }
 
     // If one task, switch to it if nessecary
