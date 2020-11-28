@@ -95,6 +95,8 @@ extern "C"
     extern void IRQ14();
     extern void IRQ15();
 
+    void EndIRQEarly();
+
     extern void IRQUnknown();
 }
 

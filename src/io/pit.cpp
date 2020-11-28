@@ -10,7 +10,7 @@ void InitPIT()
         MODE_BINARY_16_BIT      // PIT channel will operate in binary mode
     );
     
-    SetReloadValueInHz(CHANNEL_0_DATA, 8000);
+    SetReloadValueInHz(CHANNEL_0_DATA, 1000);
 }
 
 void SetReloadValue(uint16_t channel, uint16_t value)

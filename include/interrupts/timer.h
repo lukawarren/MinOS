@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define DO_SOUND_DEMO false
+#define DO_SOUND_DEMO true
 
 void OnTimerInterrupt();
 

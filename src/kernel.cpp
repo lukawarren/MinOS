@@ -117,7 +117,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     task1 = CreateTask("Process1", (uint32_t) &Process1);
     task2 = CreateTask("Process2", (uint32_t) &Process2);
 
-    SwitchToTask((uint32_t)&task1->pStack, (uint32_t)task1->pStack);
+    EnableScheduler();
 
     // Start prompt and hang
     VGA_printf("");
@@ -173,7 +173,6 @@ void Process1()
     {
         VGA_printf("Hello from process 1");
         for (int i = 0; i < 0xFFFFFFF; ++i) asm("nop");
-        SwitchToTask((uint32_t)&task1->pStack, (uint32_t)task2->pStack);
     }
 }
 
@@ -183,6 +182,5 @@ void Process2()
     {
         VGA_printf("Hello from process 2");
         for (int i = 0; i < 0xFFFFFFF; ++i) asm("nop");
-        SwitchToTask((uint32_t)&task2->pStack, (uint32_t)task1->pStack);
     }
 }

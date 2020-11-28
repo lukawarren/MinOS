@@ -8,6 +8,8 @@
 static IDT idt[256];
 static Keyboard* keyboard;
 
+uint8_t currentIRQ;
+
 void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k)
 {
     keyboard = k;
@@ -37,6 +39,8 @@ void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k)
 
 void HandleInterrupts(uint8_t irq, uint8_t unknown)
 {
+    currentIRQ = irq; // Used in multitask.cpp
+
     if (unknown)
     {
         VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);

@@ -13,6 +13,10 @@ struct Task
     Task* pNextTask = nullptr;
 };
 
+void EnableScheduler();
+void DisableScheduler();
+void OnMultitaskPIT();
+
 Task* CreateTask(char const* sName, uint32_t entry);
 
 extern "C"
