@@ -19,6 +19,9 @@ void OnMultitaskPIT();
 
 Task* CreateTask(char const* sName, uint32_t entry);
 
+void OnIRQReturn();
+extern uint32_t IRQReturnAddress;
+
 extern "C"
 {
     extern void SwitchToTask(uint32_t oldStack, uint32_t newStack);

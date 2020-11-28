@@ -1,3 +1,11 @@
+extern IRQReturnAddress
+
+section data
+global bIRQShouldJump
+
+bIRQShouldJump:
+    db 0
+
 section text
 
 global LoadIDT
@@ -20,6 +28,20 @@ IRQ%1:
     pop     eax                 ; Restore state
     pop     eax
     pop     eax
+
+    cmp byte [bIRQShouldJump], 1
+    je  PerformIRQJump%1
+    jmp FinishJump%1
+
+PerformIRQJump%1:
+    push eax
+    mov eax, [IRQReturnAddress]
+    mov [esp+4], eax ; Move to return address the required process
+    pop eax
+
+    ; Set bIRQShouldJump to false
+    mov [bIRQShouldJump], byte 0
+FinishJump%1:
     iret                        ; Return
 %endmacro
 

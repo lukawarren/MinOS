@@ -172,7 +172,7 @@ void Process1()
     while (true)
     {
         VGA_printf("Hello from process 1");
-        for (int i = 0; i < 0xFFFFFFF; ++i) asm("nop");
+        for (int i = 0; i != 0xFFFFFFF; ++i) asm("nop");
     }
 }
 

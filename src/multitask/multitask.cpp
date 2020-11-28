@@ -11,6 +11,11 @@ Task* pTaskListHead = nullptr;
 Task* pCurrentTask = nullptr;
 size_t nTasks = 0;
 
+Task* oldTask;
+Task* newTask;
+
+uint32_t IRQReturnAddress = (uint32_t) &OnIRQReturn;
+
 Task* CreateTask(char const* sName, uint32_t entry)
 {
     // Create new task in memory and linked list
@@ -58,15 +63,17 @@ void OnMultitaskPIT()
     if (nTasks == 1 && pCurrentTask == nullptr) 
     {
         pCurrentTask = pTaskListHead;
-        //PIC_EndInterrupt(currentIRQ);  // FINISH INTERRUPT (interrupts will not return otherwise)
-        SwitchToTask((uint32_t)&pCurrentTask->pStack, (uint32_t)pCurrentTask->pStack);
+        oldTask = pCurrentTask;
+        newTask = pCurrentTask;
+
+        bIRQShouldJump = true;
     }
     else if (nTasks > 1)
     {
         if (pCurrentTask == nullptr) pCurrentTask = pTaskListHead;
 
-        Task* oldTask = pCurrentTask;
-        Task* newTask = pCurrentTask->pNextTask;
+        oldTask = pCurrentTask;
+        newTask = pCurrentTask->pNextTask;
 
         // If end of list reached, go back to start
         if (newTask == nullptr)
@@ -76,7 +83,15 @@ void OnMultitaskPIT()
 
         pCurrentTask = newTask;
 
-        //PIC_EndInterrupt(currentIRQ);  // FINISH INTERRUPT (interrupts will not return otherwise)
-        SwitchToTask((uint32_t)&oldTask->pStack, (uint32_t)newTask->pStack);
+        oldTask = pCurrentTask;
+        newTask = pCurrentTask;
+        bIRQShouldJump = true;
     }
+}
+
+void OnIRQReturn()
+{
+    VGA_printf((uint32_t)&oldTask->pStack);
+    VGA_printf((uint32_t)newTask->pStack);
+    SwitchToTask((uint32_t)&oldTask->pStack, (uint32_t)newTask->pStack);
 }

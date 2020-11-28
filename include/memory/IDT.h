@@ -100,4 +100,6 @@ extern "C"
     extern void IRQUnknown();
 }
 
+extern bool bIRQShouldJump;
+
 #endif
