@@ -177,18 +177,11 @@ void OnCommand(char* buffer)
 void DrawBar(int processID)
 {
     uint32_t barHeight = 10;
-    uint32_t barWidth = processID * 10;
+    uint32_t barWidth = barProgress[processID]++ / 100;
     if (barWidth >= VGA_framebuffer.width) barWidth = VGA_framebuffer.width;
 
-    uint32_t x = 0;
-    uint32_t y = VGA_framebuffer.height - 1 - barHeight*(processID+1);
-    barWidth += x;
-    barHeight += y;  
-
-    x = 7;
-
-    for (; x < 50; ++x)
-        for (; y < barHeight; ++y)
+    for (uint32_t x = 0; x < barWidth; ++x)
+        for (uint32_t y = VGA_framebuffer.height - 1 - barHeight*(processID+1); y < VGA_framebuffer.height - 1 - processID*barHeight; ++y)
             VGA_PutPixel(x, y, barColours[processID]);
 }
 
