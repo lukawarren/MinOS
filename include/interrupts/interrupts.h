@@ -10,6 +10,4 @@
 
 void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k = nullptr);
 
-extern uint8_t currentIRQ;
-
 #endif

@@ -1,13 +1,25 @@
+section data
+
+extern IRQJumpEIP
+
+global oldTaskStack
+oldTaskStack:
+    dd 0
+
+global newTaskStack
+newTaskStack:
+    dd 0
+
 section text
 
-global SwitchToTask
+global PerformTaskSwitch
 
-SwitchToTask:
+PerformTaskSwitch:
 
     ; Disable IRQs
     cli
 
-    ; Save current task - eip is already saved by the caller's "call" instruction
+    push dword [IRQJumpEIP] ; eip is not already saved as there was no "call" instruction
     push eax
     push ebx
     push ecx
@@ -17,11 +29,17 @@ SwitchToTask:
     push ebp
 
     ; Save esp of previous task
-    mov edx, [esp+4+7*4] ; contains pointer to old stack in process struct
+    ; (if indeed there was one)
+    cmp [oldTaskStack], dword 0
+    je switchToNewTask
+saveOldStack:
+    mov edx, [oldTaskStack] ; contains pointer to old stack
     mov [edx], esp
 
+switchToNewTask:
     ; Switch to new task
-    mov esp, [esp+4+8*4] ; contains address of new stack
+    mov edx, [newTaskStack]
+    mov esp, [edx] ; contains address of new stack
     
     pop ebp
     pop esi
@@ -33,5 +51,4 @@ SwitchToTask:
 
     ; Enable IRQs
     sti
-
     ret

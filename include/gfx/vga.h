@@ -36,6 +36,8 @@ void VGA_WriteChar(char c, size_t x, size_t y, uint32_t colour = VGA_COLOUR_WHIT
 void VGA_WriteString(char const* string, bool newLine = true, uint32_t colour = VGA_COLOUR_WHITE);
 void VGA_Clear(uint32_t colour = VGA_COLOUR_BLACK);
 
+void VGA_PutPixel(size_t x, size_t y, uint32_t colour);
+
 template <typename T>
 void VGA_printf(T* data, bool newLine = true, uint32_t colour = VGA_COLOUR_WHITE)
 {

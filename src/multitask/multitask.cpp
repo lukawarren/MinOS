@@ -3,18 +3,15 @@
 #include "../memory/paging.h"
 #include "../gfx/vga.h"
 #include "../stdlib.h"
+#include "taskSwitch.h"
 
 bool bEnableMultitasking = false;
 
 // Linked list of tasks
 Task* pTaskListHead = nullptr;
+Task* pTaskListTail = nullptr;
 Task* pCurrentTask = nullptr;
 size_t nTasks = 0;
-
-Task* oldTask;
-Task* newTask;
-
-uint32_t IRQReturnAddress = (uint32_t) &OnIRQReturn;
 
 Task* CreateTask(char const* sName, uint32_t entry)
 {
@@ -42,6 +39,9 @@ Task* CreateTask(char const* sName, uint32_t entry)
     pTaskListHead = task;
     task->pPrevTask = oldHead;
     oldHead->pNextTask = task;
+    
+    if (pTaskListTail == nullptr) pTaskListTail = task;
+    if (task->pNextTask == nullptr) task->pNextTask = pTaskListTail;
 
     nTasks++;
 
@@ -52,54 +52,44 @@ Task* CreateTask(char const* sName, uint32_t entry)
     return task;
 }
 
-void EnableScheduler()  { bEnableMultitasking = true;  }
+void EnableScheduler()  { bEnableMultitasking = true;  IRQReturnAddress = (uint32_t) &PerformTaskSwitch; }
 void DisableScheduler() { bEnableMultitasking = false; }
 
 void OnMultitaskPIT()
 {
-    /*
-        So.... two processes breaks it.
-        But why? Even with nothing below it still breaks - *but check that*.
-        So.... something that CreateTask does?
-    */
-
     if (nTasks == 0 || !bEnableMultitasking) { bIRQShouldJump = false; return; }
 
     // If one task, switch to it if nessecary
     if (nTasks == 1 && pCurrentTask == nullptr) 
     {
         pCurrentTask = pTaskListHead;
-        oldTask = pCurrentTask;
-        newTask = pCurrentTask;
-
+        oldTaskStack = 0;
+        newTaskStack = (uint32_t) &pCurrentTask->pStack;
         bIRQShouldJump = true;
     }
     else if (nTasks > 1)
     {
-        /*
-        if (pCurrentTask == nullptr) pCurrentTask = pTaskListHead;
-        
-        oldTask = pCurrentTask;
-        newTask = pCurrentTask->pNextTask;
-
-        // If end of list reached, go back to start
-        if (newTask == nullptr)
+        // If no task has previously ran, avoid
+        // sullying the non-existent "old task"
+        if (pCurrentTask == nullptr)
         {
-            while (newTask == nullptr || newTask->pPrevTask != nullptr) newTask = oldTask->pPrevTask;
+            pCurrentTask = pTaskListTail;
+            Task* newTask = pCurrentTask;
+            oldTaskStack = 0;
+            newTaskStack = (uint32_t) &newTask->pStack;
+            bIRQShouldJump = true;
         }
 
-        pCurrentTask = newTask;*/
+        // Otherwise continue cycling
+        else
+        {
+            Task* oldTask = pCurrentTask;
+            Task* newTask = pCurrentTask->pNextTask;
 
-        pCurrentTask = pTaskListHead->pPrevTask;
-        oldTask = pCurrentTask;
-        newTask = pCurrentTask;
-        bIRQShouldJump = true;
+            pCurrentTask = newTask;
+            oldTaskStack = (uint32_t) &oldTask->pStack;
+            newTaskStack = (uint32_t) &newTask->pStack;
+            bIRQShouldJump = true;
+        }      
     }
-}
-
-void OnIRQReturn()
-{
-    VGA_printf<uint32_t, true>((uint32_t)pCurrentTask);
-    while (true) { asm("nop"); }
-    SwitchToTask((uint32_t)&oldTask->pStack, (uint32_t)newTask->pStack);
 }

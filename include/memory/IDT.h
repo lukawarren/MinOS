@@ -101,5 +101,7 @@ extern "C"
 }
 
 extern bool bIRQShouldJump;
+extern uint32_t IRQReturnAddress;
+extern uint32_t IRQJumpEIP;
 
 #endif

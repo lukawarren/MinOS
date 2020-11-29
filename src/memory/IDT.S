@@ -1,18 +1,27 @@
-extern IRQReturnAddress
-
 section data
+
+global IRQReturnAddress
+IRQReturnAddress:
+    dd 0
 
 global bIRQShouldJump
 bIRQShouldJump:
     db 0
+
+global IRQJumpEIP
+IRQJumpEIP:
+    dd 0
 
 section text
 
 global LoadIDT
 
 LoadIDT:
-    mov edx, [esp + 4]
-    lidt [edx]
+    cli ; disable interrupts
+    push eax
+    mov eax, [esp + 8]
+    lidt [eax]
+    pop eax
     sti ; enable interrupts
     ret
 
@@ -21,21 +30,46 @@ extern HandleInterrupts
 %macro IRQHandler 1
 global IRQ%1
 IRQ%1:
-    cli
-    push    eax                 ; Preserve state
+    cli ; Disable interrupts until iret is called
+
+    ; Preserve state
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push ebp
+    push edi
+    push esi
+    push esp
+
     push    dword 0             ; This is not an error
     push    dword %1            ; Push interrupt id
     call    HandleInterrupts    ; Call generic function
-    pop     eax                 ; Restore state
     pop     eax
     pop     eax
 
+    ; Restore state
+    pop esp
+    pop esi
+    pop edi
+    pop ebp
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
+    ; Perform IRQ jump if nessecaryy
     cmp byte [bIRQShouldJump], 1
     je  PerformIRQJump%1
     jmp FinishJump%1
 
 PerformIRQJump%1:
     push eax
+
+    ; Set IRQJumpEIP as jump is not following calling conventions otherwises
+    mov eax, [esp+4]
+    mov [IRQJumpEIP], eax
+
     mov eax, [IRQReturnAddress]
     mov [esp+4], eax ; Set the return address to the required process
     pop eax
@@ -43,7 +77,6 @@ PerformIRQJump%1:
     mov [bIRQShouldJump], byte 0 ; Set bIRQShouldJump to false
     
 FinishJump%1:
-    sti
     iret    ; Return
 %endmacro
 

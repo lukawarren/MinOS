@@ -21,8 +21,14 @@ multiboot_info_t* pMultiboot;
 
 Task* task1;
 Task* task2;
+Task* task3;
 void Process1();
-void Process2(); 
+void Process2();
+void Process3();
+
+int barProgress[3];
+const VGA_Colour barColours[3] = { VGA_COLOUR_LIGHT_YELLOW, VGA_COLOUR_LIGHT_GREEN, VGA_COLOUR_LIGHT_RED };
+void DrawBar(int processID);
 
 extern "C" void kernel_main(multiboot_info_t* mbd) 
 {
@@ -116,6 +122,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     // Multiprocessing test
     task1 = CreateTask("Process1", (uint32_t) &Process1);
     task2 = CreateTask("Process2", (uint32_t) &Process2);
+    task2 = CreateTask("Process3", (uint32_t) &Process3);
 
     EnableScheduler();
 
@@ -167,20 +174,24 @@ void OnCommand(char* buffer)
     else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
 }
 
-void Process1()
+void DrawBar(int processID)
 {
-    while (true)
-    {
-        VGA_printf("Hello from process 1");
-        for (int i = 0; i < 0xFFFFFFF; ++i) asm("nop");
-    }
+    uint32_t barHeight = 10;
+    uint32_t barWidth = processID * 10;
+    if (barWidth >= VGA_framebuffer.width) barWidth = VGA_framebuffer.width;
+
+    uint32_t x = 0;
+    uint32_t y = VGA_framebuffer.height - 1 - barHeight*(processID+1);
+    barWidth += x;
+    barHeight += y;  
+
+    x = 7;
+
+    for (; x < 50; ++x)
+        for (; y < barHeight; ++y)
+            VGA_PutPixel(x, y, barColours[processID]);
 }
 
-void Process2()
-{
-    while (true)
-    {
-        VGA_printf("Hello from process 2");
-        for (int i = 0; i < 0xFFFFFFF; ++i) asm("nop");
-    }
-}
+void Process1() { while (true) DrawBar(0); }
+void Process2() { while (true) DrawBar(1); }
+void Process3() { while (true) DrawBar(2); }
