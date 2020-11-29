@@ -100,8 +100,8 @@ extern "C"
     extern void IRQUnknown();
 }
 
-extern bool bIRQShouldJump;
-extern uint32_t IRQReturnAddress;
-extern uint32_t IRQJumpEIP;
+extern volatile bool bIRQShouldJump;
+extern volatile uint32_t IRQReturnAddress;
+extern volatile uint32_t IRQJumpEIP;
 
 #endif

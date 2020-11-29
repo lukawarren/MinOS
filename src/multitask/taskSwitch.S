@@ -27,6 +27,7 @@ PerformTaskSwitch:
     push edi
     push esi
     push ebp
+    pushf
 
     ; Save esp of previous task
     ; (if indeed there was one)
@@ -41,6 +42,7 @@ switchToNewTask:
     mov edx, [newTaskStack]
     mov esp, [edx] ; contains address of new stack
     
+    popf
     pop ebp
     pop esi
     pop edi

@@ -122,7 +122,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     // Multiprocessing test
     task1 = CreateTask("Process1", (uint32_t) &Process1);
     task2 = CreateTask("Process2", (uint32_t) &Process2);
-    task2 = CreateTask("Process3", (uint32_t) &Process3);
+    task3 = CreateTask("Process3", (uint32_t) &Process3);
 
     EnableScheduler();
 

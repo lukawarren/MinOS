@@ -41,6 +41,7 @@ void HandleInterrupts(uint8_t irq, uint8_t unknown)
 {
     if (unknown)
     {
+        return;
         VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
         VGA_printf("Interrupt with error occured! (code ", false);
         VGA_printf<uint8_t, true>(irq, false);

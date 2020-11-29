@@ -33,6 +33,7 @@ Task* CreateTask(char const* sName, uint32_t entry)
     *--task->pStack = 0;      // esi
     *--task->pStack = 0;      // edi
     *--task->pStack = (uint32_t) pStackTop; // ebp?
+    *--task->pStack = 0x202;
 
     // Linked list stuff
     Task* oldHead = pTaskListHead;
