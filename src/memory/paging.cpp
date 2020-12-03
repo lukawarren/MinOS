@@ -152,7 +152,7 @@ void* kmalloc(uint32_t bytes)
             bool contigousPagesFound = true;
             for (uint32_t p = 1; p < pagesRequired; ++p)
             {
-                if (pageListArray[pagesRequired+p].IsAllocated()) { contigousPagesFound = false; break; }
+                if (pageListArray[i+p].IsAllocated()) { contigousPagesFound = false; break; }
             }
 
             if (contigousPagesFound)
@@ -161,10 +161,10 @@ void* kmalloc(uint32_t bytes)
 
                 for (uint32_t p = 0; p < pagesRequired; ++p)
                     AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
-                
+
                 // Clear pages too
                 memset((void*)pageAddress, 0, pageSize*pagesRequired);
-
+                
                 return (void*)pageAddress;
             }
         }

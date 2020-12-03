@@ -12,6 +12,7 @@
 #include "interrupts/keyboard.h"
 #include "interrupts/timer.h"
 #include "multitask/multitask.h"
+#include "multitask/taskSwitch.h"
 #include "cli.h"
 #include "stdlib.h"
 
@@ -123,7 +124,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     task1 = CreateTask("Process1", (uint32_t) &Process1);
     task2 = CreateTask("Process2", (uint32_t) &Process2);
     task3 = CreateTask("Process3", (uint32_t) &Process3);
-
+    
     EnableScheduler();
 
     // Start prompt and hang
@@ -177,7 +178,7 @@ void OnCommand(char* buffer)
 void DrawBar(int processID)
 {
     uint32_t barHeight = 10;
-    uint32_t barWidth = barProgress[processID]++ / 100;
+    uint32_t barWidth = barProgress[processID]++ / 1;
     if (barWidth >= VGA_framebuffer.width) barWidth = VGA_framebuffer.width;
 
     for (uint32_t x = 0; x < barWidth; ++x)

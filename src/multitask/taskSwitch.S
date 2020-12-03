@@ -13,13 +13,9 @@ newTaskStack:
 section text
 
 global PerformTaskSwitch
-
 PerformTaskSwitch:
 
-    ; Disable IRQs
-    cli
-
-    push dword [IRQJumpEIP] ; eip is not already saved as there was no "call" instruction
+    ; Push old state onto its stack
     push eax
     push ebx
     push ecx
@@ -29,19 +25,24 @@ PerformTaskSwitch:
     push ebp
     pushf
 
-    ; Save esp of previous task
-    ; (if indeed there was one)
+    ; If there was a previous task
+    ; (not just the kernel main thread),
+    ; save its stack
     cmp [oldTaskStack], dword 0
     je switchToNewTask
+
 saveOldStack:
+
     mov edx, [oldTaskStack] ; contains pointer to old stack
     mov [edx], esp
 
 switchToNewTask:
-    ; Switch to new task
+
+    ; Switch to new task's stack
     mov edx, [newTaskStack]
     mov esp, [edx] ; contains address of new stack
-    
+
+    ; Restore new task's stack
     popf
     pop ebp
     pop esi
@@ -51,6 +52,4 @@ switchToNewTask:
     pop ebx
     pop eax
 
-    ; Enable IRQs
-    sti
-    ret
+    ret ; Return anew

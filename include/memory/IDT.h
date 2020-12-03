@@ -76,7 +76,9 @@ struct IDTDescriptor
 extern "C"
 {
     extern void LoadIDT(const IDTDescriptor* IDTDescriptor);
-    void HandleInterrupts(uint8_t irq, uint8_t unknown);
+    void HandleInterrupts(uint32_t irq, uint32_t unknown);
+    void HandleExceptions(uint32_t irq, uint32_t eip, uint32_t errorCode);
+    void SanityCheck(uint32_t eip);
 
     extern void IRQ0();
     extern void IRQ1();
@@ -95,7 +97,37 @@ extern "C"
     extern void IRQ14();
     extern void IRQ15();
 
-    void EndIRQEarly();
+    extern void IRQException0();
+    extern void IRQException1();
+    extern void IRQException2();
+    extern void IRQException3();
+    extern void IRQException4();
+    extern void IRQException5();
+    extern void IRQException6();
+    extern void IRQException7();
+    extern void IRQException8();
+    extern void IRQException9();
+    extern void IRQException10();
+    extern void IRQException11();
+    extern void IRQException12();
+    extern void IRQException13();
+    extern void IRQException14();
+    extern void IRQException15();
+    extern void IRQException16();
+    extern void IRQException17();
+    extern void IRQException18();
+    extern void IRQException19();
+    extern void IRQException20();
+    extern void IRQException21();
+    extern void IRQException22();
+    extern void IRQException23();
+    extern void IRQException24();
+    extern void IRQException25();
+    extern void IRQException26();
+    extern void IRQException27();
+    extern void IRQException28();
+    extern void IRQException29();
+    extern void IRQException30();
 
     extern void IRQUnknown();
 }

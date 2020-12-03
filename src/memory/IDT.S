@@ -1,16 +1,10 @@
 section data
 
-global IRQReturnAddress
-IRQReturnAddress:
-    dd 0
-
+; Set in multitask.cpp when
+; a task swtich is to occur
 global bIRQShouldJump
 bIRQShouldJump:
     db 0
-
-global IRQJumpEIP
-IRQJumpEIP:
-    dd 0
 
 section text
 
@@ -26,11 +20,15 @@ LoadIDT:
     ret
 
 extern HandleInterrupts
+extern HandleExceptions
+extern PerformTaskSwitch
 
 %macro IRQHandler 1
 global IRQ%1
 IRQ%1:
     cli ; Disable interrupts until iret is called
+    cli ; For some reason bochs does not trigger a
+    cli ; breakpoint unless I do 3 in a row, and I am paranoid
 
     ; Preserve state
     push eax
@@ -40,7 +38,6 @@ IRQ%1:
     push ebp
     push edi
     push esi
-    push esp
 
     push    dword 0             ; This is not an error
     push    dword %1            ; Push interrupt id
@@ -49,7 +46,6 @@ IRQ%1:
     pop     eax
 
     ; Restore state
-    pop esp
     pop esi
     pop edi
     pop ebp
@@ -59,20 +55,27 @@ IRQ%1:
     pop eax
 
     ; Perform IRQ jump if nessecaryy
-    cmp byte [bIRQShouldJump], 1
+    cmp [bIRQShouldJump], byte 1
     je  PerformIRQJump%1
     jmp FinishJump%1
 
 PerformIRQJump%1:
-    push eax
 
-    ; Set IRQJumpEIP as jump is not following calling conventions otherwises
-    mov eax, [esp+4]
-    mov [IRQJumpEIP], eax
+    ; Now, I could, and *used to* do all this
+    ; overly complicated and error-prone code
+    ; to retrieve the old eip from the stack,
+    ; replace the one in the IRQ stack frame,
+    ; then use "iret" to jump to the new code.
+    ; Then one day I realised I was really
+    ; overcomplicating things, and that actually,
+    ; I could just switch tasks, and since the
+    ; last thing in the stack was eip anyway,
+    ; I could save myself considerable trouble
+    ; (and deubgging) by just doing nothing.
+    ; So if you're wondering where eip is getting
+    ; set, wonder no more!
 
-    mov eax, [IRQReturnAddress]
-    mov [esp+4], eax ; Set the return address to the required process
-    pop eax
+    call PerformTaskSwitch
 
     mov [bIRQShouldJump], byte 0 ; Set bIRQShouldJump to false
     
@@ -80,6 +83,7 @@ FinishJump%1:
     iret    ; Return
 %endmacro
 
+; IRQs
 IRQHandler 0
 IRQHandler 1
 IRQHandler 2
@@ -97,13 +101,117 @@ IRQHandler 13
 IRQHandler 14
 IRQHandler 15
 
+; Unmapped IRQ handler
 global IRQUnknown
 IRQUnknown:
-    push    eax                 ; Preserve state
-    push    dword 1             ; This is an error!
+    cli
+
+    ; Preserve state
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push ebp
+    push edi
+    push esi
+
+    push    dword 1             ; This is an error! (well, sort of)
     push    dword 0xAF          ; Push superfluous id
     call    HandleInterrupts    ; Call generic function
-    pop     eax                 ; Restore state
     pop     eax
     pop     eax
+    
+    ; Restore state
+    pop esi
+    pop edi
+    pop ebp
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
     iret                        ; Return
+
+; IRQ exception handler
+%macro IRQException 1
+global IRQException%1
+IRQException%1:
+    cli
+
+    ; Preserve state
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push ebp
+    push edi
+    push esi
+
+    ; Get error code and push to stack
+    ; Some exceptions don't have an error
+    ; code, but it's not like pushing
+    ; an incorrect value breaks anything,
+    ; and I'm all for simpler code if it's
+    ; just for debugging anyway.
+    mov eax, [esp+28]
+    push eax
+
+    ; Get eip and push to stack -
+    ; this is often where the error occured!
+    mov eax, [esp+36]
+    push eax    
+
+    ; Push id to stack
+    push dword %1
+
+    call    HandleExceptions ; Call C code
+
+    ; Unpop stack
+    pop     eax
+    pop     eax
+    pop     eax
+
+    ; Restore state
+    pop esi
+    pop edi
+    pop ebp
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
+    iret                        ; Return
+%endmacro
+
+; IRQ exceptions
+IRQException 0
+IRQException 1
+IRQException 2
+IRQException 3
+IRQException 4
+IRQException 5
+IRQException 6
+IRQException 7
+IRQException 8
+IRQException 9
+IRQException 10
+IRQException 11
+IRQException 12
+IRQException 13
+IRQException 14
+IRQException 15
+IRQException 16
+IRQException 17
+IRQException 18
+IRQException 19
+IRQException 20
+IRQException 21
+IRQException 22
+IRQException 23
+IRQException 24
+IRQException 25
+IRQException 26
+IRQException 27
+IRQException 28
+IRQException 29
+IRQException 30
