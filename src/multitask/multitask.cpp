@@ -20,7 +20,7 @@ Task* CreateTask(char const* sName, uint32_t entry)
     strncpy(task->sName, sName, 32);
 
     // Allocate stack
-    task->pStack = (uint32_t*)((uint32_t)kmalloc(4096) + 4096 - 0x10); // Stack grows downwards
+    task->pStack = (uint32_t*)((uint32_t)kmalloc(4096) + 4096 - 16); // Stack grows downwards
     uint32_t* pStackTop = task->pStack;
     
     // Get eflags

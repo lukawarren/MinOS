@@ -91,5 +91,9 @@ void VGA_printf<uint64_t, true>(uint64_t data, bool newLine, uint32_t colour)
 		}
     }
 
-    if (newLine) { VGA_column = 0; VGA_row++; }
+    if (newLine)
+    { 
+        VGA_column = 0; 
+        if (++VGA_row >= VGA_charRows-1) { VGA_row = 0; VGA_Clear(); } 
+    }
 }
