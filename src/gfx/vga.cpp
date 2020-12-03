@@ -18,7 +18,7 @@ void VGA_Init(Framebuffer fb)
     VGA_charColumns = fb.width / CHAR_WIDTH;
 }
 
-void VGA_PutPixel(size_t x, size_t y, uint32_t colour) // For external use
+void VGA_PutPixel(size_t x, size_t y, uint32_t colour)
 {
     size_t index = x*4 + y*VGA_framebuffer.pitch;
     *(uint32_t*)((uint32_t)VGA_framebuffer.address + index) = colour;
@@ -63,9 +63,9 @@ void VGA_WriteString(char const* string, bool newLine, uint32_t colour)
 
 void VGA_Clear(uint32_t colour)
 {
-    for (size_t i = 0; i < VGA_charColumns; ++i)
+    for (size_t i = 0; i < VGA_framebuffer.width; ++i)
     {
-        for (size_t j = 0; j < VGA_charRows; ++j) VGA_WriteChar(' ', i, j, colour);
+        for (size_t j = 0; j < VGA_framebuffer.height; ++j) VGA_PutPixel(i, j, colour);
     }
 }
 

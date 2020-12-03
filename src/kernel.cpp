@@ -124,7 +124,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     task1 = CreateTask("Process1", (uint32_t) &Process1);
     task2 = CreateTask("Process2", (uint32_t) &Process2);
     task3 = CreateTask("Process3", (uint32_t) &Process3);
-    
+
     EnableScheduler();
 
     // Start prompt and hang
@@ -139,9 +139,9 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 void OnCommand(char* buffer)
 {
     #if DO_SOUND_DEMO
-    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot, jingle", false);
+    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot, paging, jingle", false);
     #else
-    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot", false);
+    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot, paging", false);
     #endif
     else if (strcmp(buffer, "$ gdt"))
     {
@@ -164,6 +164,10 @@ void OnCommand(char* buffer)
         VGA_printf(pMultiboot->framebuffer_height, false);
         VGA_printf("x", false);
         VGA_printf(pMultiboot->framebuffer_pitch / pMultiboot->framebuffer_width * 8);
+    }
+    else if (strcmp(buffer, "$ paging"))
+    {
+        PrintPaging();
     }
     #if DO_SOUND_DEMO
     else if (strcmp(buffer, "$ jingle"))

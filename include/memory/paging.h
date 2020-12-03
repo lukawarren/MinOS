@@ -48,4 +48,6 @@ void DeallocatePageDirectory(uint32_t physicalAddress);
 void* kmalloc(uint32_t bytes);
 void  kfree(void* ptr, uint32_t bytes);
 
+void PrintPaging();
+
 #endif

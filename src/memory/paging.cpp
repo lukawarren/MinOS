@@ -35,6 +35,9 @@ void InitPaging(const uint32_t maxAddress)
     pageDirectories = (uint32_t*)pagingBegin;
     pageTables = pageDirectories + numDirectories;
     pageListArray = (Page*) pageTables + numDirectories*numPages; 
+    memset(pageDirectories, 0, numDirectories);
+    memset(pageTables,      0, numPages);
+    memset(pageListArray,   0, numDirectories*numPages);
 
     // Set all pages as empty and fill them with correct values 
     for (uint32_t i = 0; i < numDirectories; ++i) DeallocatePageDirectory(i * pageDirectorySize);
@@ -87,7 +90,7 @@ void DeallocatePage(uint32_t virtualAddress)
 
     // Fill table then add informmation to pageListArray
     *pageTable = PD_PRESENT(0);
-    pageListArray[pageTableIndex].ClearAllocated();
+    pageListArray[pageTableIndex] = Page(0, false, false);
 }
 
 void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags, bool kernel)
@@ -190,6 +193,65 @@ void kfree(void* ptr, uint32_t bytes)
 
     for (uint32_t i = 0; i < pagesRequired; ++i)
         DeallocatePage((uint32_t)ptr + i*pageSize);
+}
+
+void PrintPaging()
+{
+    /*
+        Yes, it's very inefficient,
+        Yes, it's sloppy
+        But yes, it's for debugging
+    */
+   
+    auto FindContiguousChunk = [&](Page* startingPage)
+    {
+        Page* page = startingPage;
+        int linearOffset = page->GetAddress() - ((startingPage - pageListArray) * pageSize);
+        //VGA_printf(linearOffset, true, VGA_COLOUR_LIGHT_YELLOW);
+        while (page->IsAllocated())
+        {
+            int offset = page->GetAddress() - ((page - pageListArray) * pageSize);
+            //VGA_printf(offset, true, VGA_COLOUR_LIGHT_GREEN);
+            if (offset != linearOffset) return --page;
+            page++;
+        }
+
+        return --page;
+    };
+    
+    VGA_printf("Linear Address", false);
+    VGA_column += 26;
+    VGA_printf("Virtual Address");
+
+    Page* page = pageListArray;
+    while (page < pageListArray+numDirectories*numPages)
+    {
+        Page* oldPage = page;
+        page = FindContiguousChunk(page);
+        if (page->IsAllocated())
+        {
+            uint32_t beforeWidth;
+            const uint32_t width = 15;
+
+            beforeWidth = VGA_column;
+            VGA_printf<uint32_t, true>((oldPage - pageListArray) * pageSize, false);
+            VGA_column = beforeWidth + width;
+            beforeWidth = VGA_column;
+            VGA_printf<uint32_t, true>((page - pageListArray) * pageSize + pageSize-1, false);
+            VGA_column = beforeWidth + width;
+
+            VGA_column += 10;
+
+            beforeWidth = VGA_column;
+            VGA_printf<uint32_t, true>(oldPage->GetAddress(), false);
+            VGA_column = beforeWidth + width;
+            beforeWidth = VGA_column;
+            VGA_printf<uint32_t, true>(page->GetAddress() + pageSize-1);
+            VGA_column=  0;
+        }
+        page = page+2;
+    }
+    
 }
 
 #pragma GCC diagnostic pop
