@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "../memory/tss.h"
+
 struct Task
 {
     char sName[32];
@@ -13,7 +15,7 @@ struct Task
     Task* pNextTask = nullptr;
 };
 
-void EnableScheduler();
+void EnableScheduler(TSS* tss);
 void DisableScheduler();
 void OnMultitaskPIT();
 

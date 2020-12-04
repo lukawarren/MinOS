@@ -36,12 +36,11 @@ struct TSS
     uint16_t iomap_base = 0;
 };
 
-inline constexpr TSS CreateTSSEntry(uint32_t stackPointer0, uint32_t dataSegmentDescriptor0 = 0x10)
+inline constexpr TSS CreateTSSEntry(const uint32_t stackPointer0, const uint32_t dataSegmentDescriptor0)
 {
     TSS tss;
     tss.ss0 = dataSegmentDescriptor0;
     tss.esp0 = stackPointer0;
-    tss.iomap_base = sizeof(TSS); // As longa as one doesn't plan to use the io-bitmap further
     return tss;
 }
 

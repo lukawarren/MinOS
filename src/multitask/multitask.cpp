@@ -13,6 +13,9 @@ Task* pTaskListTail = nullptr;
 Task* pCurrentTask = nullptr;
 size_t nTasks = 0;
 
+// Ring 0 vs Ring 3
+TSS* tss = nullptr;
+
 Task* CreateTask(char const* sName, uint32_t entry)
 {
     // Create new task in memory and linked list
@@ -61,8 +64,8 @@ Task* CreateTask(char const* sName, uint32_t entry)
     return task;
 }
 
-void EnableScheduler()  { bEnableMultitasking = true; }
-void DisableScheduler() { bEnableMultitasking = false; }
+void EnableScheduler(TSS* _tss)     { bEnableMultitasking = true; tss = _tss; }
+void DisableScheduler()             { bEnableMultitasking = false; }
 
 void OnMultitaskPIT()
 {

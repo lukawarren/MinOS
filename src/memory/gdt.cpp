@@ -13,7 +13,9 @@ void PrintGDT(const uint64_t* pTable, const unsigned int nEntries)
     VGA_column += 10;
     VGA_printf("DPL", false);
     VGA_column += 10;
-    VGA_printf("Type");
+    VGA_printf("Type", false);
+    VGA_column += 14;
+    VGA_printf("Selector");
     
     for (unsigned int i = 0; i < nEntries; ++i)
     {
@@ -46,13 +48,18 @@ void PrintGDT(const uint64_t* pTable, const unsigned int nEntries)
         // Type 
         if (((flags >> 0x4) & 1) == (SEG_DESCTYPE(0)))
         {
-            if (((flags >> 0x7) & 1) == (SEG_PRES(0))) VGA_printf("Unused");
-            else VGA_printf("TSS");
+            if (((flags >> 0x7) & 1) == (SEG_PRES(0))) VGA_printf("Unused", false);
+            else VGA_printf("TSS", false);
         }
         else
         {
-            if (flags & 0b1000) VGA_printf("32-bit code");
-            else VGA_printf("32-bit data");
+            if (flags & 0b1000) VGA_printf("32-bit code", false);
+            else VGA_printf("32-bit data", false);
         }
+
+        VGA_column = 60;
+
+        // Selector
+        VGA_printf<uint32_t, true>(i * 8);
     }
 }

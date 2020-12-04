@@ -17,7 +17,7 @@
 #include "stdlib.h"
 
 TSS tssEntry;
-uint64_t GDTTable[4];
+uint64_t GDTTable[6];
 multiboot_info_t* pMultiboot;
 
 Task* task1;
@@ -55,13 +55,15 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf<uint16_t, true>((uint16_t)COM1.m_Com);
 
     // Create TSS
-    tssEntry = CreateTSSEntry(0x0);
+    tssEntry = CreateTSSEntry(0x0, 0x10); // Stack pointer (zero for now, not needed yet) and ring 0 data selector 
 
     // Construct GDT entries (0xFFFFF actually translates to all of memory)
-    GDTTable[0] = CreateGDTEntry(0, 0, 0); // GDT entry at 0x0 cannot be used
-    GDTTable[1] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_CODE_PL0); // Code - 0x8
-    GDTTable[2] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL0); // Data - 0x10
-    GDTTable[3] = CreateGDTEntry((uint32_t) &tssEntry, sizeof(tssEntry), TSS_PL0);  // TSS, 0x18
+    GDTTable[0] = CreateGDTEntry(0, 0, 0);                                          // GDT entry at 0x0 cannot be used
+    GDTTable[1] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_CODE_PL0);                // Code      - 0x8
+    GDTTable[2] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL0);                // Data      - 0x10
+    GDTTable[3] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_CODE_PL3);                // User code - 0x18
+    GDTTable[4] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL3);                // Data code - 0x20
+    GDTTable[5] = CreateGDTEntry((uint32_t) &tssEntry, sizeof(tssEntry), TSS_PL0);  // TSS, 0x18 - 0x28
 
     // Load GDT
     LoadGDT(GDTTable, sizeof(GDTTable));
@@ -69,7 +71,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("GDT sucessfully loaded");
 
     // Load TSS
-    LoadTSS((uint32_t)&GDTTable[3] - (uint32_t)&GDTTable);
+    LoadTSS((uint32_t)&GDTTable[5] - (uint32_t)&GDTTable);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
 
@@ -130,7 +132,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
 
-    EnableScheduler();
+    EnableScheduler(&tssEntry);
 
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }
@@ -145,7 +147,7 @@ void OnCommand(char* buffer)
     #endif
     else if (strcmp(buffer, "$ gdt"))
     {
-        PrintGDT(GDTTable, 4);
+        PrintGDT(GDTTable, sizeof(GDTTable) / sizeof(GDTTable[0]));
     }
     else if (strcmp(buffer, "$ paging"))
     {
