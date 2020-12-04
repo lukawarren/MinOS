@@ -57,10 +57,10 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     // Create TSS
     tssEntry = CreateTSSEntry(0x0);
 
-    // Construct GDT entries
+    // Construct GDT entries (0xFFFFF actually translates to all of memory)
     GDTTable[0] = CreateGDTEntry(0, 0, 0); // GDT entry at 0x0 cannot be used
-    GDTTable[1] = CreateGDTEntry(0x00000000, 0xffffffff, GDT_CODE_PL0); // Code - 0x8
-    GDTTable[2] = CreateGDTEntry(0x00000000, 0xffffffff, GDT_DATA_PL0); // Data - 0x10
+    GDTTable[1] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_CODE_PL0); // Code - 0x8
+    GDTTable[2] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL0); // Data - 0x10
     GDTTable[3] = CreateGDTEntry((uint32_t) &tssEntry, sizeof(tssEntry), TSS_PL0);  // TSS, 0x18
 
     // Load GDT
@@ -112,7 +112,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Setup PIT
     InitPIT();
-
+    
     // Init PIC, create IDT entries and enable interrupts
     InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL, &keyboard);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
@@ -125,12 +125,12 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     task2 = CreateTask("Process2", (uint32_t) &Process2);
     task3 = CreateTask("Process3", (uint32_t) &Process3);
 
-    EnableScheduler();
-
-    // Start prompt and hang
+    // Start prompt
     VGA_printf("");
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
+
+    EnableScheduler();
 
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }
@@ -139,31 +139,13 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 void OnCommand(char* buffer)
 {
     #if DO_SOUND_DEMO
-    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot, paging, jingle", false);
+    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, paging, jingle", false);
     #else
-    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, multiboot, paging", false);
+    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, paging", false);
     #endif
     else if (strcmp(buffer, "$ gdt"))
     {
-        VGA_printf("GDT loaded at address ", false);
-        VGA_printf<size_t, true>((size_t)&GDTTable, false);
-        VGA_printf(" with ", false);
-        VGA_printf(sizeof(GDTTable) / sizeof(GDTTable[0]), false);
-        VGA_printf(" entries:");
-        for (size_t i = 0; i < sizeof(GDTTable) / sizeof(GDTTable[0]); ++i) VGA_printf<uint64_t, true>(GDTTable[i]);
-    }
-    else if (strcmp(buffer, "$ multiboot"))
-    {
-        VGA_printf("Multiboot header at ", false);
-        VGA_printf<uint32_t, true>((uint32_t)pMultiboot);
-        VGA_printf("");
-        VGA_printf("Framebuffer information:");
-        VGA_printf("Resolution: ", false); 
-        VGA_printf(pMultiboot->framebuffer_width, false);
-        VGA_printf("x", false);
-        VGA_printf(pMultiboot->framebuffer_height, false);
-        VGA_printf("x", false);
-        VGA_printf(pMultiboot->framebuffer_pitch / pMultiboot->framebuffer_width * 8);
+        PrintGDT(GDTTable, 4);
     }
     else if (strcmp(buffer, "$ paging"))
     {

@@ -8,7 +8,7 @@
     Whilst the page table, page directories, etc could be much smaller on systems with less
     physical RAM, I have decided to have enough space to address the maximum 4GB so that the
     kernel will be a similar size on all systems, making identity-mapped kernel space and its
-    affected user space much easier. That means that paging takes 16 MB of memory, followed by
+    affected user space much easier. That means that paging takes 8 MB of memory, followed by
     a further 4 MB for the page list array (I think).
 */
 
@@ -46,7 +46,7 @@ void InitPaging(const uint32_t maxAddress)
     // Should already be aligned to nearest 4kb
     uint32_t kernelMemorySoFar = (uint32_t)pageListArray + sizeof(uint32_t)*numPages*sizeof(uint32_t)*numDirectories;
     uint32_t pagesToAllocate = (kernelMemorySoFar - pagingBegin) / pageSize;
-    for (uint32_t i = 0; i < pagesToAllocate; ++i) AllocatePage(i * pageSize, i * pageSize, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+    for (uint32_t i = 0; i < pagesToAllocate; ++i) AllocatePage(i * pageSize, i * pageSize, PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(0), true);
 
     // User space will begin at 0x40000000 (1 GB) virtually, but physically at (what is currently) 16MB
     // At the time of writing it isn't used, but is allocated as a "token gesture", and to verify the mappping does indeed work.
@@ -57,7 +57,7 @@ void InitPaging(const uint32_t maxAddress)
     uint32_t framebufferAlignmentDifference = (uint32_t)VGA_framebuffer.address - aligendFramebufferAddress;
     uint32_t framebufferPages = (sizeof(uint32_t) * VGA_framebuffer.width * VGA_framebuffer.height) / pageSize;
     for (uint32_t i = 0; i < framebufferPages; ++i)
-        AllocatePage(aligendFramebufferAddress + i * pageSize, kernelMemorySoFar + i*pageSize, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+        AllocatePage(aligendFramebufferAddress + i * pageSize, kernelMemorySoFar + i*pageSize, PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(0), true);
     VGA_framebuffer.address = (uint32_t*)(kernelMemorySoFar + framebufferAlignmentDifference);
 
     LoadPageDirectories((uint32_t)pageDirectories);
@@ -163,7 +163,7 @@ void* kmalloc(uint32_t bytes)
                 uint32_t pageAddress = pageSize*i;
 
                 for (uint32_t p = 0; p < pagesRequired; ++p)
-                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, PD_PRESENT(1) | PD_READWRITE(1) | PD_SUPERVISOR(1), true);
+                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(0), true);
 
                 // Clear pages too
                 memset((void*)pageAddress, 0, pageSize*pagesRequired);

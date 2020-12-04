@@ -9,9 +9,9 @@ HDRFILES := $(shell find $(PROJDIRS) -type f -name "*.h")
 
 ASMFILES := $(shell find $(PROJDIRS) -type f -name "*.S")
 
-OBJFILES := $(patsubst %.cpp,%.o,$(CPPFILES))
-OBJFILES += $(patsubst %.c,%.o,$(CFILES))
-OBJFILES += $(patsubst %.S,%.o,$(ASMFILES))
+OBJFILES := $(patsubst %.cpp,%.cpp.o,$(CPPFILES))
+OBJFILES += $(patsubst %.c,%.c.o,$(CFILES))
+OBJFILES += $(patsubst %.S,%.S.o,$(ASMFILES))
 OBJFILES := $(patsubst src/%,build/%,$(OBJFILES))
 
 WARNINGS := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
@@ -35,13 +35,13 @@ build/$(NAME).iso: $(OBJFILES)
 	cp src/grub.cfg build/isodir/boot/grub/grub.cfg
 	grub-mkrescue -o build/$(NAME).iso build/isodir
 
-build/%.o: src/%.cpp
+build/%.cpp.o: src/%.cpp
 	@$(TOOLCHAIN)-g++ $(CPPFLAGS) -c $< -o $@ $(INCLUDEDIRS)
 
-build/%.o: src/%.c
+build/%.c.o: src/%.c
 	@$(TOOLCHAIN)-gcc $(CFLAGS) -c $< -o $@ -$(INCLUDEDIRS)
 
-build/%.o: src/%.S
+build/%.S.o: src/%.S
 	@$(ASSEMBLER) -felf32 $< -o $@
 
 clean:

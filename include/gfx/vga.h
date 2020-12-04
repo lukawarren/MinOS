@@ -44,13 +44,17 @@ void VGA_printf(T* data, bool newLine = true, uint32_t colour = VGA_COLOUR_WHITE
     VGA_WriteString(static_cast<char const*>(data), newLine, colour);
 }
 
-template <typename T, bool hex = false>
+template <typename T, bool hex = false, size_t digits = 0>
 void VGA_printf(T data, bool newLine = true, uint32_t colour = VGA_COLOUR_WHITE)
 {
     // Get number of digits
-    size_t i = data;
-    size_t nDigits = 1;
-    while (i/=(hex ? 16 : 10)) nDigits++;
+    size_t nDigits = digits;
+    if (nDigits == 0)
+    {
+        size_t i = data;
+        nDigits = 1;
+        while (i/=(hex ? 16 : 10)) nDigits++;
+    }
 
     auto digitToASCII = [](const size_t number) { return (char)('0' + number); };
     auto hexToASCII = [](const size_t number) 

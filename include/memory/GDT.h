@@ -11,7 +11,7 @@
 #define SEG_LONG(x)      ((x) << 0x0D) // Long mode
 #define SEG_SIZE(x)      ((x) << 0x0E) // Size (0 for 16-bit, 1 for 32)
 #define SEG_GRAN(x)      ((x) << 0x0F) // Granularity (0 for 1B - 1MB, 1 for 4KB - 4GB)
-#define SEG_PRIV(x)     (((x) &  0x03) << 0x05)   // Set privilege level (0 - 3)
+#define SEG_PRIV(x)      (((x) &  0x03) << 0x05)   // Set privilege level (0 - 3)
  
 #define SEG_DATA_RD        0x00 // Read-Only
 #define SEG_DATA_RDA       0x01 // Read-Only, accessed
@@ -48,6 +48,7 @@
 
 #define TSS_PL0      SEG_PRES(1)     | SEG_SIZE(1) | SEG_CODE_EXA
 
+
 inline constexpr uint64_t CreateGDTEntry(const uint32_t base, const uint32_t limit, const uint16_t flag)
 {
     uint64_t descriptor = 0;
@@ -67,6 +68,8 @@ inline constexpr uint64_t CreateGDTEntry(const uint32_t base, const uint32_t lim
 
     return descriptor;
 }
+
+void PrintGDT(const uint64_t* pTable, const unsigned int nEntries);
 
 extern "C"
 {

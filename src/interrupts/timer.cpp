@@ -23,7 +23,7 @@ void OnTimerInterrupt()
         soundDelayCount++;
     #endif
 
-    SetReloadValueInHz(CHANNEL_0_DATA, 10000);//1000);
+    SetReloadValueInHz(CHANNEL_0_DATA, 1000);
 
     // Multitasking
     OnMultitaskPIT();
