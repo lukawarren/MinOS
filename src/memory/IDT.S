@@ -39,11 +39,37 @@ IRQ%1:
     push edi
     push esi
 
+    ; Preserve segment registers
+    ; and use ring 0 ones
+    push ds
+    push es
+    push fs
+    push gs
+
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    ; Realign stack - pushing 9 is fine, but
+    ; we pushed 10 (or will do), so add 8
+    add esp, 8
+
     push    dword 0             ; This is not an error
     push    dword %1            ; Push interrupt id
     call    HandleInterrupts    ; Call generic function
     pop     eax
     pop     eax
+
+    ; "Un-realign" stack
+    sub esp, 8
+
+    ; Get back segment registers
+    pop gs
+    pop fs
+    pop es
+    pop ds
 
     ; Restore state
     pop esi
@@ -74,6 +100,9 @@ PerformIRQJump%1:
     ; (and deubgging) by just doing nothing.
     ; So if you're wondering where eip is getting
     ; set, wonder no more!
+
+    ; Also, this should restore eflags and
+    ; the cs register too, plus ss and esp
 
     call PerformTaskSwitch
 
@@ -115,12 +144,36 @@ IRQUnknown:
     push edi
     push esi
 
+    ; Preserve segment registers
+    ; and use ring 0 ones
+    mov ax, ds
+    push eax
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    ; Realign stack - pushing 9 is fine, but
+    ; we pushed 10 (or will do), so add 8
+    add esp, 8
+
     push    dword 1             ; This is an error! (well, sort of)
     push    dword 0xAF          ; Push superfluous id
     call    HandleInterrupts    ; Call generic function
     pop     eax
     pop     eax
     
+    ; "Un-realign" stack
+    sub esp, 8
+
+    ; Get back segment registers
+    pop eax
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
     ; Restore state
     pop esi
     pop edi
@@ -147,6 +200,20 @@ IRQException%1:
     push edi
     push esi
 
+    ; Preserve segment registers
+    ; and use ring 0 ones
+    mov ax, ds
+    push eax
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    ; Realign stack - pushing 9 is fine, but
+    ; we pushed 11 (or will do), so add 7
+    add esp, 7
+
     ; Get error code and push to stack
     ; Some exceptions don't have an error
     ; code, but it's not like pushing
@@ -170,6 +237,16 @@ IRQException%1:
     pop     eax
     pop     eax
     pop     eax
+
+    ; "Un-realign" stack
+    sub esp, 8
+
+    ; Get back segment registers
+    pop eax
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
     ; Restore state
     pop esi

@@ -31,7 +31,10 @@ Task* CreateTask(char const* sName, uint32_t entry)
     asm volatile( "pushf; pop %0;" : "=rm"(eflags) );
   
     // Push blank registers onto the stack
-    // No need for esp, that's just the stack
+    *--task->pStack = 0x10;   // stack segment (ss)
+    *--task->pStack = (uint32_t) pStackTop; // esp
+    *--task->pStack = eflags; // eflags
+    *--task->pStack = 0x8;    // cs (iret uses a 32-bit pop - don't panic!)
     *--task->pStack = entry;  // eip
     *--task->pStack = 0;      // eax
     *--task->pStack = 0;      // ebx
@@ -40,8 +43,14 @@ Task* CreateTask(char const* sName, uint32_t entry)
     *--task->pStack = 0;      // esi
     *--task->pStack = 0;      // edi
     *--task->pStack = (uint32_t) pStackTop; // ebp?
-    *--task->pStack = eflags;
-    
+    *--task->pStack = eflags; // eflags (yes, twice)
+
+    // Segment registers
+    *--task->pStack = 0x10; // ds
+    *--task->pStack = 0x10; // fs
+    *--task->pStack = 0x10; // es
+    *--task->pStack = 0x10; // gs
+
     // Linked list stuff
     Task* oldHead = pTaskListHead;
     pTaskListHead = task;

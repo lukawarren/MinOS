@@ -10,4 +10,7 @@
 
 void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k = nullptr);
 
+inline void EnableInterrupts()  { asm volatile("sti"); }
+inline void DisableInterrupts() { asm volatile("cli"); }
+
 #endif
