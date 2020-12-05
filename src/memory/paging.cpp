@@ -12,9 +12,6 @@
     a further 4 MB for the page list array (I think).
 */
 
-#define KERNEL_PAGE     (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1))
-#define USER_DIRECTORY  (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1))
-
 constexpr uint32_t pageDirectorySize = 0x400000;
 constexpr uint32_t pageSize = 0x1000;
 
@@ -142,7 +139,7 @@ void DeallocatePageDirectory(uint32_t virtualAddress, uint32_t flags)
     FlushTLB();
 }
 
-void* kmalloc(uint32_t bytes)
+void* kmalloc(uint32_t bytes, uint32_t flags)
 {
     // Yes, I *know* this is very inefficient, wastteful, etc but...
     // Links lists are booooooooring
@@ -174,7 +171,7 @@ void* kmalloc(uint32_t bytes)
                 uint32_t pageAddress = pageSize*i;
 
                 for (uint32_t p = 0; p < pagesRequired; ++p)
-                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, KERNEL_PAGE, true);
+                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, flags, true);
 
                 // Clear pages too
                 memset((void*)pageAddress, 0, pageSize*pagesRequired);

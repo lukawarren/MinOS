@@ -4,6 +4,7 @@
 extern "C"
 {
     extern void SwitchToUserMode();
+    extern uint32_t userModeAddress;
 }
 
 #endif

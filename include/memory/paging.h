@@ -9,6 +9,10 @@
 
 extern uint32_t __kernel_end;
 
+#define KERNEL_PAGE     (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(0))
+#define USER_DIRECTORY  (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1))
+
+
 /*
     A page will always be aligned to 4kb,
     so that the last three bits will always
@@ -45,7 +49,7 @@ void DeallocatePage(uint32_t physicalAddress);
 void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags,  bool kernel);
 void DeallocatePageDirectory(uint32_t physicalAddress, uint32_t flags);
 
-void* kmalloc(uint32_t bytes);
+void* kmalloc(uint32_t bytes, uint32_t flags = KERNEL_PAGE);
 void  kfree(void* ptr, uint32_t bytes);
 
 void PrintPaging();

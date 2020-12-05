@@ -124,7 +124,6 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("IDT sucessfully loaded");
 
     VGA_printf("");
-
     
     // Multiprocessing test
     task1 = CreateTask("Process1", (uint32_t) &Process1);
@@ -137,6 +136,12 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     keyboard.OnKeyUpdate('\0');
 
     //EnableScheduler();   
+
+    // Create new user memory space for process
+    uint8_t* userProcess = (uint8_t*) kmalloc(4096, (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1)));
+    userProcess[0] = 0xeb; // jmp
+    userProcess[1] = 0xfe; // $
+    userModeAddress = (uint32_t)userProcess;
 
     SwitchToUserMode();
 

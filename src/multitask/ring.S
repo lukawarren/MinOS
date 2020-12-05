@@ -1,7 +1,9 @@
-section text
+section data
+global userModeAddress
+userModeAddress:
+    dd 0
 
-UserModeTest:
-    jmp $
+section text
 
 extern tss
 extern FlushTSSRing3
@@ -38,10 +40,10 @@ SwitchToUserMode:
     pushf               ; user mode eflags
     pop eax
     or eax, 0x200
-    pushf
+    push eax
 
     push 0x1B           ; ring 3 code selector with bottom 2 bits set for ring 3
-    push UserModeTest   ; eip to return to
+    push dword [userModeAddress]   ; eip to return to
 
     ; Now simply "return" from the "interrupt"
     iret
