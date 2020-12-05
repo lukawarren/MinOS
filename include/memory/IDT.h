@@ -78,6 +78,7 @@ extern "C"
     extern void LoadIDT(const IDTDescriptor* IDTDescriptor);
     void HandleInterrupts(uint32_t irq, uint32_t unknown);
     void HandleExceptions(uint32_t irq, uint32_t eip, uint32_t errorCode);
+    void HandleSyscalls(uint32_t code, uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t edi, uint32_t esi, uint32_t ebp);
     void SanityCheck(uint32_t eip);
 
     extern void IRQ0();
@@ -128,6 +129,8 @@ extern "C"
     extern void IRQException28();
     extern void IRQException29();
     extern void IRQException30();
+
+    extern void IRQSyscall80();
 
     extern void IRQUnknown();
 }

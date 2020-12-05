@@ -48,6 +48,9 @@ void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k)
     idt[14] =   CreateIDTEntry((uint32_t) IRQException14, 0x8, ENABLED_R0_INTERRUPT);   idt[29] = CreateIDTEntry((uint32_t) IRQException29, 0x8, ENABLED_R0_INTERRUPT);
     idt[30] =   CreateIDTEntry((uint32_t) IRQException30, 0x8, ENABLED_R0_INTERRUPT);
 
+    // Syscals
+    idt[0x80] = CreateIDTEntry((uint32_t) IRQSyscall80, 0x8, ENABLED_R0_INTERRUPT);
+
     // IDT descriptor
     IDTDescriptor descriptor = IDTDescriptor(idt);
 
@@ -97,10 +100,17 @@ void HandleExceptions(uint32_t irq, uint32_t eip, uint32_t errorCode)
     VGA_printf<uint32_t, true>(irq, false);
     VGA_printf(" occured with error code ", false);
     VGA_printf<uint32_t, true>(errorCode, false);
-    VGA_printf(" - eip: ");
+    VGA_printf(" - eip: ", false);
     VGA_printf<uint32_t, true>(eip);
 
     while (true) asm("hlt");
 
     PIC_EndInterrupt((uint8_t)irq);
+}
+
+void HandleSyscalls(uint32_t code, uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t edi, uint32_t esi, uint32_t ebp)
+{
+    VGA_printf("Syscall!");
+
+    PIC_EndInterrupt(0x80);
 }

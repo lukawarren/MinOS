@@ -296,3 +296,71 @@ IRQException 27
 IRQException 28
 IRQException 29
 IRQException 30
+
+; IRQ syscall 0x80
+extern HandleSyscalls
+global IRQSyscall80
+IRQSyscall80:
+    cli
+
+    ; Preserve state
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push ebp
+    push edi
+    push esi
+
+    ; Preserve segment registers
+    ; and use ring 0 ones
+    push ds
+    push es
+    push fs
+    push gs
+
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    ; Realign stack - pushing 9 is fine, but
+    ; we pushed 8 (or will do), so add 1
+    add esp, 1
+
+    push dword [esp+36]
+    push dword [esp+32]
+    push dword [esp+28]
+    push dword [esp+24]
+    push dword [esp+20]
+    push dword [esp+16]
+    push dword [esp+10]
+    call HandleSyscalls ; Call syscall
+    pop eax
+    pop eax
+    pop eax
+    pop eax
+    pop eax
+    pop eax
+    pop eax
+
+    ; "Un-realign" stack
+    sub esp, 1
+
+    ; Get back segment registers
+    pop gs
+    pop fs
+    pop es
+    pop ds
+
+    ; Restore state
+    pop esi
+    pop edi
+    pop ebp
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
+    iret                        ; Return
