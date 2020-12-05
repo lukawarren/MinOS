@@ -44,3 +44,12 @@ void memset(void* b, int c, int len)
         len--;
     }
 }
+
+void memcpy(void *dest, void *src, size_t n)
+{
+    char *csrc = (char *)src; 
+    char *cdest = (char *)dest; 
+
+    for (size_t i=0; i<n; i++) 
+        cdest[i] = csrc[i]; 
+}

@@ -21,6 +21,14 @@ TSS tssEntry;
 uint64_t GDTTable[6];
 multiboot_info_t* pMultiboot;
 
+// Temporary place to store GRUB modules
+// Paging ruins memory, but a modern machine
+// really should have at least 50MB (right?!),
+// so just put it there
+void* pGrubModules = (void*)((uint32_t)(&__kernel_end) + (1024*1024*11)); 
+uint32_t nGrubModulesCount = 0;
+uint32_t nGrubModulesOffset = 0;
+
 Task* task1;
 Task* task2;
 Task* task3;
@@ -108,6 +116,29 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
         VGA_printf("Memory mapping failed!");
     }
 
+    // Copy GRUB modules before they're overwritten
+    if (pMultiboot->mods_count > 0)
+    {
+        VGA_printf("");
+        VGA_printf("Loading GRUB modules...");
+
+        multiboot_module_t* module = (multiboot_module_t*) pMultiboot->mods_addr;
+        for (unsigned int i = 0; i < pMultiboot->mods_count; ++i)
+        {
+            // Round size of binary to nearest page
+            uint32_t size = module->mod_end - module->mod_start;
+
+            memcpy(pGrubModules, (void*)module->mod_start, size);
+            nGrubModulesCount += size;
+
+            if (i == 0) nGrubModulesOffset = (uint32_t)pGrubModules - module->mod_start;
+
+            module++;
+        }
+        VGA_printf("");
+    }
+
+
     // Page frame allocation
     InitPaging(maxMemoryRange);
 
@@ -135,14 +166,33 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     // Load GRUB modules as user processes
     if (pMultiboot->mods_count > 0)
     {
-        VGA_printf("Loading GRUB modules...");
-
         multiboot_module_t* module = (multiboot_module_t*) pMultiboot->mods_addr;
         for (unsigned int i = 0; i < pMultiboot->mods_count; ++i)
         {
+            // Identify name of module
+            VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
             VGA_printf("Loading module ", false);
             VGA_printf((char const*)module->cmdline, false);
-            VGA_printf("...");
+
+            // Round size of binary to nearest page
+            uint32_t originalSize = module->mod_end - module->mod_start;
+            uint32_t size = originalSize;
+            uint32_t remainder = size % 0x1000;
+            if (remainder != 0) size += 0x1000 - remainder;
+
+            // Module just contains raw binary data,
+            // so copy it into memory and make new task
+            void* program = kmalloc(size);
+            memcpy(program, (void*)(module->mod_start + nGrubModulesOffset), originalSize);
+            
+            VGA_printf(" at address ", false);
+            VGA_printf<uint32_t, true>(module->mod_start + nGrubModulesOffset, false);
+            VGA_printf(" with size ", false);
+            VGA_printf<uint32_t, true>(size);
+
+            // Create task
+            CreateTask((char const*)module->cmdline, (uint32_t)program, TaskType::USER_TASK);
+
             module++;
         }   
 
