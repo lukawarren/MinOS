@@ -126,26 +126,25 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("");
     
     // Multiprocessing test
-    task1 = CreateTask("Process1", (uint32_t) &Process1);
-    task2 = CreateTask("Process2", (uint32_t) &Process2);
-    task3 = CreateTask("Process3", (uint32_t) &Process3);
+    task1 = CreateTask("Bar1", (uint32_t) &Process1);
+    task2 = CreateTask("Bar2", (uint32_t) &Process2);
+    task3 = CreateTask("Bar2", (uint32_t) &Process3);
+
+    // Create new user memory space for process's code
+    uint8_t* userProcess = (uint8_t*) kmalloc(4096, USER_PAGE);
+    userProcess[0] = 0xeb; // jmp
+    userProcess[1] = 0xfe; // $
+    userModeAddress = (uint32_t)userProcess;
+
+    // User mode process
+    CreateTask("User test", (uint32_t)userProcess, TaskType::USER_TASK);
 
     // Start prompt
     VGA_printf("");
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
 
-    // Create new user memory space for process's code
-    uint8_t* userProcess = (uint8_t*) kmalloc(4096, (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1)));
-    userProcess[0] = 0xeb; // jmp
-    userProcess[1] = 0xfe; // $
-    userModeAddress = (uint32_t)userProcess;
-
     EnableScheduler();
-
-    VGA_printf("Switching to user mode but leaving 3 kernel tasks...");
-    SwitchToUserMode(); // Also enables interrupts
-
 
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }

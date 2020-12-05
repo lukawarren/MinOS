@@ -25,7 +25,7 @@ void OnMultitaskPIT();
 enum TaskType
 {
     KERNEL_TASK,
-    USER_TAST
+    USER_TASK
 };
 
 Task* CreateTask(char const* sName, uint32_t entry, TaskType type = KERNEL_TASK);
