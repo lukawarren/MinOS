@@ -16,14 +16,14 @@ size_t nTasks = 0;
 // Ring 0 vs Ring 3
 TSS* tss = nullptr;
 
-Task* CreateTask(char const* sName, uint32_t entry)
+Task* CreateTask(char const* sName, uint32_t entry, TaskType type)
 {
     // Create new task in memory and linked list
-    Task* task = (Task*) kmalloc(sizeof(Task));
+    Task* task = (Task*) kmalloc(sizeof(Task), type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE);
     strncpy(task->sName, sName, 32);
 
     // Allocate stack
-    task->pStack = (uint32_t*)((uint32_t)kmalloc(4096) + 4096 - 16); // Stack grows downwards
+    task->pStack = (uint32_t*)((uint32_t)kmalloc(4096, type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE) + 4096 - 16); // Stack grows downwards
     uint32_t* pStackTop = task->pStack;
     
     // Get eflags
@@ -31,10 +31,10 @@ Task* CreateTask(char const* sName, uint32_t entry)
     asm volatile( "pushf; pop %0;" : "=rm"(eflags) );
   
     // Push blank registers onto the stack
-    *--task->pStack = 0x10;   // stack segment (ss)
+    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23;   // stack segment (ss)
     *--task->pStack = (uint32_t) pStackTop; // esp
     *--task->pStack = eflags; // eflags
-    *--task->pStack = 0x8;    // cs (iret uses a 32-bit pop - don't panic!)
+    *--task->pStack = type == KERNEL_TASK ? 0x08 : 0x1B;    // cs (iret uses a 32-bit pop - don't panic!)
     *--task->pStack = entry;  // eip
     *--task->pStack = 0;      // eax
     *--task->pStack = 0;      // ebx
@@ -46,10 +46,10 @@ Task* CreateTask(char const* sName, uint32_t entry)
     *--task->pStack = eflags; // eflags (yes, twice)
 
     // Segment registers
-    *--task->pStack = 0x10; // ds
-    *--task->pStack = 0x10; // fs
-    *--task->pStack = 0x10; // es
-    *--task->pStack = 0x10; // gs
+    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23; // ds
+    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23; // fs
+    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23; // es
+    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23; // gs
 
     // Linked list stuff
     Task* oldHead = pTaskListHead;
@@ -63,12 +63,12 @@ Task* CreateTask(char const* sName, uint32_t entry)
     nTasks++;
 
     VGA_printf("[Info] ", false, VGA_COLOUR_LIGHT_YELLOW);
-    VGA_printf("Created new task - ", false);
+    VGA_printf("Created new ", false);
+    if (type == KERNEL_TASK) VGA_printf("kernel", false); else VGA_printf("user", false);
+    VGA_printf(" task - ", false);
     VGA_printf(task->sName, false);
     VGA_printf(" - entrypoint ", false);
-    VGA_printf<uint32_t, true>((uint32_t)entry, false);
-    VGA_printf(", stack - ", false);
-    VGA_printf<uint32_t, true>((uint32_t)pStackTop);
+    VGA_printf<uint32_t, true>((uint32_t)entry);
 
     return task;
 }

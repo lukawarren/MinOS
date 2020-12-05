@@ -22,6 +22,12 @@ void DisableScheduler();
 
 void OnMultitaskPIT();
 
-Task* CreateTask(char const* sName, uint32_t entry);
+enum TaskType
+{
+    KERNEL_TASK,
+    USER_TAST
+};
+
+Task* CreateTask(char const* sName, uint32_t entry, TaskType type = KERNEL_TASK);
 
 #endif

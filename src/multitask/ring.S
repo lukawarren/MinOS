@@ -1,4 +1,5 @@
 section data
+
 global userModeAddress
 userModeAddress:
     dd 0
@@ -42,8 +43,8 @@ SwitchToUserMode:
     or eax, 0x200
     push eax
 
-    push 0x1B           ; ring 3 code selector with bottom 2 bits set for ring 3
-    push dword [userModeAddress]   ; eip to return to
+    push 0x1B               ; ring 3 code selector with bottom 2 bits set for ring 3
+    push dword [userModeAddress] ; eip to return to
 
     ; Now simply "return" from the "interrupt"
     iret

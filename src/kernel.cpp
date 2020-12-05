@@ -135,14 +135,13 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
 
-    // Create new user memory space for process
+    // Create new user memory space for process's code
     uint8_t* userProcess = (uint8_t*) kmalloc(4096, (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1)));
     userProcess[0] = 0xeb; // jmp
     userProcess[1] = 0xfe; // $
     userModeAddress = (uint32_t)userProcess;
 
-    DisableInterrupts();
-    //EnableScheduler();
+    EnableScheduler();
 
     VGA_printf("Switching to user mode but leaving 3 kernel tasks...");
     SwitchToUserMode(); // Also enables interrupts
