@@ -132,10 +132,15 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Create new user memory space for process's code
     uint8_t* userProcess = (uint8_t*) kmalloc(4096, USER_PAGE);
-    userProcess[0] = 0xcd; // int
-    userProcess[1] = 0x80; // 0x80
-    userProcess[2] = 0xeb; // jmp
-    userProcess[3] = 0xfe; // $
+    userProcess[0] = 0xb8; // mov eax
+    userProcess[1] = 0x00; // 0
+    userProcess[2] = 0x00;
+    userProcess[3] = 0x00;
+    userProcess[4] = 0x00;
+    userProcess[5] = 0xcd; // int
+    userProcess[6] = 0x80; // 0x80
+    userProcess[7] = 0xeb; // jmp
+    userProcess[8] = 0xfe; // $
     userModeAddress = (uint32_t)userProcess;
 
     // User mode process

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CHARSET_H
 #define CHARSET_H
 
