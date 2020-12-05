@@ -3,7 +3,11 @@ NAME := MinOS
 all: build/$(NAME).iso
 
 build/$(NAME).iso:
+
+	mkdir -p build/isodir/modules/
+
 	$(MAKE) -C kernel
+	$(MAKE) -C user/pages
 
 	mkdir -p build/isodir/boot/grub
 	cp kernel/build/$(NAME).bin build/isodir/boot/$(NAME).bin
@@ -13,3 +17,4 @@ build/$(NAME).iso:
 clean:
 	-@$(RM) -r $(wildcard $(OBJFILES) build/*)
 	$(MAKE) -C kernel clean
+	$(MAKE) -C user/pages clean

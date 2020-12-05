@@ -130,24 +130,26 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     task2 = CreateTask("Bar2", (uint32_t) &Process2);
     task3 = CreateTask("Bar2", (uint32_t) &Process3);
 
-    // Create new user memory space for process's code
-    uint8_t* userProcess = (uint8_t*) kmalloc(4096, USER_PAGE);
-    userProcess[0] = 0xb8; // mov eax
-    userProcess[1] = 0x00; // 0
-    userProcess[2] = 0x00;
-    userProcess[3] = 0x00;
-    userProcess[4] = 0x00;
-    userProcess[5] = 0xcd; // int
-    userProcess[6] = 0x80; // 0x80
-    userProcess[7] = 0xeb; // jmp
-    userProcess[8] = 0xfe; // $
-    userModeAddress = (uint32_t)userProcess;
+    VGA_printf("");
 
-    // User mode process
-    CreateTask("User test", (uint32_t)userProcess, TaskType::USER_TASK);
+    // Load GRUB modules as user processes
+    if (pMultiboot->mods_count > 0)
+    {
+        VGA_printf("Loading GRUB modules...");
+
+        multiboot_module_t* module = (multiboot_module_t*) pMultiboot->mods_addr;
+        for (unsigned int i = 0; i < pMultiboot->mods_count; ++i)
+        {
+            VGA_printf("Loading module ", false);
+            VGA_printf((char const*)module->cmdline, false);
+            VGA_printf("...");
+            module++;
+        }   
+
+        VGA_printf("");
+    }
 
     // Start prompt
-    VGA_printf("");
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
 

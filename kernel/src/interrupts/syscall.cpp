@@ -29,9 +29,11 @@ void HandleSyscalls(Syscall syscall)
 static void SysVgaPrintf(Syscall syscall)
 {
     VGA_printf("printf...");
+    VGA_printf<uint32_t, true>(syscall.eax);
 }
 
 static void SysThreadExit(Syscall syscall)
 {
     VGA_printf("thread exiting...");
+    VGA_printf<uint32_t, true>(syscall.eax);
 }
