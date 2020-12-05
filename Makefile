@@ -11,4 +11,5 @@ build/$(NAME).iso:
 	grub-mkrescue -o build/$(NAME).iso build/isodir
 
 clean:
+	-@$(RM) -r $(wildcard $(OBJFILES) build/*)
 	$(MAKE) -C kernel clean
