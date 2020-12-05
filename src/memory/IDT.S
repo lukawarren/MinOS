@@ -146,8 +146,11 @@ IRQUnknown:
 
     ; Preserve segment registers
     ; and use ring 0 ones
-    mov ax, ds
-    push eax
+    push ds
+    push es
+    push fs
+    push gs
+
     mov ax, 0x10
     mov ds, ax
     mov es, ax
@@ -168,11 +171,10 @@ IRQUnknown:
     sub esp, 8
 
     ; Get back segment registers
-    pop eax
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+    pop gs
+    pop fs
+    pop es
+    pop ds
 
     ; Restore state
     pop esi
@@ -202,8 +204,11 @@ IRQException%1:
 
     ; Preserve segment registers
     ; and use ring 0 ones
-    mov ax, ds
-    push eax
+    push ds
+    push es
+    push fs
+    push gs
+
     mov ax, 0x10
     mov ds, ax
     mov es, ax
@@ -242,11 +247,10 @@ IRQException%1:
     sub esp, 8
 
     ; Get back segment registers
-    pop eax
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+    pop gs
+    pop fs
+    pop es
+    pop ds
 
     ; Restore state
     pop esi

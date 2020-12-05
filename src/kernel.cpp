@@ -142,7 +142,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     userModeAddress = (uint32_t)userProcess;
 
     DisableInterrupts();
-    EnableScheduler();
+    //EnableScheduler();
 
     VGA_printf("Switching to user mode but leaving 3 kernel tasks...");
     SwitchToUserMode(); // Also enables interrupts
