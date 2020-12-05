@@ -4,6 +4,8 @@ compile.bat
 compile.sh
 minos_toolchain.tar.gz
 toolchain/
-.vscode
-build/
 bochs/
+.vscode
+
+build/
+kernel/build/
