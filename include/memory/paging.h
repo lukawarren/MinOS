@@ -42,8 +42,8 @@ void InitPaging(const uint32_t maxAddress);
 void AllocatePage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags, bool kernel);
 void DeallocatePage(uint32_t physicalAddress);
 
-void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags, bool kernel);
-void DeallocatePageDirectory(uint32_t physicalAddress);
+void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags,  bool kernel);
+void DeallocatePageDirectory(uint32_t physicalAddress, uint32_t flags);
 
 void* kmalloc(uint32_t bytes);
 void  kfree(void* ptr, uint32_t bytes);

@@ -108,7 +108,6 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
         VGA_printf("Memory mapping failed!");
     }
 
-    /*
     // Page frame allocation
     InitPaging(maxMemoryRange);
 
@@ -119,7 +118,6 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     // Setup PIT
     InitPIT();
     
-    
     // Init PIC, create IDT entries and enable interrupts
     InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL, &keyboard);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
@@ -127,6 +125,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     VGA_printf("");
 
+    
     // Multiprocessing test
     task1 = CreateTask("Process1", (uint32_t) &Process1);
     task2 = CreateTask("Process2", (uint32_t) &Process2);
@@ -137,8 +136,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
 
-    EnableScheduler();
-    */
+    //EnableScheduler();   
 
     SwitchToUserMode();
 

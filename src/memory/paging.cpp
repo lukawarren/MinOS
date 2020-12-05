@@ -12,6 +12,9 @@
     a further 4 MB for the page list array (I think).
 */
 
+#define KERNEL_PAGE     (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1))
+#define USER_DIRECTORY  (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1))
+
 constexpr uint32_t pageDirectorySize = 0x400000;
 constexpr uint32_t pageSize = 0x1000;
 
@@ -39,14 +42,14 @@ void InitPaging(const uint32_t maxAddress)
     memset(pageTables,      0, numPages);
     memset(pageListArray,   0, numDirectories*numPages);
 
-    // Set all pages as empty and fill them with correct values 
-    for (uint32_t i = 0; i < numDirectories; ++i) DeallocatePageDirectory(i * pageDirectorySize);
+    // Set all pages directories as empty and fill them with correct flags 
+    for (uint32_t i = 0; i < numDirectories; ++i) DeallocatePageDirectory(i * pageDirectorySize, USER_DIRECTORY);
 
     // Allocate enough pages to cover memory usage of above memory management
     // Should already be aligned to nearest 4kb
     uint32_t kernelMemorySoFar = (uint32_t)pageListArray + sizeof(uint32_t)*numPages*sizeof(uint32_t)*numDirectories;
     uint32_t pagesToAllocate = (kernelMemorySoFar - pagingBegin) / pageSize;
-    for (uint32_t i = 0; i < pagesToAllocate; ++i) AllocatePage(i * pageSize, i * pageSize, PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(0), true);
+    for (uint32_t i = 0; i < pagesToAllocate; ++i) AllocatePage(i * pageSize, i * pageSize, KERNEL_PAGE, true);
 
     // User space will begin at 0x40000000 (1 GB) virtually, but physically at (what is currently) 16MB
     // At the time of writing it isn't used, but is allocated as a "token gesture", and to verify the mappping does indeed work.
@@ -57,7 +60,7 @@ void InitPaging(const uint32_t maxAddress)
     uint32_t framebufferAlignmentDifference = (uint32_t)VGA_framebuffer.address - aligendFramebufferAddress;
     uint32_t framebufferPages = (sizeof(uint32_t) * VGA_framebuffer.width * VGA_framebuffer.height) / pageSize;
     for (uint32_t i = 0; i < framebufferPages; ++i)
-        AllocatePage(aligendFramebufferAddress + i * pageSize, kernelMemorySoFar + i*pageSize, PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(0), true);
+        AllocatePage(aligendFramebufferAddress + i * pageSize, kernelMemorySoFar + i*pageSize, KERNEL_PAGE, true);
     VGA_framebuffer.address = (uint32_t*)(kernelMemorySoFar + framebufferAlignmentDifference);
 
     LoadPageDirectories((uint32_t)pageDirectories);
@@ -81,6 +84,8 @@ void AllocatePage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t fl
     // Fill table then add informmation to pageListArray
     *pageTable = physicalAddress | flags;
     pageListArray[pageTableIndex] = Page(physicalAddress, true, kernel);
+
+    FlushTLB();
 }
 
 void DeallocatePage(uint32_t virtualAddress)
@@ -91,6 +96,8 @@ void DeallocatePage(uint32_t virtualAddress)
     // Fill table then add informmation to pageListArray
     *pageTable = PD_PRESENT(0);
     pageListArray[pageTableIndex] = Page(0, false, false);
+
+    FlushTLB();
 }
 
 void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags, bool kernel)
@@ -111,9 +118,11 @@ void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, ui
     {
         pageListArray[1024*pageDirectoryIndex+i] = Page(i * pageSize + physicalAddress, true, kernel);
     }
+
+    FlushTLB();
 }
 
-void DeallocatePageDirectory(uint32_t virtualAddress)
+void DeallocatePageDirectory(uint32_t virtualAddress, uint32_t flags)
 {
     // Find page directory to be changed - ignore divide by 0
     unsigned int pageDirectoryIndex = (virtualAddress == 0) ? 0 : (virtualAddress / pageDirectorySize);
@@ -122,13 +131,15 @@ void DeallocatePageDirectory(uint32_t virtualAddress)
     // Whilst the page directory will be present to achieve the same end, the page tables will not
     uint32_t* pageTable = pageTables + numPages*pageDirectoryIndex;
     for (int i = 0; i < 1024; ++i) pageTable[i] = PD_PRESENT(0);
-    pageDirectories[pageDirectoryIndex] = (uint32_t)pageTable | PD_PRESENT(1);
+    pageDirectories[pageDirectoryIndex] = (uint32_t)pageTable | flags;
     
     // Update page list array for all pages
     for (int i = 0; i < 1024; ++i)
     {
         pageListArray[1024*pageDirectoryIndex+i] = Page(0, false, false);
     }
+
+    FlushTLB();
 }
 
 void* kmalloc(uint32_t bytes)
@@ -163,7 +174,7 @@ void* kmalloc(uint32_t bytes)
                 uint32_t pageAddress = pageSize*i;
 
                 for (uint32_t p = 0; p < pagesRequired; ++p)
-                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(0), true);
+                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, KERNEL_PAGE, true);
 
                 // Clear pages too
                 memset((void*)pageAddress, 0, pageSize*pagesRequired);

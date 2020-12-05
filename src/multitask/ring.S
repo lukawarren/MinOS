@@ -32,7 +32,14 @@ SwitchToUserMode:
     mov eax, esp
     push 0x23           ; ring 3 data selector with bottom 2 bits set for ring 3
     push eax            ; preserved user mode esp
+
+    ; Modify pushed eflags to enable interrupts again,
+    ; as "sti" won't work in user mode
     pushf               ; user mode eflags
+    pop eax
+    or eax, 0x200
+    pushf
+
     push 0x1B           ; ring 3 code selector with bottom 2 bits set for ring 3
     push UserModeTest   ; eip to return to
 

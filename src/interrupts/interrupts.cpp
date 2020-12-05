@@ -104,9 +104,3 @@ void HandleExceptions(uint32_t irq, uint32_t eip, uint32_t errorCode)
 
     PIC_EndInterrupt((uint8_t)irq);
 }
-
-#include "../io/uart.h"
-void SanityCheck(uint32_t eip)
-{
-    UART::pCOM->printf<uint32_t, true>(eip);
-}
