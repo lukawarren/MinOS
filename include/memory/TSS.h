@@ -2,8 +2,8 @@
 #ifndef TSS_H
 #define TSS_H
 
-#include "stddef.h"
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
 
 struct TSS
 {
@@ -34,13 +34,14 @@ struct TSS
     uint32_t ldt = 0;      
     uint16_t trap = 0;
     uint16_t iomap_base = 0;
-};
+} __attribute__((packed));
 
 inline constexpr TSS CreateTSSEntry(const uint32_t stackPointer0, const uint32_t dataSegmentDescriptor0)
 {
-    TSS tss;
+    TSS tss = {};
     tss.ss0 = dataSegmentDescriptor0;
     tss.esp0 = stackPointer0;
+    tss.iomap_base = sizeof(TSS) - 1;
     return tss;
 }
 

@@ -13,6 +13,7 @@
 #include "interrupts/timer.h"
 #include "multitask/multitask.h"
 #include "multitask/taskSwitch.h"
+#include "multitask/ring.h"
 #include "cli.h"
 #include "stdlib.h"
 
@@ -62,8 +63,8 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     GDTTable[1] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_CODE_PL0);                // Code      - 0x8
     GDTTable[2] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL0);                // Data      - 0x10
     GDTTable[3] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_CODE_PL3);                // User code - 0x18
-    GDTTable[4] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL3);                // Data code - 0x20
-    GDTTable[5] = CreateGDTEntry((uint32_t) &tssEntry, sizeof(tssEntry), TSS_PL0);  // TSS, 0x18 - 0x28
+    GDTTable[4] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL3);                // User data - 0x20
+    GDTTable[5] = CreateGDTEntry((uint32_t) &tssEntry, sizeof(tssEntry), TSS_PL0);  // TSS       - 0x28
 
     // Load GDT
     LoadGDT(GDTTable, sizeof(GDTTable));
@@ -71,9 +72,11 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("GDT sucessfully loaded");
 
     // Load TSS
-    LoadTSS((uint32_t)&GDTTable[5] - (uint32_t)&GDTTable);
+    LoadTSS(((uint32_t)&GDTTable[5] - (uint32_t)&GDTTable) | 0b11); // Set last 2 bits for RPL 3
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
+
+    SetTSSForMultitasking(&tssEntry);
 
     // Read memory map from GRUB
     if ((mbd->flags & 6) == 0) {  VGA_printf("[Failure] Multiboot error!", true, VGA_COLOUR_LIGHT_RED); }
@@ -105,6 +108,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
         VGA_printf("Memory mapping failed!");
     }
 
+    /*
     // Page frame allocation
     InitPaging(maxMemoryRange);
 
@@ -114,6 +118,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Setup PIT
     InitPIT();
+    
     
     // Init PIC, create IDT entries and enable interrupts
     InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL, &keyboard);
@@ -132,7 +137,10 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
 
-    EnableScheduler(&tssEntry);
+    EnableScheduler();
+    */
+
+    SwitchToUserMode();
 
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }

@@ -15,8 +15,11 @@ struct Task
     Task* pNextTask = nullptr;
 };
 
-void EnableScheduler(TSS* tss);
+void SetTSSForMultitasking(TSS* _tss);
+
+void EnableScheduler();
 void DisableScheduler();
+
 void OnMultitaskPIT();
 
 Task* CreateTask(char const* sName, uint32_t entry);

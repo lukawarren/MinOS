@@ -64,7 +64,9 @@ Task* CreateTask(char const* sName, uint32_t entry)
     return task;
 }
 
-void EnableScheduler(TSS* _tss)     { bEnableMultitasking = true; tss = _tss; }
+void SetTSSForMultitasking(TSS* _tss) { tss = _tss; }
+
+void EnableScheduler()              { bEnableMultitasking = true; }
 void DisableScheduler()             { bEnableMultitasking = false; }
 
 void OnMultitaskPIT()
