@@ -2,11 +2,12 @@ section text
 
 global main
 main:
+
     ; testing value
     mov ecx, 0xdeadbeef
 
     ; delay
-    mov eax, 100000000
+    mov eax, 0xbeef
 delay:
     cmp eax, 0
     je syscall
