@@ -11,8 +11,9 @@
 #include "interrupts/interrupts.h"
 #include "interrupts/keyboard.h"
 #include "interrupts/timer.h"
-#include "multitask/multitask.h"
 #include "multitask/taskSwitch.h"
+#include "multitask/multitask.h"
+#include "multitask/modules.h"
 #include "multitask/ring.h"
 #include "cli.h"
 #include "stdlib.h"
@@ -20,14 +21,6 @@
 TSS tssEntry;
 uint64_t GDTTable[6];
 multiboot_info_t* pMultiboot;
-
-// Temporary place to store GRUB modules
-// Paging ruins memory, but a modern machine
-// really should have at least 50MB (right?!),
-// so just put it there
-void* pGrubModules = (void*)((uint32_t)(&__kernel_end) + (1024*1024*11)); 
-uint32_t nGrubModulesCount = 0;
-uint32_t nGrubModulesOffset = 0;
 
 Task* task1;
 Task* task2;
@@ -81,63 +74,18 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Load TSS
     LoadTSS(((uint32_t)&GDTTable[5] - (uint32_t)&GDTTable) | 0b11); // Set last 2 bits for RPL 3
+    SetTSSForMultitasking(&tssEntry);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
-
-    SetTSSForMultitasking(&tssEntry);
 
     // Read memory map from GRUB
     if ((mbd->flags & 6) == 0) {  VGA_printf("[Failure] Multiboot error!", true, VGA_COLOUR_LIGHT_RED); }
 
-    /*
-        Let's use the second block of extended memory,
-        which extends from 0x1000000 (16mb) to just before memory mapped PCI devices (if any)
-    */
-    multiboot_memory_map_t* entry = (multiboot_memory_map_t *)(mbd->mmap_addr);
-    uint32_t maxMemoryRange = 0;
-    while ((multiboot_uint32_t) entry < mbd->mmap_addr + mbd->mmap_length)
-    {
-        if (entry->addr == 0x100000)
-        {
-            VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-            VGA_printf("Extended memory block detected with length ", false);
-            VGA_printf<uint32_t, true>((uint32_t)entry->len, false);
-            VGA_printf(" (", false);
-            VGA_printf((uint32_t)(entry->len / 1024 / 1024), false);
-            VGA_printf(" MB)");
+    // Map out memory
+    uint32_t maxMemoryRange = GetMaxMemoryRange(pMultiboot);
 
-            maxMemoryRange = (uint32_t)entry->addr + (uint32_t)entry->len;
-        }
-        entry = (multiboot_memory_map_t *) ((unsigned int) entry + entry->size + sizeof(entry->size));
-    }
-    if (maxMemoryRange == 0)
-    {
-        VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_GREEN);
-        VGA_printf("Memory mapping failed!");
-    }
-
-    // Copy GRUB modules before they're overwritten
-    if (pMultiboot->mods_count > 0)
-    {
-        VGA_printf("");
-        VGA_printf("Loading GRUB modules...");
-
-        multiboot_module_t* module = (multiboot_module_t*) pMultiboot->mods_addr;
-        for (unsigned int i = 0; i < pMultiboot->mods_count; ++i)
-        {
-            // Round size of binary to nearest page
-            uint32_t size = module->mod_end - module->mod_start;
-
-            memcpy(pGrubModules, (void*)module->mod_start, size);
-            nGrubModulesCount += size;
-
-            if (i == 0) nGrubModulesOffset = (uint32_t)pGrubModules - module->mod_start;
-
-            module++;
-        }
-        VGA_printf("");
-    }
-
+    // Pging messes up GRUB modules
+    MoveGrubModules(pMultiboot);
 
     // Page frame allocation
     InitPaging(maxMemoryRange);
@@ -153,51 +101,16 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL, &keyboard);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
-
-    VGA_printf("");
     
     // Multiprocessing test
+    VGA_printf("");
     task1 = CreateTask("Bar1", (uint32_t) &Process1);
     task2 = CreateTask("Bar2", (uint32_t) &Process2);
     task3 = CreateTask("Bar2", (uint32_t) &Process3);
-
     VGA_printf("");
 
-    // Load GRUB modules as user processes
-    if (pMultiboot->mods_count > 0)
-    {
-        multiboot_module_t* module = (multiboot_module_t*) pMultiboot->mods_addr;
-        for (unsigned int i = 0; i < pMultiboot->mods_count; ++i)
-        {
-            // Identify name of module
-            VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-            VGA_printf("Loading module ", false);
-            VGA_printf((char const*)module->cmdline, false);
-
-            // Round size of binary to nearest page
-            uint32_t originalSize = module->mod_end - module->mod_start;
-            uint32_t size = originalSize;
-            uint32_t remainder = size % 0x1000;
-            if (remainder != 0) size += 0x1000 - remainder;
-
-            // Module just contains raw binary data,
-            // so copy it into memory and make new task
-            void* program = kmalloc(size);
-            memcpy(program, (void*)(module->mod_start + nGrubModulesOffset), originalSize);
-            
-            VGA_printf(" at address ", false);
-            VGA_printf<uint32_t, true>(module->mod_start + nGrubModulesOffset, false);
-            VGA_printf(" with size ", false);
-            VGA_printf<uint32_t, true>(size);
-
-            // Create task
-            CreateTask((char const*)module->cmdline, (uint32_t)program, TaskType::USER_TASK);
-
-            module++;
-        }   
-
-        VGA_printf("");
-    }
+    // Load GRUB modules
+    LoadGrubModules(pMultiboot);
 
     // Start prompt
     keyboard.OnKeyUpdate('\0');

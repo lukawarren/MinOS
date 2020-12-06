@@ -19,6 +19,11 @@
  *  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+// Custom stuff
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+// end of custom stuff
+
 #ifndef MULTIBOOT_HEADER
 #define MULTIBOOT_HEADER 1
 
@@ -272,3 +277,7 @@ struct multiboot_apm_info
 #endif /* ! ASM_FILE */
 
 #endif /* ! MULTIBOOT_HEADER */
+
+// Custom stuff
+#pragma GCC diagnostic pop
+// end of custom stuff

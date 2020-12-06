@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "../multiboot.h"
 #include "mmu.h"
 
 extern uint32_t __kernel_end;
@@ -41,6 +42,8 @@ struct Page
 
     inline uint32_t GetAddress() { return pageIdentifier & 0b11111111111111111111111111111000; }
 };
+
+uint32_t GetMaxMemoryRange(multiboot_info_t* pMultiboot);
 
 void InitPaging(const uint32_t maxAddress);
 

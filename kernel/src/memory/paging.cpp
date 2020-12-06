@@ -12,8 +12,8 @@
     a further 4 MB for the page list array (I think).
 */
 
-constexpr uint32_t pageDirectorySize = 0x400000;
-constexpr uint32_t pageSize = 0x1000;
+constexpr uint32_t pageDirectorySize = DIRECTORY_SIZE;
+constexpr uint32_t pageSize = PAGE_SIZE;
 
 const uint32_t numDirectories = 1024;
 const uint32_t numPages = 1024;
@@ -260,6 +260,38 @@ void PrintPaging()
         page = page+2;
     }
     
+}
+
+uint32_t GetMaxMemoryRange(multiboot_info_t* pMultiboot)
+{
+    /*
+        Let's use the second block of extended memory,
+        which extends from 0x1000000 (16mb) to just before memory mapped PCI devices (if any)
+    */
+    multiboot_memory_map_t* entry = (multiboot_memory_map_t *)(pMultiboot->mmap_addr);
+    uint32_t maxMemoryRange = 0;
+    while ((multiboot_uint32_t) entry < pMultiboot->mmap_addr + pMultiboot->mmap_length)
+    {
+        if (entry->addr == 0x100000)
+        {
+            VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
+            VGA_printf("Extended memory block detected with length ", false);
+            VGA_printf<uint32_t, true>((uint32_t)entry->len, false);
+            VGA_printf(" (", false);
+            VGA_printf((uint32_t)(entry->len / 1024 / 1024), false);
+            VGA_printf(" MB)");
+
+            maxMemoryRange = (uint32_t)entry->addr + (uint32_t)entry->len;
+        }
+        entry = (multiboot_memory_map_t *) ((unsigned int) entry + entry->size + sizeof(entry->size));
+    }
+    if (maxMemoryRange == 0)
+    {
+        VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_GREEN);
+        VGA_printf("Memory mapping failed!");
+    }
+
+    return maxMemoryRange;
 }
 
 #pragma GCC diagnostic pop
