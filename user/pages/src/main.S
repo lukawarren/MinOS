@@ -6,7 +6,6 @@ main:
     mov ecx, 0xdeadbeef
 
     ; delay
-
     mov eax, 100000000
 delay:
     cmp eax, 0
@@ -15,21 +14,8 @@ delay:
     jmp delay
 
 syscall:
+    pusha
     mov eax, 0
-
-    push eax
-    push ebx
-    push ecx
-    push edx
-    push ebp
-    push edi
-    push esi
     int 0x80
-    pop esi
-    pop edi
-    pop ebp
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    popa
     jmp main

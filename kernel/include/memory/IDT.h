@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "../io/pic.h"
+#include "../stdlib.h"
 
 /*
     0x00 Divide by zero
@@ -77,7 +78,7 @@ extern "C"
 {
     extern void LoadIDT(const IDTDescriptor* IDTDescriptor);
     void HandleInterrupts(uint32_t irq, uint32_t unknown);
-    void HandleExceptions(uint32_t irq, uint32_t eip, uint32_t errorCode);
+    void HandleExceptions(uint32_t irq, uint32_t eip, uint32_t errorCode, Registers regs);
     void SanityCheck(uint32_t eip);
 
     extern void IRQ0();

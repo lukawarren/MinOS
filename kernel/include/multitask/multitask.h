@@ -10,6 +10,9 @@
 struct Task
 {
     char sName[32];
+    bool bKernel;
+    uint32_t size;
+    uint32_t location;
     uint32_t* pStack;
     Task* pPrevTask = nullptr;
     Task* pNextTask = nullptr;
@@ -28,6 +31,6 @@ enum TaskType
     USER_TASK
 };
 
-Task* CreateTask(char const* sName, uint32_t entry, TaskType type = KERNEL_TASK);
+Task* CreateTask(char const* sName, uint32_t entry, uint32_t size = 0, uint32_t location = 0, TaskType type = KERNEL_TASK);
 
 #endif

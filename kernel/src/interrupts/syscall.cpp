@@ -2,16 +2,16 @@
 #include "../memory/idt.h"
 #include "../gfx/vga.h"
 
-static void SysVgaPrintf    (Syscall syscall);
-static void SysThreadExit   (Syscall syscall);
+static void SysVgaPrintf    (Registers syscall);
+static void SysThreadExit   (Registers syscall);
 
-static void (*pSyscalls[2])(Syscall syscall) =
+static void (*pSyscalls[2])(Registers syscall) =
 {
     &SysVgaPrintf,
     &SysThreadExit
 };
 
-void HandleSyscalls(Syscall syscall)
+void HandleSyscalls(Registers syscall)
 {
     // Get syscall type
     const uint32_t type = syscall.eax;
@@ -26,13 +26,13 @@ void HandleSyscalls(Syscall syscall)
     PIC_EndInterrupt(0x80);
 }
 
-static void SysVgaPrintf(Syscall syscall)
+static void SysVgaPrintf(Registers syscall)
 {
     VGA_printf("printf ", false);
     VGA_printf<uint32_t, true>(syscall.ecx);
 }
 
-static void SysThreadExit(Syscall syscall)
+static void SysThreadExit(Registers syscall)
 {
     VGA_printf("thread exiting...");
     VGA_printf<uint32_t, true>(syscall.ecx);

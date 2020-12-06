@@ -94,15 +94,29 @@ void HandleInterrupts(uint32_t irq, uint32_t unknown)
     PIC_EndInterrupt((uint8_t)irq);
 }
 
-void HandleExceptions(uint32_t irq, uint32_t eip, uint32_t errorCode)
+void HandleExceptions(uint32_t irq, uint32_t eip, uint32_t errorCode, Registers regs)
 {
     VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
     VGA_printf("Excecption ", false);
     VGA_printf<uint32_t, true>(irq, false);
     VGA_printf(" occured with error code ", false);
-    VGA_printf<uint32_t, true>(errorCode, false);
-    VGA_printf(" - eip: ", false);
+    VGA_printf<uint32_t, true>(errorCode);
+    VGA_printf("eip: ", false);
     VGA_printf<uint32_t, true>(eip);
+    VGA_printf("eax: ", false);
+    VGA_printf<uint32_t, true>(regs.eax);
+    VGA_printf("ebx: ", false);
+    VGA_printf<uint32_t, true>(regs.ebx);
+    VGA_printf("ecx: ", false);
+    VGA_printf<uint32_t, true>(regs.ecx);
+    VGA_printf("edx: ", false);
+    VGA_printf<uint32_t, true>(regs.edx);
+    VGA_printf("ebp: ", false);
+    VGA_printf<uint32_t, true>(regs.ebp);
+    VGA_printf("edi: ", false);
+    VGA_printf<uint32_t, true>(regs.edi);
+    VGA_printf("esi: ", false);
+    VGA_printf<uint32_t, true>(regs.esi);
 
     while (true) asm("hlt");
 

@@ -4,17 +4,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
-struct Syscall
-{
-    uint32_t esi;
-    uint32_t edi;
-    uint32_t ebp;
-    uint32_t edx;
-    uint32_t ecx;
-    uint32_t ebx;
-    uint32_t eax;
-}  __attribute__((packed));
+#include "../stdlib.h"
 
 enum Syscalls
 {
@@ -24,7 +14,7 @@ enum Syscalls
 
 extern "C"
 {
-    void HandleSyscalls(Syscall syscall);
+    void HandleSyscalls(Registers syscall);
 }
 
 #endif

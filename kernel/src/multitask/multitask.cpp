@@ -16,11 +16,23 @@ size_t nTasks = 0;
 // Ring 0 vs Ring 3
 TSS* tss = nullptr;
 
-Task* CreateTask(char const* sName, uint32_t entry, TaskType type)
+Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location, TaskType type)
 {
     // Create new task in memory and linked list
     Task* task = (Task*) kmalloc(sizeof(Task), type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE);
     strncpy(task->sName, sName, 32);
+    task->bKernel = type == KERNEL_PAGE;
+
+    if (type != KERNEL_PAGE)
+    {
+        // Round task to nearest page
+        uint32_t originalSize = size;
+        uint32_t roundedSize = originalSize;
+        uint32_t remainder = roundedSize % PAGE_SIZE;
+        if (remainder != 0) roundedSize += PAGE_SIZE - remainder;
+        task->size = roundedSize;
+        task->location = location;
+    }
 
     // Allocate stack
     task->pStack = (uint32_t*)((uint32_t)kmalloc(4096, type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE) + 4096 - 16); // Stack grows downwards
@@ -78,6 +90,15 @@ void SetTSSForMultitasking(TSS* _tss) { tss = _tss; }
 void EnableScheduler()              { bEnableMultitasking = true; }
 void DisableScheduler()             { bEnableMultitasking = false; }
 
+static void MapNewUserTask(Task* task)
+{
+    // Setup paging so task begins at 0x40000000
+    for (uint32_t i = 0; i < task->size / PAGE_SIZE; ++i)
+    {
+        AllocatePage(task->location + i * PAGE_SIZE, 0x40000000 + i * PAGE_SIZE, USER_PAGE, false);
+    }
+}
+
 void OnMultitaskPIT()
 {
     if (nTasks == 0 || !bEnableMultitasking) { bIRQShouldJump = false; return; }
@@ -85,9 +106,11 @@ void OnMultitaskPIT()
     // If one task, switch to it if nessecary
     if (nTasks == 1 && pCurrentTask == nullptr) 
     {
+        VGA_printf("Switching...");
         pCurrentTask = pTaskListHead;
         oldTaskStack = 0;
         newTaskStack = (uint32_t) &pCurrentTask->pStack;
+        if (pCurrentTask->bKernel == false) MapNewUserTask(pCurrentTask);
         bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
     }
     else if (nTasks > 1)
@@ -100,6 +123,7 @@ void OnMultitaskPIT()
             Task* newTask = pCurrentTask;
             oldTaskStack = 0;
             newTaskStack = (uint32_t) &newTask->pStack;
+            if (newTask->bKernel == false) MapNewUserTask(newTask);
             bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
         }
 
@@ -112,6 +136,7 @@ void OnMultitaskPIT()
             pCurrentTask = newTask;
             oldTaskStack = (uint32_t) &oldTask->pStack;
             newTaskStack = (uint32_t) &newTask->pStack;
+            if (newTask->bKernel == false) MapNewUserTask(newTask);
             bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
         }      
     }

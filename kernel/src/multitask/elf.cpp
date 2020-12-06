@@ -4,22 +4,22 @@
 
 static void LoadElfSegment(void* file, ElfProgramHeader* programHeader, void* memory);
 
-void* LoadElfFile(void* file)
+ElfReturn LoadElfFile(void* file)
 {
     // Get ELF header
     Elf32Header* header = (Elf32Header*)file;
     // Check for magic number
-    if (header->e_ident[EI_MAG0] != ELFMAG0) { VGA_printf("Incorrect ELF mag0"); return NULL; }
-    if (header->e_ident[EI_MAG1] != ELFMAG1) { VGA_printf("Incorrect ELF mag1"); return NULL; }
-    if (header->e_ident[EI_MAG2] != ELFMAG2) { VGA_printf("Incorrect ELF mag2"); return NULL; }
-    if (header->e_ident[EI_MAG3] != ELFMAG3) { VGA_printf("Incorrect ELF mag3"); return NULL; }
+    if (header->e_ident[EI_MAG0] != ELFMAG0) { VGA_printf("Incorrect ELF mag0"); return {}; }
+    if (header->e_ident[EI_MAG1] != ELFMAG1) { VGA_printf("Incorrect ELF mag1"); return {}; }
+    if (header->e_ident[EI_MAG2] != ELFMAG2) { VGA_printf("Incorrect ELF mag2"); return {}; }
+    if (header->e_ident[EI_MAG3] != ELFMAG3) { VGA_printf("Incorrect ELF mag3"); return {}; }
     
     // Check other header values
-    if (header->e_ident[EI_CLASS]   != ELFCLASS32)    { VGA_printf("Incorrect ELF class");        return NULL; }
-    if (header->e_ident[EI_DATA]    != ELFDATA2LSB)   { VGA_printf("Incorrect ELF byte order");   return NULL; }
-    if (header->e_ident[EI_VERSION] != EV_CURRENT)    { VGA_printf("Incorrect ELF version");      return NULL; }
-    if (header->e_machine           != EM_386)        { VGA_printf("Incorrect ELF target");       return NULL; }
-    if (header->e_type              != ET_EXEC)       { VGA_printf("Incorrect ELF type");         return NULL; }
+    if (header->e_ident[EI_CLASS]   != ELFCLASS32)    { VGA_printf("Incorrect ELF class");        return {}; }
+    if (header->e_ident[EI_DATA]    != ELFDATA2LSB)   { VGA_printf("Incorrect ELF byte order");   return {}; }
+    if (header->e_ident[EI_VERSION] != EV_CURRENT)    { VGA_printf("Incorrect ELF version");      return {}; }
+    if (header->e_machine           != EM_386)        { VGA_printf("Incorrect ELF target");       return {}; }
+    if (header->e_type              != ET_EXEC)       { VGA_printf("Incorrect ELF type");         return {}; }
 
     // Get total file size for malloc
     ElfProgramHeader* programHeader = (ElfProgramHeader*)((uint32_t)file + header->e_phoff);
@@ -33,7 +33,7 @@ void* LoadElfFile(void* file)
     }
 
     // Allocate memory - not writable for now
-    void* memory = malloc(fileSize, PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(1));
+    void* memory = malloc(fileSize, USER_PAGE); // Really should be (see LoadElfSegment) - PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(1);
 
     // Load program headers and look for loadable sections
     for (uint32_t i = 0; i < header->e_phnum; ++i)
@@ -44,7 +44,7 @@ void* LoadElfFile(void* file)
         }
     }
 
-    return (void*)((uint32_t)memory + header->e_entry);
+    return { header->e_entry, fileSize, (uint32_t) memory };
 }
 
 static void LoadElfSegment(void* file, ElfProgramHeader* programHeader, void* memory)
@@ -57,13 +57,12 @@ static void LoadElfSegment(void* file, ElfProgramHeader* programHeader, void* me
     // Minus the 0x40000000 from memory position
     memoryPosition -= 0x40000000;
 
-    // Get flags
-    uint32_t flags = PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(1);
-    if (programHeader->p_flags & ELF_PT_W) flags |= PD_READWRITE(1);
-
-    // Set segment's page to have appropriate flags
+    // Get and set segment's page to have appropriate flags
     // WARNING: code assumes alignment on page boundary!
-    AllocatePage((uint32_t)memory + memoryPosition, (uint32_t)memory + memoryPosition, flags, false);
+    // ...just kidding, it complicates multitask.cpp
+    //uint32_t flags = PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(1);
+    //if (programHeader->p_flags & ELF_PT_W) flags |= PD_READWRITE(1);
+    //AllocatePage((uint32_t)memory + memoryPosition, (uint32_t)memory + memoryPosition, flags, false);
 
     // Load segment
     uint32_t segmentMemory  = (uint32_t)memory + memoryPosition;

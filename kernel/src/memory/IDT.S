@@ -87,6 +87,8 @@ IRQ%1:
 
 PerformIRQJump%1:
 
+    mov [bIRQShouldJump], byte 0
+
     ; Now, I could, and *used to* do all this
     ; overly complicated and error-prone code
     ; to retrieve the old eip from the stack,
@@ -103,10 +105,7 @@ PerformIRQJump%1:
 
     ; Also, this should restore eflags and
     ; the cs register too, plus ss and esp
-
     call PerformTaskSwitch
-
-    mov [bIRQShouldJump], byte 0 ; Set bIRQShouldJump to false
     
 FinishJump%1:
     iret    ; Return
@@ -192,15 +191,7 @@ IRQUnknown:
 global IRQException%1
 IRQException%1:
     cli
-
-    ; Preserve state
-    push eax
-    push ebx
-    push ecx
-    push edx
-    push ebp
-    push edi
-    push esi
+    xchg bx, bx
 
     ; Preserve segment registers
     ; and use ring 0 ones
@@ -209,29 +200,38 @@ IRQException%1:
     push fs
     push gs
 
+    push eax
     mov ax, 0x10
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
+    pop eax
 
-    ; Realign stack - pushing 9 is fine, but
-    ; we pushed 11 (or will do), so add 7
-    add esp, 7
-
+    ; Push registers
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push ebp
+    push edi
+    push esi
+    
     ; Get error code and push to stack
     ; Some exceptions don't have an error
     ; code, but it's not like pushing
     ; an incorrect value breaks anything,
     ; and I'm all for simpler code if it's
-    ; just for debugging anyway.
-    mov eax, [esp+28]
+    ; just for debugging anyway. If there
+    ; isn't an error code, it'll just push
+    ; the eip after all.
+    mov eax, [esp+36]
     push eax
 
     ; Get eip and push to stack -
     ; this is often where the error occured!
-    mov eax, [esp+36]
-    push eax    
+    mov eax, [esp+44]
+    push eax
 
     ; Push id to stack
     push dword %1
@@ -243,16 +243,7 @@ IRQException%1:
     pop     eax
     pop     eax
 
-    ; "Un-realign" stack
-    sub esp, 8
-
-    ; Get back segment registers
-    pop gs
-    pop fs
-    pop es
-    pop ds
-
-    ; Restore state
+    ; Pop more off stack
     pop esi
     pop edi
     pop ebp
@@ -260,6 +251,12 @@ IRQException%1:
     pop ecx
     pop ebx
     pop eax
+
+    ; Get back segment registers
+    pop gs
+    pop fs
+    pop es
+    pop ds
 
     iret                        ; Return
 %endmacro
@@ -327,9 +324,8 @@ IRQSyscall80:
     mov gs, ax
     pop eax
 
-    ; Realign stack - pushing 9 is fine, but
-    ; we pushed 8 (or will do), so add 1
-    add esp, 1
+    ; Realign stack by adding 2
+    add esp, 2
 
     push eax
     push ebx
@@ -348,7 +344,7 @@ IRQSyscall80:
     pop eax
 
     ; "Un-realign" stack
-    sub esp, 1
+    sub esp, 2
 
     ; Get back segment registers
     pop gs

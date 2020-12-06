@@ -83,8 +83,8 @@ void LoadGrubModules(multiboot_info_t* pMultiboot)
             // Round size of binary to nearest page
             uint32_t originalSize = module->mod_end - module->mod_start;
             uint32_t size = originalSize;
-            uint32_t remainder = size % 0x1000;
-            if (remainder != 0) size += 0x1000 - remainder;
+            uint32_t remainder = size % PAGE_SIZE;
+            if (remainder != 0) size += PAGE_SIZE - remainder;
             
             VGA_printf(" at address ", false);
             VGA_printf<uint32_t, true>(module->mod_start + nGrubModulesOffset, false);
@@ -94,13 +94,11 @@ void LoadGrubModules(multiboot_info_t* pMultiboot)
             // Module is an elf file so parse it as such
             void* program = kmalloc(size);
             memcpy(program, (void*)(module->mod_start + nGrubModulesOffset), originalSize);
-            uint32_t entry = (uint32_t) LoadElfFile(program);
+            auto elf = LoadElfFile(program);
             kfree(program, size);
 
-            entry -= 0x40000000;
-
             // Create task
-            CreateTask((char const*)moduleString, entry, TaskType::USER_TASK);
+            CreateTask((char const*)moduleString, elf.entry, elf.size, elf.location, TaskType::USER_TASK);
 
             module++;
         }   

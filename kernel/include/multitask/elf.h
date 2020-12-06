@@ -96,6 +96,12 @@ enum ProgramHeaderType
 #define ELF_PT_R 0x2
 #define ELF_PT_W 0x4
 
-void* LoadElfFile(void* file);
+struct ElfReturn
+{
+	uint32_t entry;
+	uint32_t size;
+	uint32_t location;
+};
+ElfReturn LoadElfFile(void* file);
 
 #endif
