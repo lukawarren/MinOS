@@ -53,8 +53,11 @@ void DeallocatePage(uint32_t physicalAddress);
 void AllocatePageDirectory(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags,  bool kernel);
 void DeallocatePageDirectory(uint32_t physicalAddress, uint32_t flags);
 
-void* kmalloc(uint32_t bytes, uint32_t flags = KERNEL_PAGE);
+void* kmalloc(uint32_t bytes, uint32_t flags = KERNEL_PAGE, bool kernel = true);
 void  kfree(void* ptr, uint32_t bytes);
+
+void* malloc(uint32_t bytes, uint32_t flags = USER_PAGE);
+void  free(void* ptr, uint32_t bytes);
 
 void PrintPaging();
 

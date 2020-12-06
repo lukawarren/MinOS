@@ -139,7 +139,7 @@ void DeallocatePageDirectory(uint32_t virtualAddress, uint32_t flags)
     FlushTLB();
 }
 
-void* kmalloc(uint32_t bytes, uint32_t flags)
+void* kmalloc(uint32_t bytes, uint32_t flags, bool kernel)
 {
     // Yes, I *know* this is very inefficient, wastteful, etc but...
     // Links lists are booooooooring
@@ -171,7 +171,7 @@ void* kmalloc(uint32_t bytes, uint32_t flags)
                 uint32_t pageAddress = pageSize*i;
 
                 for (uint32_t p = 0; p < pagesRequired; ++p)
-                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, flags, true);
+                    AllocatePage(pageAddress+pageSize*p, pageAddress+pageSize*p, flags, kernel);
 
                 // Clear pages too
                 memset((void*)pageAddress, 0, pageSize*pagesRequired);
@@ -201,6 +201,16 @@ void kfree(void* ptr, uint32_t bytes)
 
     for (uint32_t i = 0; i < pagesRequired; ++i)
         DeallocatePage((uint32_t)ptr + i*pageSize);
+}
+
+void* malloc(uint32_t bytes, uint32_t flags)
+{
+    return kmalloc(bytes, flags, false);
+}
+
+void free(void* ptr, uint32_t bytes)
+{
+    kfree(ptr, bytes);
 }
 
 void PrintPaging()

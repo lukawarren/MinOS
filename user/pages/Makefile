@@ -9,7 +9,9 @@ HDRFILES := $(shell find $(PROJDIRS) -type f -name "*.h")
 
 ASMFILES := $(shell find $(PROJDIRS) -type f -name "*.S")
 
-OBJFILES += $(patsubst %.S,%.bin,$(ASMFILES))
+OBJFILES := $(patsubst %.cpp,%.cpp.o,$(CPPFILES))
+OBJFILES += $(patsubst %.c,%.c.o,$(CFILES))
+OBJFILES += $(patsubst %.S,%.S.o,$(ASMFILES))
 OBJFILES := $(patsubst src/%,build/%,$(OBJFILES))
 
 WARNINGS := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
@@ -24,11 +26,20 @@ ASSEMBLER := nasm
 
 $(shell mkdir -p build)
 
-all: $(OBJFILES)
-	$(shell cp build/$(NAME).bin ../../build/isodir/modules/$(NAME))
+all: build/$(NAME).bin
+	$(shell cp build/$(NAME).bin ../../build/isodir/modules/$(NAME).elf)
 
-build/%.bin: src/%.S
-	@$(ASSEMBLER) -f bin $< -o $@
+build/$(NAME).bin: $(OBJFILES)
+	@$(TOOLCHAIN)-g++ -T src/linker.ld -o build/$(NAME).bin -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
+
+build/%.cpp.o: src/%.cpp
+	@$(TOOLCHAIN)-g++ $(CPPFLAGS) -c $< -o $@ $(INCLUDEDIRS)
+
+build/%.c.o: src/%.c
+	@$(TOOLCHAIN)-gcc $(CFLAGS) -c $< -o $@ $(INCLUDEDIRS)
+
+build/%.S.o: src/%.S
+	@$(ASSEMBLER) -felf32 $< -o $@
 
 clean:
 	-@$(RM) -r $(wildcard $(OBJFILES) build/*)

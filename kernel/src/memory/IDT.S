@@ -319,30 +319,32 @@ IRQSyscall80:
     push fs
     push gs
 
+    push eax
     mov ax, 0x10
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
+    pop eax
 
     ; Realign stack - pushing 9 is fine, but
     ; we pushed 8 (or will do), so add 1
     add esp, 1
 
-    push dword [esp+36]
-    push dword [esp+32]
-    push dword [esp+28]
-    push dword [esp+24]
-    push dword [esp+20]
-    push dword [esp+16]
-    push dword [esp+10]
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push ebp
+    push edi
+    push esi
     call HandleSyscalls ; Call syscall
-    pop eax
-    pop eax
-    pop eax
-    pop eax
-    pop eax
-    pop eax
+    pop esi
+    pop edi
+    pop ebp
+    pop edx
+    pop ecx
+    pop ebx
     pop eax
 
     ; "Un-realign" stack

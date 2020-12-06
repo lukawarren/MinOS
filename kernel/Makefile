@@ -35,7 +35,7 @@ build/%.cpp.o: src/%.cpp
 	@$(TOOLCHAIN)-g++ $(CPPFLAGS) -c $< -o $@ $(INCLUDEDIRS)
 
 build/%.c.o: src/%.c
-	@$(TOOLCHAIN)-gcc $(CFLAGS) -c $< -o $@ -$(INCLUDEDIRS)
+	@$(TOOLCHAIN)-gcc $(CFLAGS) -c $< -o $@ $(INCLUDEDIRS)
 
 build/%.S.o: src/%.S
 	@$(ASSEMBLER) -felf32 $< -o $@
