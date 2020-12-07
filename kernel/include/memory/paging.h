@@ -61,4 +61,6 @@ void  free(void* ptr, uint32_t bytes);
 
 void PrintPaging();
 
+bool IsPageWithinUserBounds(uint32_t address);
+
 #endif

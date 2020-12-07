@@ -1,13 +1,14 @@
 #include "syscall.h"
+#include "../memory/paging.h"
 #include "../memory/idt.h"
 #include "../gfx/vga.h"
 
-static void SysVgaPrintf    (Registers syscall);
+static void SysPrintf       (Registers syscall);
 static void SysThreadExit   (Registers syscall);
 
 static void (*pSyscalls[2])(Registers syscall) =
 {
-    &SysVgaPrintf,
+    &SysPrintf,
     &SysThreadExit
 };
 
@@ -26,10 +27,12 @@ void HandleSyscalls(Registers syscall)
     PIC_EndInterrupt(0x80);
 }
 
-static void SysVgaPrintf(Registers syscall)
+static void SysPrintf(Registers syscall)
 {
-    VGA_printf("printf ", false);
-    VGA_printf<uint32_t, true>(syscall.ecx);
+    // Sanity check address in ecx to check it's within range
+    if (!IsPageWithinUserBounds(syscall.ecx)) return;
+
+    VGA_printf((char const*)syscall.ecx);
 }
 
 static void SysThreadExit(Registers syscall)

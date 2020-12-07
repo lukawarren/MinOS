@@ -304,4 +304,10 @@ uint32_t GetMaxMemoryRange(multiboot_info_t* pMultiboot)
     return maxMemoryRange;
 }
 
+bool IsPageWithinUserBounds(uint32_t address)
+{
+    unsigned int pageTableIndex = (address == 0) ? 0 : (address / PAGE_SIZE);
+    return !pageListArray[pageTableIndex].IsKernel();
+}
+
 #pragma GCC diagnostic pop
