@@ -101,6 +101,10 @@ struct ElfReturn
 	uint32_t entry;
 	uint32_t size;
 	uint32_t location;
+	uint32_t error = 0;
+	
+	ElfReturn(uint32_t _entry, uint32_t _size, uint32_t _location) : entry(_entry), size(_size), location(_location), error(0) {}
+	ElfReturn() : error(1) {}
 };
 ElfReturn LoadElfFile(void* file);
 

@@ -2,6 +2,8 @@
 #include "../gfx/vga.h"
 #include "../memory/paging.h"
 
+#define ELF_ERROR_MESSAGE(message) VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED); VGA_printf(message);
+
 static void LoadElfSegment(void* file, ElfProgramHeader* programHeader, void* memory);
 
 ElfReturn LoadElfFile(void* file)
@@ -9,17 +11,17 @@ ElfReturn LoadElfFile(void* file)
     // Get ELF header
     Elf32Header* header = (Elf32Header*)file;
     // Check for magic number
-    if (header->e_ident[EI_MAG0] != ELFMAG0) { VGA_printf("Incorrect ELF mag0"); return {}; }
-    if (header->e_ident[EI_MAG1] != ELFMAG1) { VGA_printf("Incorrect ELF mag1"); return {}; }
-    if (header->e_ident[EI_MAG2] != ELFMAG2) { VGA_printf("Incorrect ELF mag2"); return {}; }
-    if (header->e_ident[EI_MAG3] != ELFMAG3) { VGA_printf("Incorrect ELF mag3"); return {}; }
+    if (header->e_ident[EI_MAG0] != ELFMAG0) { ELF_ERROR_MESSAGE("Incorrect ELF mag0"); return {}; }
+    if (header->e_ident[EI_MAG1] != ELFMAG1) { ELF_ERROR_MESSAGE("Incorrect ELF mag1"); return {}; }
+    if (header->e_ident[EI_MAG2] != ELFMAG2) { ELF_ERROR_MESSAGE("Incorrect ELF mag2"); return {}; }
+    if (header->e_ident[EI_MAG3] != ELFMAG3) { ELF_ERROR_MESSAGE("Incorrect ELF mag3"); return {}; }
     
     // Check other header values
-    if (header->e_ident[EI_CLASS]   != ELFCLASS32)    { VGA_printf("Incorrect ELF class");        return {}; }
-    if (header->e_ident[EI_DATA]    != ELFDATA2LSB)   { VGA_printf("Incorrect ELF byte order");   return {}; }
-    if (header->e_ident[EI_VERSION] != EV_CURRENT)    { VGA_printf("Incorrect ELF version");      return {}; }
-    if (header->e_machine           != EM_386)        { VGA_printf("Incorrect ELF target");       return {}; }
-    if (header->e_type              != ET_EXEC)       { VGA_printf("Incorrect ELF type");         return {}; }
+    if (header->e_ident[EI_CLASS]   != ELFCLASS32)    { ELF_ERROR_MESSAGE("Incorrect ELF class");        return {}; }
+    if (header->e_ident[EI_DATA]    != ELFDATA2LSB)   { ELF_ERROR_MESSAGE("Incorrect ELF byte order");   return {}; }
+    if (header->e_ident[EI_VERSION] != EV_CURRENT)    { ELF_ERROR_MESSAGE("Incorrect ELF version");      return {}; }
+    if (header->e_machine           != EM_386)        { ELF_ERROR_MESSAGE("Incorrect ELF target");       return {}; }
+    if (header->e_type              != ET_EXEC)       { ELF_ERROR_MESSAGE("Incorrect ELF type");         return {}; }
 
     // Get total file size for malloc
     ElfProgramHeader* programHeader = (ElfProgramHeader*)((uint32_t)file + header->e_phoff);

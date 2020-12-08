@@ -191,7 +191,6 @@ IRQUnknown:
 global IRQException%1
 IRQException%1:
     cli
-    xchg bx, bx
 
     ; Preserve segment registers
     ; and use ring 0 ones

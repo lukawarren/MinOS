@@ -92,6 +92,8 @@ void DisableScheduler()             { bEnableMultitasking = false; }
 
 static void MapNewUserTask(Task* task)
 {
+    // Unmap current task so its memory can't be read or written to accidentally
+
     // Setup paging so task begins at 0x40000000
     for (uint32_t i = 0; i < task->size / PAGE_SIZE; ++i)
     {

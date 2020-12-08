@@ -9,17 +9,20 @@
 // Paging ruins memory, but a modern machine
 // really should have at least 50MB (right?!),
 // so just put it there
-void* pGrubModules = (void*)((uint32_t)(&__kernel_end) + (1024*1024*50)); 
+void* pGrubModules = (void*)((uint32_t)(&__kernel_end) + (1024*1024*60)); 
 uint32_t nGrubModulesSize = 0;
-uint32_t nGrubModulesOffset = 0;
 
 // It is reasonable to assume the strings
 // in these GRUB modules will be no bigger than
-// a combined 10MB, and that each will be no bigger
-// than 512 characters, so that an array of strings
+// a combined 1MB, and that each will be no bigger
+// than 256 characters, so that an array of strings
 // can be formed.
-char* pGrubStrings = (char*)((uint32_t)(&__kernel_end) + (1024*1024*40));
+char* pGrubStrings = (char*)((uint32_t)(&__kernel_end) + (1024*1024*50));
 constexpr uint32_t nGrubStringsLength = 256;
+
+// Below that in memory, a 1MB array of the moduel
+// sizes.
+uint32_t* pGrubSizes = (uint32_t*)((uint32_t)(&__kernel_end) + (1024*1024*49));
 
 void MoveGrubModules(multiboot_info_t* pMultiboot)
 {
@@ -32,13 +35,17 @@ void MoveGrubModules(multiboot_info_t* pMultiboot)
         multiboot_module_t* module = (multiboot_module_t*) pMultiboot->mods_addr;
         for (unsigned int i = 0; i < pMultiboot->mods_count; ++i)
         {
-            // Round size of binary to nearest page
             uint32_t size = module->mod_end - module->mod_start;
 
-            memcpy(pGrubModules, (void*)module->mod_start, size);
+            VGA_printf("Copying from ", false);
+            VGA_printf<uint32_t, true>(module->mod_start, false);
+            VGA_printf(" to ", false);
+            VGA_printf<uint32_t, true>((uint32_t)pGrubModules + nGrubModulesSize);
+            memcpy((void*)((uint32_t)pGrubModules + nGrubModulesSize), (void*)module->mod_start, size);
             nGrubModulesSize += size;
 
-            if (i == 0) nGrubModulesOffset = (uint32_t)pGrubModules - module->mod_start;
+            // Size array
+            pGrubSizes[i] = size;            
 
             // Copy over strings too
             strncpy(pGrubStrings, (char*)module->cmdline, nGrubStringsLength);
@@ -66,6 +73,11 @@ void LoadGrubModules(multiboot_info_t* pMultiboot)
         AllocatePage((uint32_t)pGrubStrings + PAGE_SIZE*i, (uint32_t)pGrubStrings + PAGE_SIZE*i, KERNEL_PAGE, true);
     pGrubStrings -= pMultiboot->mods_count * nGrubStringsLength;
 
+    uint32_t sizePages = 1024 ;
+    for (uint32_t i = 0; i < sizePages; ++i)
+        AllocatePage((uint32_t)pGrubSizes + PAGE_SIZE*i, (uint32_t)pGrubSizes + PAGE_SIZE*i, KERNEL_PAGE, true);
+    sizePages -= pMultiboot->mods_count;
+
     // Load GRUB modules as user processes
     if (pMultiboot->mods_count > 0)
     {
@@ -86,27 +98,33 @@ void LoadGrubModules(multiboot_info_t* pMultiboot)
             uint32_t remainder = size % PAGE_SIZE;
             if (remainder != 0) size += PAGE_SIZE - remainder;
             
+            // Get address
+            uint32_t address = (uint32_t) pGrubModules;
+
             VGA_printf(" at address ", false);
-            VGA_printf<uint32_t, true>(module->mod_start + nGrubModulesOffset, false);
+            VGA_printf<uint32_t, true>(address, false);
             VGA_printf(" with size ", false);
             VGA_printf<uint32_t, true>(size);
 
             // Module is an elf file so parse it as such
             void* program = kmalloc(size);
-            memcpy(program, (void*)(module->mod_start + nGrubModulesOffset), originalSize);
+            memcpy(program, (void*)address, originalSize);
             auto elf = LoadElfFile(program);
             kfree(program, size);
 
             // Create task
-            CreateTask((char const*)moduleString, elf.entry, elf.size, elf.location, TaskType::USER_TASK);
+            if (!elf.error)
+                CreateTask((char const*)moduleString, elf.entry, elf.size, elf.location, TaskType::USER_TASK);
 
             module++;
+            pGrubModules = (void*)((uint32_t)pGrubModules + pGrubSizes[i]);
         }   
 
         VGA_printf("");
     }
 
     // Free grub buffer
-    for (uint32_t i = 0; i < modulePages; ++i) DeallocatePage((uint32_t)pGrubModules + PAGE_SIZE*i);
+    for (uint32_t i = 0; i < modulePages; ++i)  DeallocatePage((uint32_t)pGrubModules + PAGE_SIZE*i);
     for (uint32_t i = 0; i < stringsPages; ++i) DeallocatePage((uint32_t)pGrubStrings + PAGE_SIZE*i);
+    for (uint32_t i = 0; i < sizePages; ++i)    DeallocatePage((uint32_t)pGrubSizes   + PAGE_SIZE*i);
 }
