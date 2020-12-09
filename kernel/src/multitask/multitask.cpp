@@ -2,7 +2,7 @@
 #include "../interrupts/interrupts.h"
 #include "../memory/paging.h"
 #include "../gfx/vga.h"
-#include "../stdlib.h"
+#include "stdlib.h"
 #include "taskSwitch.h"
 
 bool bEnableMultitasking = false;
@@ -15,6 +15,7 @@ size_t nTasks = 0;
 
 // Ring 0 vs Ring 3
 TSS* tss = nullptr;
+static uint32_t lastUserTaskPages = 0;
 
 Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location, TaskType type)
 {
@@ -35,7 +36,7 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     }
 
     // Allocate stack
-    task->pStack = (uint32_t*)((uint32_t)kmalloc(4096, type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE) + 4096 - 16); // Stack grows downwards
+    task->pStack = (uint32_t*)((uint32_t)kmalloc(4096, type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE, type == KERNEL_TASK) + 4096 - 16); // Stack grows downwards
     uint32_t* pStackTop = task->pStack;
     
     // Get eflags
@@ -93,12 +94,18 @@ void DisableScheduler()             { bEnableMultitasking = false; }
 static void MapNewUserTask(Task* task)
 {
     // Unmap current task so its memory can't be read or written to accidentally
+    for (uint32_t i = 0; i < lastUserTaskPages; ++i)
+    {
+        DeallocatePage(0x40000000 + i*PAGE_SIZE);
+    } 
 
     // Setup paging so task begins at 0x40000000
     for (uint32_t i = 0; i < task->size / PAGE_SIZE; ++i)
     {
         AllocatePage(task->location + i * PAGE_SIZE, 0x40000000 + i * PAGE_SIZE, USER_PAGE, false);
     }
+
+    lastUserTaskPages = task->size / PAGE_SIZE;
 }
 
 void OnMultitaskPIT()
@@ -142,4 +149,9 @@ void OnMultitaskPIT()
             bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
         }      
     }
+}
+
+uint32_t GetNumberOfTasks()
+{
+    return nTasks;
 }

@@ -1,23 +1,26 @@
 #include "syscall.h"
+#include "../multitask/multitask.h"
 #include "../memory/paging.h"
 #include "../memory/idt.h"
 #include "../gfx/vga.h"
 
-static void SysPrintf       (Registers syscall);
-static void SysThreadExit   (Registers syscall);
+static int SysPrintf       (Registers syscall);
+static int SysGetTasks     (Registers syscall);
 
-static void (*pSyscalls[2])(Registers syscall) =
+static int (*pSyscalls[2])(Registers syscall) =
 {
     &SysPrintf,
-    &SysThreadExit
+    &SysGetTasks
 };
 
-void HandleSyscalls(Registers syscall)
+int HandleSyscalls(Registers syscall)
 {
     // Get syscall type
     const uint32_t type = syscall.eax;
 
-    if (type <= (THREAD_EXIT - VGA_PRINTF)) pSyscalls[type](syscall);
+    int returnValue = -1;
+
+    if (type <= (THREAD_EXIT - VGA_PRINTF)) returnValue = pSyscalls[type](syscall);
     else
     {
         VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
@@ -25,18 +28,20 @@ void HandleSyscalls(Registers syscall)
     }
 
     PIC_EndInterrupt(0x80);
+    return returnValue;
 }
 
-static void SysPrintf(Registers syscall)
+static int SysPrintf(Registers syscall)
 {
     // Sanity check address in ecx to check it's within range
-    if (!IsPageWithinUserBounds(syscall.ecx)) return;
+    if (!IsPageWithinUserBounds(syscall.ecx)) return -1;
 
     VGA_printf((char const*)syscall.ecx);
+
+    return 0;
 }
 
-static void SysThreadExit(Registers syscall)
+static int SysGetTasks(Registers syscall __attribute__((unused)))
 {
-    VGA_printf("thread exiting...");
-    VGA_printf<uint32_t, true>(syscall.ecx);
+    return GetNumberOfTasks();
 }

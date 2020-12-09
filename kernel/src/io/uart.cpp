@@ -1,7 +1,7 @@
 #include "uart.h"
 #include "io.h"
 #include "vga.h"
-#include "../stdlib.h"
+#include "stdlib.h"
 
 UART* UART::pCOM = nullptr;
 

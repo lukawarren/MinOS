@@ -25,6 +25,8 @@ void DisableScheduler();
 
 void OnMultitaskPIT();
 
+uint32_t GetNumberOfTasks();
+
 enum TaskType
 {
     KERNEL_TASK,

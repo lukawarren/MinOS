@@ -1,7 +1,7 @@
 NAME := pages
 
 PROJDIRS := src
-INCLUDEDIRS := -Iinclude -I../../kernel/include
+INCLUDEDIRS := -Iinclude -I../../kernel/include -I../../stdlib/include
 
 CPPFILES := $(shell find $(PROJDIRS) -type f -name "*.cpp")
 CFILES += $(shell find $(PROJDIRS) -type f -name "*.c")
@@ -13,6 +13,7 @@ OBJFILES := $(patsubst %.cpp,%.cpp.o,$(CPPFILES))
 OBJFILES += $(patsubst %.c,%.c.o,$(CFILES))
 OBJFILES += $(patsubst %.S,%.S.o,$(ASMFILES))
 OBJFILES := $(patsubst src/%,build/%,$(OBJFILES))
+OBJFILES += $(shell find ../../stdlib/build/ -type f -name "*.o")
 
 WARNINGS := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
 			-Wwrite-strings -Wmissing-declarations \

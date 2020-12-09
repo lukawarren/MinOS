@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "../io/pic.h"
-#include "../stdlib.h"
+#include "stdlib.h"
 
 /*
     0x00 Divide by zero

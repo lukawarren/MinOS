@@ -6,6 +6,7 @@ build/$(NAME).iso:
 
 	mkdir -p build/isodir/modules/
 
+	$(MAKE) -C stdlib
 	$(MAKE) -C kernel
 	$(MAKE) -C user/pages
 
@@ -16,5 +17,7 @@ build/$(NAME).iso:
 
 clean:
 	-@$(RM) -r $(wildcard $(OBJFILES) build/*)
+	
+	$(MAKE) -C stdlib clean
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user/pages clean

@@ -5,6 +5,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 size_t  strlen(const char* string);
 
 size_t  pow(const size_t number, const size_t power);
@@ -26,5 +31,9 @@ struct Registers
     uint32_t ebx;
     uint32_t eax;
 }  __attribute__((packed));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

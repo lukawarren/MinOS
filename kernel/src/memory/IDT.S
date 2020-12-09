@@ -52,18 +52,11 @@ IRQ%1:
     mov fs, ax
     mov gs, ax
 
-    ; Realign stack - pushing 9 is fine, but
-    ; we pushed 10 (or will do), so add 8
-    add esp, 8
-
     push    dword 0             ; This is not an error
     push    dword %1            ; Push interrupt id
     call    HandleInterrupts    ; Call generic function
     pop     eax
     pop     eax
-
-    ; "Un-realign" stack
-    sub esp, 8
 
     ; Get back segment registers
     pop gs
@@ -156,18 +149,11 @@ IRQUnknown:
     mov fs, ax
     mov gs, ax
 
-    ; Realign stack - pushing 9 is fine, but
-    ; we pushed 10 (or will do), so add 8
-    add esp, 8
-
     push    dword 1             ; This is an error! (well, sort of)
     push    dword 0xAF          ; Push superfluous id
     call    HandleInterrupts    ; Call generic function
     pop     eax
     pop     eax
-    
-    ; "Un-realign" stack
-    sub esp, 8
 
     ; Get back segment registers
     pop gs
@@ -299,15 +285,6 @@ global IRQSyscall80
 IRQSyscall80:
     cli
 
-    ; Preserve state
-    push eax
-    push ebx
-    push ecx
-    push edx
-    push ebp
-    push edi
-    push esi
-
     ; Preserve segment registers
     ; and use ring 0 ones
     push ds
@@ -323,27 +300,24 @@ IRQSyscall80:
     mov gs, ax
     pop eax
 
-    ; Realign stack by adding 2
-    add esp, 2
-
-    push eax
+    ; Preserve state
+    push eax            ; (function argument)
     push ebx
     push ecx
     push edx
     push ebp
     push edi
     push esi
+
     call HandleSyscalls ; Call syscall
+    
     pop esi
     pop edi
     pop ebp
     pop edx
     pop ecx
     pop ebx
-    pop eax
-
-    ; "Un-realign" stack
-    sub esp, 2
+    add esp, 4          ; Don't trash eax!
 
     ; Get back segment registers
     pop gs
@@ -351,13 +325,8 @@ IRQSyscall80:
     pop es
     pop ds
 
-    ; Restore state
-    pop esi
-    pop edi
-    pop ebp
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    ; Returun value is in eax,
+    ; hence the failure to preserve
+    ; it's value above - C expcects this
 
     iret                        ; Return

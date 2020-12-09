@@ -1,5 +1,5 @@
 #include "vga.h"
-#include "../stdlib.h"
+#include "stdlib.h"
 #include "../io/io.h"
 #include "charset.h"
 
