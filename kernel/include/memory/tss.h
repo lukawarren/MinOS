@@ -43,8 +43,6 @@ inline constexpr TSS CreateTSSEntry(const uint32_t stackPointer0, const uint32_t
     tss.esp0 = stackPointer0;
     tss.iomap_base = sizeof(TSS);
 
-    tss.cs   = 0x0b;
-    tss.ss = tss.ds = tss.es = tss.fs = tss.gs = 0x13;
     return tss;
 }
 

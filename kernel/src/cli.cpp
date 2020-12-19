@@ -1,7 +1,7 @@
 #include "cli.h"
 #include "gfx/vga.h"
 
-CLI::CLI(void (*_OnCommand)(char*)) { OnCommand = _OnCommand; }
+CLI::CLI(void (*_OnCommand)(char*)) { OnCommand = _OnCommand; bufferCount = CLI_BEGIN; }
 
 void CLI::Update(uint8_t scancode)
 {

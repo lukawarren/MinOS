@@ -32,8 +32,8 @@ SECTIONS
 		*(COMMON)
 		*(.bss)
 		. = ALIGN(16);
-		__tss_stack = .;
 		. += 4k;
+		__tss_stack = .;
 		. = ALIGN(4k);
 		__kernel_end = .;
 	}
