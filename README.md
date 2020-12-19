@@ -5,6 +5,7 @@ A tiny x86 kernel written in modern C++ and Assembly.
 * Multiboot 2 compliant kernel
 * Interrupts
 * Paging
+* Pre-emptive multitasking (ring 3 and 0)
 * VGA text mode output
 * Serial UART output
 
@@ -35,6 +36,13 @@ docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd c
 git clone https://github.com/TheUltimateKerbonaut/MinOS
 cd MinOS
 make
+```
+
+## Running scripts manually
+The output of each script has already been generated. You may however do this yourself. Simply go into the directory of each and run:
+```
+make
+./{name}
 ```
 
 ## Running

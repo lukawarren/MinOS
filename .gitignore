@@ -10,3 +10,5 @@ bochs/
 build/
 kernel/build/
 user/pages/build/
+
+tools/filesystem/build

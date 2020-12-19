@@ -10,6 +10,8 @@ build/$(NAME).iso:
 	$(MAKE) -C kernel
 	$(MAKE) -C user/pages
 
+	cp scripts/filesystem/output/filesystem.bin build/isodir/modules/filesystem.bin
+
 	mkdir -p build/isodir/boot/grub
 	cp kernel/build/$(NAME).bin build/isodir/boot/$(NAME).bin
 	cp kernel/src/grub.cfg build/isodir/boot/grub/grub.cfg
