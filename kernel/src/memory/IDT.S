@@ -22,6 +22,7 @@ LoadIDT:
 extern HandleInterrupts
 extern HandleExceptions
 extern PerformTaskSwitch
+extern PerformOneWaySwitch
 
 %macro IRQHandler 1
 global IRQ%1
@@ -280,11 +281,25 @@ IRQException 29
 IRQException 30
 
 ; IRQ syscall 0x80
+extern __tss_stack
 extern HandleSyscalls
 global IRQSyscall80
 IRQSyscall80:
     cli
 
+    ; When exiting tasks, the current
+    ; stack becomes unallocated,
+    ; so switch to the kernel stack
+    ; instead (hardware TSS stuff is
+    ; not used)
+    cmp eax, 2
+    je PerformTaskSave
+    jmp AfterTaskSave
+
+PerformTaskSave:
+    mov esp, __tss_stack
+
+AfterTaskSave:
     ; Preserve segment registers
     ; and use ring 0 ones
     push ds
@@ -308,7 +323,7 @@ IRQSyscall80:
     push ebp
     push edi
     push esi
-
+    
     call HandleSyscalls ; Call syscall
     
     pop esi
@@ -325,8 +340,16 @@ IRQSyscall80:
     pop es
     pop ds
 
+    ; Perform IRQ jump if nessecaryy
+    cmp [bIRQShouldJump], byte 1
+    je  SyscallIRQJump
+    jmp SyscallFinishJump
+
+SyscallIRQJump:
+    mov [bIRQShouldJump], byte 0
+    call PerformOneWaySwitch
+SyscallFinishJump:
     ; Returun value is in eax,
     ; hence the failure to preserve
     ; it's value above - C expcects this
-
     iret                        ; Return

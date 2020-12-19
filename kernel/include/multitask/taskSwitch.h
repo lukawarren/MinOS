@@ -11,6 +11,7 @@ extern volatile uint32_t newTaskStack;
 extern "C"
 {
     extern void PerformTaskSwitch();
+    extern void PerformOneWaySwitch();
 }
 
 #endif

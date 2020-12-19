@@ -9,7 +9,8 @@ int main()
     strncpy(jeff, bob, 100);
     printf(jeff);
     
-    while(1) asm("nop");
+    printf("Hello world!");
 
+    sysexit();
     return 0;
 }

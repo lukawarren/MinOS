@@ -23,6 +23,8 @@ static uint32_t* pageTables;
 static Page* pageListArray;
 uint32_t maxPhysicalPages;
 
+extern uint32_t __tss_stack;
+
 void InitPaging(const uint32_t maxAddress)
 {
     // Knowing memory size will allow for allocation in pageListArray later
@@ -48,9 +50,8 @@ void InitPaging(const uint32_t maxAddress)
     uint32_t pagesToAllocate = (kernelMemorySoFar - pagingBegin) / pageSize;
     for (uint32_t i = 0; i < pagesToAllocate; ++i) AllocatePage(i * pageSize, i * pageSize, KERNEL_PAGE, true);
 
-    // User space will begin at 0x40000000 (1 GB) virtually, but physically at (what is currently) 16MB
-    // At the time of writing it isn't used, but is allocated as a "token gesture", and to verify the mappping does indeed work.
-    //AllocatePageDirectory(0x1000000, 0x40000000, PD_PRESENT(1) | PD_READWRITE(0) | PD_SUPERVISOR(0), false);  
+    // Allocate TSS stack
+    AllocatePage((uint32_t)&__tss_stack, (uint32_t)&__tss_stack, KERNEL_PAGE, true);
 
     // Allocate pages for VGA framebuffer, after aligning it
     uint32_t aligendFramebufferAddress = (uint32_t)VGA_framebuffer.address & ~(0xFFFF);

@@ -18,6 +18,7 @@
 #include "cli.h"
 #include "stdlib.h"
 
+extern uint32_t __tss_stack;
 TSS tssEntry;
 uint64_t GDTTable[6];
 multiboot_info_t* pMultiboot;
@@ -57,7 +58,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf<uint16_t, true>((uint16_t)COM1.m_Com);
 
     // Create TSS
-    tssEntry = CreateTSSEntry(0x0, 0x10); // Stack pointer (zero for now, not needed yet) and ring 0 data selector 
+    tssEntry = CreateTSSEntry((uint32_t)&__tss_stack, 0x10); // Stack pointer and ring 0 data selector 
 
     // Construct GDT entries (0xFFFFF actually translates to all of memory)
     GDTTable[0] = CreateGDTEntry(0, 0, 0);                                          // GDT entry at 0x0 cannot be used

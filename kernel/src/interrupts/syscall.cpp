@@ -4,13 +4,22 @@
 #include "../memory/idt.h"
 #include "../gfx/vga.h"
 
-static int SysPrintf       (Registers syscall);
-static int SysGetTasks     (Registers syscall);
+enum Syscalls
+{
+    VGA_PRINTF,
+    NTASKS,
+    SYSEXIT
+};
 
-static int (*pSyscalls[2])(Registers syscall) =
+static int SysPrintf        (Registers syscall);
+static int SysNTasks        (Registers syscall);
+static int SysSysexit       (Registers syscall);
+
+static int (*pSyscalls[3])(Registers syscall) =
 {
     &SysPrintf,
-    &SysGetTasks
+    &SysNTasks,
+    &SysSysexit
 };
 
 int HandleSyscalls(Registers syscall)
@@ -20,7 +29,7 @@ int HandleSyscalls(Registers syscall)
 
     int returnValue = -1;
 
-    if (type <= (THREAD_EXIT - VGA_PRINTF)) returnValue = pSyscalls[type](syscall);
+    if (type <= (SYSEXIT - VGA_PRINTF)) returnValue = pSyscalls[type](syscall);
     else
     {
         VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
@@ -41,7 +50,13 @@ static int SysPrintf(Registers syscall)
     return 0;
 }
 
-static int SysGetTasks(Registers syscall __attribute__((unused)))
+static int SysNTasks(Registers syscall __attribute__((unused)))
 {
     return GetNumberOfTasks();
+}
+
+static int SysSysexit(Registers syscall __attribute__((unused)))
+{
+    TaskExit();
+    return 0;
 }

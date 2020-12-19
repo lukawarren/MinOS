@@ -10,6 +10,9 @@ global newTaskStack
 newTaskStack:
     dd 0
 
+bob:
+    dd 0
+
 section text
 
 global PerformTaskSwitch
@@ -75,3 +78,7 @@ switchToNewTask:
     pop eax
 
     ret ; Return anew
+
+global PerformOneWaySwitch
+PerformOneWaySwitch:
+    jmp switchToNewTask

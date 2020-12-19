@@ -14,6 +14,7 @@ struct Task
     uint32_t size;
     uint32_t location;
     uint32_t* pStack;
+    uint32_t* pOriginalStack;
     Task* pPrevTask = nullptr;
     Task* pNextTask = nullptr;
 };
@@ -26,6 +27,8 @@ void DisableScheduler();
 void OnMultitaskPIT();
 
 uint32_t GetNumberOfTasks();
+
+void TaskExit();
 
 enum TaskType
 {

@@ -15,6 +15,7 @@ size_t nTasks = 0;
 
 // Ring 0 vs Ring 3
 TSS* tss = nullptr;
+extern uint32_t __tss_stack;
 static uint32_t lastUserTaskPages = 0;
 
 Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location, TaskType type)
@@ -24,20 +25,19 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     strncpy(task->sName, sName, 32);
     task->bKernel = type == KERNEL_PAGE;
 
-    if (type != KERNEL_PAGE)
-    {
-        // Round task to nearest page
-        uint32_t originalSize = size;
-        uint32_t roundedSize = originalSize;
-        uint32_t remainder = roundedSize % PAGE_SIZE;
-        if (remainder != 0) roundedSize += PAGE_SIZE - remainder;
-        task->size = roundedSize;
-        task->location = location;
-    }
+    // Round task to nearest page
+    uint32_t originalSize = size;
+    uint32_t roundedSize = originalSize;
+    uint32_t remainder = roundedSize % PAGE_SIZE;
+    if (remainder != 0) roundedSize += PAGE_SIZE - remainder;
+    task->size = roundedSize;
+    task->location = location;
 
     // Allocate stack
-    task->pStack = (uint32_t*)((uint32_t)kmalloc(4096, type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE, type == KERNEL_TASK) + 4096 - 16); // Stack grows downwards
+    uint32_t stack = (uint32_t)kmalloc(4096, type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE, type == KERNEL_TASK);
+    task->pStack = (uint32_t*)(stack + 4096 - 16); // Stack grows downwards
     uint32_t* pStackTop = task->pStack;
+    task->pOriginalStack = (uint32_t*)stack;
     
     // Get eflags
     uint32_t eflags;
@@ -154,4 +154,49 @@ void OnMultitaskPIT()
 uint32_t GetNumberOfTasks()
 {
     return nTasks;
+}
+
+void TaskExit()
+{
+    Task* task = pCurrentTask;
+
+    /*
+    // Update linked list
+    if (task->pPrevTask != nullptr) 
+    {
+        pCurrentTask = task->pPrevTask;
+        pCurrentTask->pNextTask = task->pNextTask;
+        if (pCurrentTask->pNextTask != pTaskListTail) pCurrentTask->pNextTask->pPrevTask = pCurrentTask;   
+    }   
+    if (task->pNextTask != pTaskListHead)
+    {
+        pCurrentTask = task->pNextTask;
+    } 
+    else pCurrentTask = nullptr;
+    */
+
+    /*
+    if (pTaskListHead == task && nTasks > 1) pTaskListHead = task->pPrevTask;
+    if (pTaskListTail == task && nTasks > 1) pTaskListTail = task->pNextTask;
+
+    if (task->pNextTask != task && nTasks > 2)
+    {
+        pCurrentTask = task->pPrevTask;
+        pCurrentTask->pNextTask = task->pNextTask;
+    }
+    else pCurrentTask = nullptr;
+    */
+
+    pCurrentTask = task->pPrevTask;
+    pCurrentTask->pNextTask = task->pNextTask;
+    pTaskListHead = pCurrentTask;
+
+    // Unallocate all memory
+    kfree(task->pOriginalStack, 4096); // stack
+    if (task->size != 0) kfree((void*)task->location, task->size); // memory
+    kfree(task, sizeof(Task)); // task struct
+
+    // Switch to new task
+    nTasks--;
+    OnMultitaskPIT();
 }
