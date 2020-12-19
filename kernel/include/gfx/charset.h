@@ -7,7 +7,7 @@
 
 #define CHAR_HEIGHT 8
 #define CHAR_WIDTH 8
-#define CHAR_SCALE 1
+#define CHAR_SCALE 2
 
 /* From https://github.com/dhepper/font8x8/blob/master/font8x8_block.h */
 

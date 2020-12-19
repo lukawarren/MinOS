@@ -15,6 +15,7 @@
 #include "multitask/multitask.h"
 #include "multitask/modules.h"
 #include "multitask/ring.h"
+#include "file/filesystem.h"
 #include "cli.h"
 #include "stdlib.h"
 

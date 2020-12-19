@@ -1,7 +1,7 @@
 NAME := MinOS
 
 PROJDIRS := src
-INCLUDEDIRS := -Iinclude -I../stdlib/include -Iinclude/io -Iinclude/memory -Iinclude/interrupts -Iinclude/gfx -Iinclude/multitask
+INCLUDEDIRS := -Iinclude -I../stdlib/include -Iinclude/io -Iinclude/memory -Iinclude/interrupts -Iinclude/gfx -Iinclude/multitask -Iinclude/file
 
 CPPFILES := $(shell find $(PROJDIRS) -type f -name "*.cpp")
 CFILES += $(shell find $(PROJDIRS) -type f -name "*.c")
@@ -25,7 +25,7 @@ CPPFLAGS := -std=c++17 $(WARNINGS) -ffreestanding -ffreestanding -O2 -fno-except
 TOOLCHAIN := i686-elf
 ASSEMBLER := nasm
 
-$(shell mkdir -p build/io build/interrupts build/memory build/gfx build/multitask)
+$(shell mkdir -p build/io build/interrupts build/memory build/gfx build/multitask build/file)
 
 all: build/$(NAME).bin
 
