@@ -112,11 +112,13 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("");
 
     // Load GRUB modules
-    LoadGrubModules(pMultiboot);
+    uint32_t vfsAddress = LoadGrubVFS(pMultiboot);
 
     // Start prompt
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
+
+    ParseVFS(vfsAddress);
 
     EnableScheduler();
 
@@ -138,10 +140,6 @@ void OnCommand(char* buffer)
     else if (strcmp(buffer, "$ paging"))
     {
         PrintPaging();
-    }
-    else if (strcmp(buffer, "$ hello"))
-    {
-        LoadGrubModules(pMultiboot);
     }
     else if (strcmp(buffer, "$ ")) {}
     #if DO_SOUND_DEMO

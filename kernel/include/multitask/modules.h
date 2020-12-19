@@ -8,6 +8,6 @@
 #include "../multiboot.h"
 
 void MoveGrubModules(multiboot_info_t* pMultiboot);
-void LoadGrubModules(multiboot_info_t* pMultiboot);
+uint32_t LoadGrubVFS(multiboot_info_t* pMultiboot);
 
 #endif

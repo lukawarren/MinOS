@@ -6,4 +6,6 @@
 #include <stddef.h>
 #include "file.h"
 
+void ParseVFS(uint32_t vfs);
+
 #endif
