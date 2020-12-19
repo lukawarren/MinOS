@@ -78,6 +78,8 @@ void LoadGrubModules(multiboot_info_t* pMultiboot)
         AllocatePage((uint32_t)pGrubSizes + PAGE_SIZE*i, (uint32_t)pGrubSizes + PAGE_SIZE*i, KERNEL_PAGE, true);
     sizePages -= pMultiboot->mods_count;
 
+    void* pGrubModulesOriginal = pGrubModules;
+
     // Load GRUB modules as user processes
     if (pMultiboot->mods_count > 0)
     {
@@ -88,9 +90,9 @@ void LoadGrubModules(multiboot_info_t* pMultiboot)
             char const* moduleString = pGrubStrings;
             pGrubStrings += nGrubStringsLength;
 
-            VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-            VGA_printf("Loading module ", false);
-            VGA_printf((char const*)moduleString, false);
+            //VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
+            //VGA_printf("Loading module ", false);
+            //VGA_printf((char const*)moduleString, false);
 
             // Round size of binary to nearest page
             uint32_t originalSize = module->mod_end - module->mod_start;
@@ -101,10 +103,10 @@ void LoadGrubModules(multiboot_info_t* pMultiboot)
             // Get address
             uint32_t address = (uint32_t) pGrubModules;
 
-            VGA_printf(" at address ", false);
-            VGA_printf<uint32_t, true>(address, false);
-            VGA_printf(" with size ", false);
-            VGA_printf<uint32_t, true>(size);
+            //VGA_printf(" at address ", false);
+            //VGA_printf<uint32_t, true>(address, false);
+            //VGA_printf(" with size ", false);
+            //VGA_printf<uint32_t, true>(size);
 
             // Module is an elf file so parse it as such
             void* program = kmalloc(size);
@@ -122,6 +124,8 @@ void LoadGrubModules(multiboot_info_t* pMultiboot)
 
         VGA_printf("");
     }
+
+    pGrubModules = pGrubModulesOriginal;
 
     // Free grub buffer
     for (uint32_t i = 0; i < modulePages; ++i)  DeallocatePage((uint32_t)pGrubModules + PAGE_SIZE*i);

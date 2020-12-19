@@ -138,6 +138,11 @@ void OnCommand(char* buffer)
     {
         PrintPaging();
     }
+    else if (strcmp(buffer, "$ hello"))
+    {
+        LoadGrubModules(pMultiboot);
+    }
+    else if (strcmp(buffer, "$ ")) {}
     #if DO_SOUND_DEMO
     else if (strcmp(buffer, "$ jingle"))
     {
