@@ -102,7 +102,7 @@ PerformIRQJump%1:
     call PerformTaskSwitch
     
 FinishJump%1:
-    iret    ; Return
+    iret    ; Return if PerformTaskSwitch wasn't called
 %endmacro
 
 ; IRQs

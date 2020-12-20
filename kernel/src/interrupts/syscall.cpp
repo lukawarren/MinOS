@@ -4,28 +4,25 @@
 #include "../memory/idt.h"
 #include "../gfx/vga.h"
 
-enum Syscalls
-{
-    VGA_PRINTF,
-    NTASKS,
-    SYSEXIT,
-    NPAGES,
-    VGA_PRINTN
-};
+static int SysPrintf                (Registers syscall);
+static int SysNTasks                (Registers syscall);
+static int SysSysexit               (Registers syscall);
+static int SysNPages                (Registers syscall);
+static int SysPrintn                (Registers syscall);
+static int SysGetFramebufferAddr    (Registers syscall);
+static int SysGetFramebufferWidth   (Registers syscall);
+static int SysGetFramebufferHeight  (Registers syscall);
 
-static int SysPrintf        (Registers syscall);
-static int SysNTasks        (Registers syscall);
-static int SysSysexit       (Registers syscall);
-static int SysNPages        (Registers syscall);
-static int SysPrintn        (Registers syscall);
-
-static int (*pSyscalls[5])(Registers syscall) =
+static int (*pSyscalls[])(Registers syscall) =
 {
     &SysPrintf,
     &SysNTasks,
     &SysSysexit,
     &SysNPages,
-    &SysPrintn
+    &SysPrintn,
+    &SysGetFramebufferAddr,
+    &SysGetFramebufferWidth,
+    &SysGetFramebufferHeight
 };
 
 int HandleSyscalls(Registers syscall)
@@ -34,7 +31,7 @@ int HandleSyscalls(Registers syscall)
     const uint32_t type = syscall.eax;
 
     int returnValue = -1;
-    if (type <= (uint32_t)(SYSEXIT - VGA_PRINTN)) returnValue = pSyscalls[type](syscall);
+    if (type < sizeof(pSyscalls) / sizeof(pSyscalls[0])) returnValue = pSyscalls[type](syscall);
     else
     {
         VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
@@ -75,3 +72,7 @@ static int SysPrintn (Registers syscall)
     VGA_printf<uint32_t>(syscall.ebx, syscall.ecx);
     return 0;
 }
+
+static int SysGetFramebufferAddr(Registers syscall __attribute__((unused))) { return (uint32_t) VGA_framebuffer.address;  }
+static int SysGetFramebufferWidth(Registers syscall __attribute__((unused))) { return (uint32_t) VGA_framebuffer.width;   }
+static int SysGetFramebufferHeight(Registers syscall __attribute__((unused))) { return (uint32_t) VGA_framebuffer.height; }

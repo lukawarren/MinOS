@@ -16,6 +16,9 @@ SYSCALL_ARGS_0(nTasks, 1)
 SYSCALL_ARGS_0(sysexit, 2)
 SYSCALL_ARGS_0(nPages, 3)
 SYSCALL_ARGS_2(printn, 4, uint32_t, message, bool, newline)
+SYSCALL_ARGS_0(getFramebufferAddr, 5)
+SYSCALL_ARGS_0(getFramebufferWidth, 6)
+SYSCALL_ARGS_0(getFramebufferHeight, 7)
 
 #ifdef __cplusplus 
 extern "C"

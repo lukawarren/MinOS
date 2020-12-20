@@ -58,7 +58,7 @@ void InitPaging(const uint32_t maxAddress)
     uint32_t framebufferAlignmentDifference = (uint32_t)VGA_framebuffer.address - aligendFramebufferAddress;
     uint32_t framebufferPages = (sizeof(uint32_t) * VGA_framebuffer.width * VGA_framebuffer.height) / pageSize;
     for (uint32_t i = 0; i < framebufferPages; ++i)
-        AllocatePage(aligendFramebufferAddress + i * pageSize, kernelMemorySoFar + i*pageSize, KERNEL_PAGE, true);
+        AllocatePage(aligendFramebufferAddress + i * pageSize, kernelMemorySoFar + i*pageSize, USER_PAGE, true);
     VGA_framebuffer.address = (uint32_t*)(kernelMemorySoFar + framebufferAlignmentDifference);
 
     LoadPageDirectories((uint32_t)pageDirectories);

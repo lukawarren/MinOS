@@ -34,7 +34,7 @@
 */
 
 #define IDT_ENABLED(x)  ((x & 0b01) << 7)
-#define MIN_PRIV(x)     ((x & 0b11) << 6)
+#define MIN_PRIV(x)     ((x & 0b11) << 5)
 
 #define GATE_INTERRUPT_32   0xE
 #define GATE_TRAP_32        0xF

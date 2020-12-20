@@ -49,7 +49,7 @@ void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k)
     idt[14] =   CreateIDTEntry((uint32_t) IRQException14, 0x8, ENABLED_R0_INTERRUPT);   idt[29] = CreateIDTEntry((uint32_t) IRQException29, 0x8, ENABLED_R0_INTERRUPT);
     idt[30] =   CreateIDTEntry((uint32_t) IRQException30, 0x8, ENABLED_R0_INTERRUPT);
 
-    // Syscals
+    // Syscalls
     idt[0x80] = CreateIDTEntry((uint32_t) IRQSyscall80, 0x8, ENABLED_R3_INTERRUPT);
 
     // IDT descriptor
