@@ -9,7 +9,10 @@ build/$(NAME).iso:
 	$(MAKE) -C stdlib
 	$(MAKE) -C kernel
 	$(MAKE) -C user/pages
+	$(MAKE) -C user/wm
+	$(MAKE) -C scripts/filesystem
 
+	cd scripts/filesystem && ./build/filesystem.o && cd ../../
 	cp scripts/filesystem/output/filesystem.bin build/isodir/modules/filesystem.bin
 
 	mkdir -p build/isodir/boot/grub
@@ -23,3 +26,5 @@ clean:
 	$(MAKE) -C stdlib clean
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user/pages clean
+	$(MAKE) -C user/wm clean
+	$(MAKE) -C scripts/filesystem clean

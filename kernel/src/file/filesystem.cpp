@@ -12,11 +12,11 @@ void BuildVFS(uint32_t vfs)
 
     while (file != nullptr)
     {
-        if (file->pNext == nullptr) file = nullptr;
+        if ((File*)file->pNext == nullptr) file = nullptr;
         else
         {
-            file->pNext = (File*)(vfs + (uint32_t)file->pNext);
-            file = file->pNext;
+            file->pNext = vfs + file->pNext;
+            file = (File*)file->pNext;
         }
     }
 
@@ -31,7 +31,7 @@ FileHandle kFileOpen(const char* sName)
     while (file != nullptr)
     {
         if (strcmp(sName, file->sName)) return (uint32_t)file - sFilesystem;
-        file = file->pNext;
+        file = (File*)file->pNext;
     }    
 
     return -1;
@@ -59,7 +59,7 @@ void kFileClose(FileHandle file __attribute__((unused))) {}
 
 FileHandle kGetNextFile(FileHandle file)
 {
-    File* nextFile = ((File*)(sFilesystem + file))->pNext;
+    File* nextFile = (File*)((File*)(sFilesystem + file))->pNext;
     if (nextFile == nullptr) return -1;
     return (uint32_t)nextFile - sFilesystem;
 }

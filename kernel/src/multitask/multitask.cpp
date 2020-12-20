@@ -107,7 +107,6 @@ void OnMultitaskPIT()
     // If one task, switch to it if nessecary
     if (nTasks == 1 && pCurrentTask == nullptr) 
     {
-        VGA_printf("Switching...");
         pCurrentTask = pTaskListHead;
         oldTaskStack = 0;
         newTaskStack = (uint32_t) &pCurrentTask->pStack;

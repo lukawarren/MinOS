@@ -38,13 +38,6 @@ cd MinOS
 make
 ```
 
-## Running scripts manually
-The output of each script has already been generated. You may however do this yourself. Simply go into the directory of each and run:
-```
-make
-./{name}
-```
-
 ## Running
 Just build the project and either run the iso in the build directory as a virtual machine or burn to a disk with something like:
 ```

@@ -25,16 +25,6 @@ TSS tssEntry;
 uint64_t GDTTable[6];
 multiboot_info_t* pMultiboot;
 
-Task* task1;
-Task* task2;
-Task* task3;
-void Process1();
-void Process2();
-void Process3();
-
-int barProgress[3];
-const VGA_Colour barColours[3] = { VGA_COLOUR_LIGHT_YELLOW, VGA_COLOUR_LIGHT_GREEN, VGA_COLOUR_LIGHT_RED };
-void DrawBar(int processID);
 
 extern "C" void kernel_main(multiboot_info_t* mbd) 
 {
@@ -93,31 +83,26 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     // Page frame allocation
     InitPaging(maxMemoryRange);
 
-    // Create keyboard
-    CLI cli = CLI(OnCommand);
-    Keyboard keyboard(&cli);
-
     // Setup PIT
     InitPIT();
     
     // Init PIC, create IDT entries and enable interrupts
-    InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL, &keyboard);
+    InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
-    
-    // Multiprocessing test
-    task1 = CreateTask("Bar1", (uint32_t) &Process1);
-    task2 = CreateTask("Bar2", (uint32_t) &Process2);
-    task3 = CreateTask("Bar2", (uint32_t) &Process3);
 
     // Load GRUB modules and build filesystem
     uint32_t vfsAddress = LoadGrubVFS(pMultiboot);
     BuildVFS(vfsAddress);
 
-    // Start prompt
-    VGA_printf("");
-    keyboard.OnKeyUpdate('\0');
-    keyboard.OnKeyUpdate('\0');
+    // Load window manager
+    FileHandle wm = kFileOpen("wm.bin");
+    void* wmBuffer = kmalloc(kGetFileSize(wm));
+    kFileRead(wm, wmBuffer);
+    auto elf = LoadElfFile(wmBuffer);
+    CreateTask("wm", elf.entry, elf.size, elf.location, TaskType::USER_TASK); 
+    kfree(wmBuffer, kGetFileSize(wm));
+    kFileClose(wm);
 
     EnableScheduler();
 
@@ -125,6 +110,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     while (true) { asm("hlt"); }
 }
 
+/*
 void OnCommand(char* buffer)
 {
     #if DO_SOUND_DEMO
@@ -151,38 +137,6 @@ void OnCommand(char* buffer)
         EnablePCSpeaker();
     }
     #endif
-
-    else
-    {
-        // Attempt to load program from disk
-        char* name = buffer + 2;
-        auto file = kFileOpen(name);
-        if (file != (FileHandle)-1)
-        {
-            void* data = kmalloc(kGetFileSize(file));
-            kFileRead(file, data);
-            auto elf = LoadElfFile(data);
-            if (!elf.error)
-                CreateTask((char const*)name, elf.entry, elf.size, elf.location, TaskType::USER_TASK);
-            kfree(data, kGetFileSize(file));
-            kFileClose(file);
-        }
-        else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
-
-    }
+    else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
 }
-
-void DrawBar(int processID)
-{
-    uint32_t barHeight = 10;
-    uint32_t barWidth = barProgress[processID]++ / 1;
-    if (barWidth >= VGA_framebuffer.width) barWidth = VGA_framebuffer.width;
-
-    for (uint32_t x = 0; x < barWidth; ++x)
-        for (uint32_t y = VGA_framebuffer.height - 1 - barHeight*(processID+1); y < VGA_framebuffer.height - 1 - processID*barHeight; ++y)
-            VGA_PutPixel(x, y, barColours[processID]);
-}
-
-void Process1() { while (true) DrawBar(0); }
-void Process2() { while (true) DrawBar(1); }
-void Process3() { while (true) DrawBar(2); }
+*/

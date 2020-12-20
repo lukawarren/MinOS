@@ -1,4 +1,4 @@
-NAME := pages
+NAME := wm
 
 PROJDIRS := src
 INCLUDEDIRS := -Iinclude -I../../kernel/include -I../../stdlib/include
