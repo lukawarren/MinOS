@@ -15,6 +15,7 @@
 #include "multitask/multitask.h"
 #include "multitask/modules.h"
 #include "multitask/ring.h"
+#include "multitask/elf.h"
 #include "file/filesystem.h"
 #include "cli.h"
 #include "stdlib.h"
@@ -153,7 +154,24 @@ void OnCommand(char* buffer)
     }
     #endif
 
-    else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
+    else
+    {
+        // Attempt to load program from disk
+        char* name = buffer + 2;
+        auto file = kFileOpen(name);
+        if (file != (FileHandle)-1)
+        {
+            void* data = kmalloc(kGetFileSize(file));
+            kFileRead(file, data);
+            auto elf = LoadElfFile(data);
+            if (!elf.error)
+                CreateTask((char const*)name, elf.entry, elf.size, elf.location, TaskType::USER_TASK);
+            kfree(data, kGetFileSize(file));
+            kFileClose(file);
+        }
+        else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
+
+    }
 }
 
 void DrawBar(int processID)
