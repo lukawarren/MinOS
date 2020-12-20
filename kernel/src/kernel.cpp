@@ -106,11 +106,9 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("IDT sucessfully loaded");
     
     // Multiprocessing test
-    VGA_printf("");
     task1 = CreateTask("Bar1", (uint32_t) &Process1);
     task2 = CreateTask("Bar2", (uint32_t) &Process2);
     task3 = CreateTask("Bar2", (uint32_t) &Process3);
-    VGA_printf("");
 
     // Load GRUB modules and build filesystem
     uint32_t vfsAddress = LoadGrubVFS(pMultiboot);

@@ -60,6 +60,7 @@ void* malloc(uint32_t bytes, uint32_t flags = USER_PAGE);
 void  free(void* ptr, uint32_t bytes);
 
 void PrintPaging();
+uint32_t GetNumberOfPages();
 
 bool IsPageWithinUserBounds(uint32_t address);
 

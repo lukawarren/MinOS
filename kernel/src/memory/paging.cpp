@@ -273,6 +273,20 @@ void PrintPaging()
     
 }
 
+uint32_t GetNumberOfPages()
+{
+    uint32_t pages = 0;
+
+    Page* page = pageListArray;
+    while (page < pageListArray+numDirectories*numPages)
+    {
+        if (page->IsAllocated()) pages++;
+        page++;
+    }
+
+    return pages;
+}
+
 uint32_t GetMaxMemoryRange(multiboot_info_t* pMultiboot)
 {
     /*

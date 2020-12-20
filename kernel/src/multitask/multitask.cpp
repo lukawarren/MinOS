@@ -75,14 +75,6 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
 
     nTasks++;
 
-    VGA_printf("[Info] ", false, VGA_COLOUR_LIGHT_YELLOW);
-    VGA_printf("Created new ", false);
-    if (type == KERNEL_TASK) VGA_printf("kernel", false); else VGA_printf("user", false);
-    VGA_printf(" task - ", false);
-    VGA_printf(task->sName, false);
-    VGA_printf(" - entrypoint ", false);
-    VGA_printf<uint32_t, true>((uint32_t)entry);
-
     return task;
 }
 
