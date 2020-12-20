@@ -10,6 +10,7 @@ CPP := g++
 $(shell mkdir -p build)
 
 all:
+	cp ../../user/pages/build/pages.bin root/pages.bin
 	@$(CPP) $(FLAGS) src/main.cpp -o build/$(NAME).exe $(INCLUDEDIRS)
 
 clean:

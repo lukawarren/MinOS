@@ -32,8 +32,9 @@ int main()
         // File header
         File file = {};
         file.size = entry.file_size();
-        strncpy(file.sName, entry.path().filename().generic_string().c_str(), 256);
-        
+        strncpy(file.sName, entry.path().filename().generic_string().c_str(), 32);
+        file.sName[31] = '\0';
+
         // Set file linked list attribute
         if (i == vSizes.size()) file.pNext == nullptr;
         else

@@ -111,14 +111,14 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     task3 = CreateTask("Bar2", (uint32_t) &Process3);
     VGA_printf("");
 
-    // Load GRUB modules
+    // Load GRUB modules and build filesystem
     uint32_t vfsAddress = LoadGrubVFS(pMultiboot);
+    BuildVFS(vfsAddress);
 
     // Start prompt
+    VGA_printf("");
     keyboard.OnKeyUpdate('\0');
     keyboard.OnKeyUpdate('\0');
-
-    ParseVFS(vfsAddress);
 
     EnableScheduler();
 
@@ -140,6 +140,10 @@ void OnCommand(char* buffer)
     else if (strcmp(buffer, "$ paging"))
     {
         PrintPaging();
+    }
+    else if (strcmp(buffer, "$ ls"))
+    {
+        PrintFiles();
     }
     else if (strcmp(buffer, "$ ")) {}
     #if DO_SOUND_DEMO
