@@ -30,7 +30,8 @@ ElfReturn LoadElfFile(void* file)
     {
         if (programHeader[i].p_type == PT_LOAD)
         {
-            fileSize += programHeader[i].p_memsz;
+            uint32_t newFileSize = (programHeader[i].p_vaddr - 0x40000000) + programHeader[i].p_memsz;
+            if (newFileSize > fileSize) fileSize = newFileSize;
         }
     }
 
@@ -65,7 +66,7 @@ static void LoadElfSegment(void* file, ElfProgramHeader* programHeader, void* me
     //uint32_t flags = PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(1);
     //if (programHeader->p_flags & ELF_PT_W) flags |= PD_READWRITE(1);
     //AllocatePage((uint32_t)memory + memoryPosition, (uint32_t)memory + memoryPosition, flags, false);
-
+    
     // Load segment
     uint32_t segmentMemory  = (uint32_t)memory + memoryPosition;
     memcpy((void*)segmentMemory, (void*)((uint32_t)file + filePosition), memorySize);

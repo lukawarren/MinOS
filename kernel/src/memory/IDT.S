@@ -99,7 +99,7 @@ PerformIRQJump%1:
 
     ; Also, this should restore eflags and
     ; the cs register too, plus ss and esp
-    call PerformTaskSwitch
+    jmp PerformTaskSwitch
     
 FinishJump%1:
     iret    ; Return if PerformTaskSwitch wasn't called
