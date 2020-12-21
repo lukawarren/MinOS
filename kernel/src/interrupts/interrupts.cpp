@@ -7,14 +7,11 @@
 #include "timer.h"
 
 static IDT idt[256];
-static Keyboard* keyboard;
 
 uint8_t currentIRQ;
 
-void InitInterrupts(uint8_t mask1, uint8_t mask2, Keyboard* k)
+void InitInterrupts(uint8_t mask1, uint8_t mask2)
 {
-    keyboard = k;
-
     // Init PIC with masks
     PIC_Init(mask1, mask2);
 
@@ -76,9 +73,6 @@ void HandleInterrupts(uint32_t irq, uint32_t unknown)
 
         case 0x1: // Keyboard
         {
-            if (keyboard == nullptr) break;
-            uint8_t scancode = inb(0x60);
-            keyboard->OnKeyUpdate(scancode);
             break;
         }
 

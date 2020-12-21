@@ -9,7 +9,6 @@
 #include "memory/idt.h"
 #include "memory/paging.h"
 #include "interrupts/interrupts.h"
-#include "interrupts/keyboard.h"
 #include "interrupts/timer.h"
 #include "multitask/taskSwitch.h"
 #include "multitask/multitask.h"
@@ -17,7 +16,6 @@
 #include "multitask/ring.h"
 #include "multitask/elf.h"
 #include "file/filesystem.h"
-#include "cli.h"
 #include "stdlib.h"
 
 extern uint32_t __tss_stack;
