@@ -26,6 +26,9 @@ public:
     void DrawBackground();
     void DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
+    void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour);
+    void DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour);
+
 private:
     uint32_t m_Width;
     uint32_t m_Height;

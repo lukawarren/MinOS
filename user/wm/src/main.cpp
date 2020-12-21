@@ -13,7 +13,7 @@ int main()
 
     graphics.Init(getFramebufferWidth(), getFramebufferHeight(), getFramebufferAddr(), getFramebufferWidth() * sizeof(uint32_t));
     graphics.DrawBackground();
-    graphics.DrawWindow("Terminal", 20, 20, 640 - 20*2, 480-20*2);
+    graphics.DrawWindow("Terminal", 50, 50, 640 - 50*2, 480-50*2);
 
     while(1) asm("nop");
     sysexit();
