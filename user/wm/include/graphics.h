@@ -75,6 +75,8 @@ private:
     uint32_t m_Height;
     uint32_t m_Address;
     uint32_t m_Pitch;
+
+    void* m_Background;
 };
 
 
