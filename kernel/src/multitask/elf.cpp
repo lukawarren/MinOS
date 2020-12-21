@@ -36,7 +36,7 @@ ElfReturn LoadElfFile(void* file)
     }
 
     // Allocate memory - not writable for now
-    void* memory = malloc(fileSize, USER_PAGE); // Really should be (see LoadElfSegment) - PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(1);
+    void* memory = kmalloc(fileSize, USER_PAGE, false); // Really should be (see LoadElfSegment) - PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(1);
 
     // Load program headers and look for loadable sections
     for (uint32_t i = 0; i < header->e_phnum; ++i)

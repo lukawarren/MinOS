@@ -3,8 +3,8 @@
 
 int main()
 {
-    uint32_t pages = (uint32_t) nPages();
-    uint32_t tasks = (uint32_t) nTasks();
+    uint32_t pages = nPages();
+    uint32_t tasks = nTasks();
 
     printn(pages, false);
     printf(" pages used for ", false);

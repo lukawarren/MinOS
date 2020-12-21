@@ -32,8 +32,8 @@ int main()
         // File header
         File file = {};
         file.size = std::experimental::filesystem::file_size(entry);
-        strncpy(file.sName, entry.path().filename().generic_string().c_str(), 32);
-        file.sName[31] = '\0';
+        strncpy(file.sName, entry.path().filename().generic_string().c_str(), MAX_FILE_NAME_LENGTH);
+        file.sName[MAX_FILE_NAME_LENGTH-1] = '\0';
 
         // Set file linked list attribute
         if (i == vSizes.size()) file.pNext == 0;

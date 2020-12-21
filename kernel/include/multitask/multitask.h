@@ -30,6 +30,8 @@ uint32_t GetNumberOfTasks();
 
 void TaskExit();
 
+void TaskGrow(uint32_t size);
+
 enum TaskType
 {
     KERNEL_TASK,

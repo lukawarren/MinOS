@@ -191,3 +191,9 @@ void TaskExit()
     nTasks--;
     OnMultitaskPIT();
 }
+
+void TaskGrow(uint32_t size)
+{
+    pCurrentTask->size += size;
+    lastUserTaskPages = pCurrentTask->size / PAGE_SIZE;
+}

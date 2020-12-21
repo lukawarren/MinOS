@@ -3,6 +3,7 @@
 #define GRAPHICS_H
 
 #include "stdlib.h"
+#include "font.h"
 
 class Graphics
 {
@@ -28,6 +29,44 @@ public:
 
     void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour);
     void DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour);
+
+    template <typename T, bool hex = false, size_t digits = 0>
+    void DrawNumber(T data, uint32_t x, uint32_t y, uint32_t colour)
+    {
+        // Get number of digits
+        size_t nDigits = digits;
+        if (nDigits == 0)
+        {
+            size_t i = data;
+            nDigits = 1;
+            while (i/=(hex ? 16 : 10)) nDigits++;
+        }
+
+        auto digitToASCII = [](const size_t number) { return (char)('0' + number); };
+        auto hexToASCII = [](const size_t number) 
+        {
+            char value = number % 16 + 48;
+            if (value > 57) value += 7;
+            return value;
+        };
+        auto getNthDigit = [](const size_t number, const size_t digit, const size_t base) { return int((number / pow(base, digit)) % base); };
+
+        if (hex) 
+        { 
+            DrawString("0x", x, y, colour);
+            for (size_t d = 0; d < nDigits; ++d)
+            { 
+                DrawChar(hexToASCII(getNthDigit(data, nDigits - d - 1, 16)), x+CHAR_WIDTH*(d+2), y, colour);
+            }
+        }
+        else
+        {
+            for (size_t d = 0; d < nDigits; ++d)
+            { 
+                DrawChar(digitToASCII(getNthDigit(data, nDigits - d - 1, 10)), x+CHAR_WIDTH*d, y, colour); 
+            }
+        }
+    }
 
 private:
     uint32_t m_Width;

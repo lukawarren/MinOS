@@ -204,16 +204,6 @@ void kfree(void* ptr, uint32_t bytes)
         DeallocatePage((uint32_t)ptr + i*pageSize);
 }
 
-void* malloc(uint32_t bytes, uint32_t flags)
-{
-    return kmalloc(bytes, flags, false);
-}
-
-void free(void* ptr, uint32_t bytes)
-{
-    kfree(ptr, bytes);
-}
-
 void PrintPaging()
 {
     /*

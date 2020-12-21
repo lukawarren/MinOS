@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "file.h"
+#include "filedefs.h"
 
 void BuildVFS(uint32_t vfs);
 
-typedef uint32_t FileHandle;
 FileHandle kFileOpen(const char* sName);
 
 uint32_t kGetFileSize(FileHandle file);
