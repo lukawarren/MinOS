@@ -65,4 +65,9 @@ void Graphics::DrawString(char const* string, uint32_t x, uint32_t y, uint32_t c
     }
 }
 
+void Graphics::Blit(void* data)
+{
+    memcpy((void*)m_Address, data, m_Pitch*m_Height);
+}
+
 Graphics::~Graphics() {}

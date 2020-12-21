@@ -30,6 +30,8 @@ public:
     void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour);
     void DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour);
 
+    void Blit(void* data);
+
     template <typename T, bool hex = false, size_t digits = 0>
     void DrawNumber(T data, uint32_t x, uint32_t y, uint32_t colour)
     {
