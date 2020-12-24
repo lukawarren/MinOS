@@ -98,10 +98,10 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     void* wmBuffer = kmalloc(kGetFileSize(wm));
     kFileRead(wm, wmBuffer);
     auto elf = LoadElfFile(wmBuffer);
-    CreateTask("wm", elf.entry, elf.size, elf.location, TaskType::USER_TASK); 
+    CreateTask("wm", elf.entry, elf.size, elf.location);
     kfree(wmBuffer, kGetFileSize(wm));
     kFileClose(wm);
-
+    
     EnableScheduler();
 
     // Hang and wait for interrupts

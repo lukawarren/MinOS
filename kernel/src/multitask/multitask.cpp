@@ -18,12 +18,11 @@ TSS* tss = nullptr;
 extern uint32_t __tss_stack;
 static uint32_t lastUserTaskPages = 0;
 
-Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location, TaskType type)
+Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location)
 {
     // Create new task in memory and linked list
-    Task* task = (Task*) kmalloc(sizeof(Task), type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE);
+    Task* task = (Task*) kmalloc(sizeof(Task), USER_PAGE);
     strncpy(task->sName, sName, 32);
-    task->bKernel = type == KERNEL_PAGE;
 
     // Round task to nearest page
     uint32_t originalSize = size;
@@ -34,7 +33,7 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     task->location = location;
 
     // Allocate stack
-    uint32_t stack = (uint32_t)kmalloc(4096, type == KERNEL_TASK ? KERNEL_PAGE : USER_PAGE, type == KERNEL_TASK);
+    uint32_t stack = (uint32_t)kmalloc(4096, USER_PAGE, false);
     task->pStack = (uint32_t*)(stack + 4096 - 16); // Stack grows downwards
     uint32_t* pStackTop = task->pStack;
     task->pOriginalStack = (uint32_t*)stack;
@@ -44,10 +43,10 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     asm volatile( "pushf; pop %0;" : "=rm"(eflags) );
   
     // Push blank registers onto the stack
-    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23;   // stack segment (ss)
+    *--task->pStack = 0x23;   // stack segment (ss)
     *--task->pStack = (uint32_t) pStackTop; // esp
     *--task->pStack = eflags; // eflags
-    *--task->pStack = type == KERNEL_TASK ? 0x08 : 0x1B;    // cs (iret uses a 32-bit pop - don't panic!)
+    *--task->pStack = 0x1B;    // cs (iret uses a 32-bit pop - don't panic!)
     *--task->pStack = entry;  // eip
     *--task->pStack = 0;      // eax
     *--task->pStack = 0;      // ebx
@@ -56,13 +55,12 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     *--task->pStack = 0;      // esi
     *--task->pStack = 0;      // edi
     *--task->pStack = (uint32_t) pStackTop; // ebp?
-    *--task->pStack = eflags; // eflags (yes, twice)
 
     // Segment registers
-    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23; // ds
-    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23; // fs
-    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23; // es
-    *--task->pStack = type == KERNEL_TASK ? 0x10 : 0x23; // gs
+    *--task->pStack = 0x23; // ds
+    *--task->pStack = 0x23; // fs
+    *--task->pStack = 0x23; // es
+    *--task->pStack = 0x23; // gs
 
     // Linked list stuff
     Task* oldHead = pTaskListHead;
@@ -110,7 +108,7 @@ void OnMultitaskPIT()
         pCurrentTask = pTaskListHead;
         oldTaskStack = 0;
         newTaskStack = (uint32_t) &pCurrentTask->pStack;
-        if (pCurrentTask->bKernel == false) MapNewUserTask(pCurrentTask);
+        MapNewUserTask(pCurrentTask);
         bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
     }
     else if (nTasks > 1)
@@ -123,7 +121,7 @@ void OnMultitaskPIT()
             Task* newTask = pCurrentTask;
             oldTaskStack = 0;
             newTaskStack = (uint32_t) &newTask->pStack;
-            if (newTask->bKernel == false) MapNewUserTask(newTask);
+            MapNewUserTask(newTask);
             bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
         }
 
@@ -136,10 +134,11 @@ void OnMultitaskPIT()
             pCurrentTask = newTask;
             oldTaskStack = (uint32_t) &oldTask->pStack;
             newTaskStack = (uint32_t) &newTask->pStack;
-            if (newTask->bKernel == false) MapNewUserTask(newTask);
+            MapNewUserTask(newTask);
             bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
-        }      
+        }
     }
+    
 }
 
 uint32_t GetNumberOfTasks()
@@ -151,36 +150,36 @@ void TaskExit()
 {
     Task* task = pCurrentTask;
 
-    /*
-    // Update linked list
-    if (task->pPrevTask != nullptr) 
+    // Case 1: There is one element in the list
+    if (nTasks == 1)
     {
-        pCurrentTask = task->pPrevTask;
-        pCurrentTask->pNextTask = task->pNextTask;
-        if (pCurrentTask->pNextTask != pTaskListTail) pCurrentTask->pNextTask->pPrevTask = pCurrentTask;   
-    }   
-    if (task->pNextTask != pTaskListHead)
-    {
-        pCurrentTask = task->pNextTask;
-    } 
-    else pCurrentTask = nullptr;
-    */
-
-    /*
-    if (pTaskListHead == task && nTasks > 1) pTaskListHead = task->pPrevTask;
-    if (pTaskListTail == task && nTasks > 1) pTaskListTail = task->pNextTask;
-
-    if (task->pNextTask != task && nTasks > 2)
-    {
-        pCurrentTask = task->pPrevTask;
-        pCurrentTask->pNextTask = task->pNextTask;
+        pCurrentTask = nullptr;
+        pTaskListHead = nullptr;
+        pTaskListTail = nullptr;
     }
-    else pCurrentTask = nullptr;
-    */
 
-    pCurrentTask = task->pPrevTask;
-    pCurrentTask->pNextTask = task->pNextTask;
-    pTaskListHead = pCurrentTask;
+    // Case 2: The task is the first one in the list
+    else if (task == pTaskListTail)
+    {
+        pTaskListTail = task->pNextTask;
+        pTaskListHead->pNextTask = pTaskListTail;
+    }
+
+    // Case 3: The task is the last one in the list
+    else if (task == pTaskListHead)
+    {
+        pTaskListHead = task->pPrevTask;
+        pTaskListHead->pNextTask = pTaskListTail;
+    }
+
+    // Case 4: The task lies somewhere in the middle
+    else
+    {
+        task->pPrevTask->pNextTask = task->pNextTask;
+        task->pNextTask->pPrevTask = task->pPrevTask;
+    }
+
+    pCurrentTask = nullptr;
 
     // Unallocate all memory
     kfree(task->pOriginalStack, 4096); // stack

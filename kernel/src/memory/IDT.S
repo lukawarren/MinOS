@@ -80,25 +80,8 @@ IRQ%1:
     jmp FinishJump%1
 
 PerformIRQJump%1:
-
     mov [bIRQShouldJump], byte 0
-
-    ; Now, I could, and *used to* do all this
-    ; overly complicated and error-prone code
-    ; to retrieve the old eip from the stack,
-    ; replace the one in the IRQ stack frame,
-    ; then use "iret" to jump to the new code.
-    ; Then one day I realised I was really
-    ; overcomplicating things, and that actually,
-    ; I could just switch tasks, and since the
-    ; last thing in the stack was eip anyway,
-    ; I could save myself considerable trouble
-    ; (and deubgging) by just doing nothing.
-    ; So if you're wondering where eip is getting
-    ; set, wonder no more!
-
-    ; Also, this should restore eflags and
-    ; the cs register too, plus ss and esp
+    
     jmp PerformTaskSwitch
     
 FinishJump%1:
@@ -286,20 +269,7 @@ extern HandleSyscalls
 global IRQSyscall80
 IRQSyscall80:
     cli
-
-    ; When exiting tasks, the current
-    ; stack becomes unallocated,
-    ; so switch to the kernel stack
-    ; instead (hardware TSS stuff is
-    ; not used)
-    cmp eax, 2
-    je PerformTaskSave
-    jmp AfterTaskSave
-
-PerformTaskSave:
-    mov esp, __tss_stack
-
-AfterTaskSave:
+    
     ; Preserve segment registers
     ; and use ring 0 ones
     push ds
@@ -347,7 +317,7 @@ AfterTaskSave:
 
 SyscallIRQJump:
     mov [bIRQShouldJump], byte 0
-    call PerformOneWaySwitch
+    jmp PerformOneWaySwitch
 SyscallFinishJump:
     ; Returun value is in eax,
     ; hence the failure to preserve
