@@ -13,7 +13,6 @@
 #include "multitask/taskSwitch.h"
 #include "multitask/multitask.h"
 #include "multitask/modules.h"
-#include "multitask/ring.h"
 #include "multitask/elf.h"
 #include "file/filesystem.h"
 #include "stdlib.h"
@@ -65,7 +64,6 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
 
     // Load TSS
     LoadTSS(((uint32_t)&GDTTable[5] - (uint32_t)&GDTTable) | 0b11); // Set last 2 bits for RPL 3
-    SetTSSForMultitasking(&tssEntry);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("TSS sucessfully loaded");
 
@@ -101,7 +99,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     CreateTask("wm", elf.entry, elf.size, elf.location);
     kfree(wmBuffer, kGetFileSize(wm));
     kFileClose(wm);
-    
+
     EnableScheduler();
 
     // Hang and wait for interrupts

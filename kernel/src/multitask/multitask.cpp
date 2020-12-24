@@ -14,14 +14,15 @@ Task* pCurrentTask = nullptr;
 size_t nTasks = 0;
 
 // Ring 0 vs Ring 3
-TSS* tss = nullptr;
-extern uint32_t __tss_stack;
 static uint32_t lastUserTaskPages = 0;
+static uint32_t processIDCount = 1;
 
-Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location)
+Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location, uint32_t parentID)
 {
     // Create new task in memory and linked list
     Task* task = (Task*) kmalloc(sizeof(Task), USER_PAGE);
+    task->processID = processIDCount;
+    task->parentID = parentID;
     strncpy(task->sName, sName, 32);
 
     // Round task to nearest page
@@ -38,14 +39,14 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     uint32_t* pStackTop = task->pStack;
     task->pOriginalStack = (uint32_t*)stack;
     
-    // Get eflags
-    uint32_t eflags;
-    asm volatile( "pushf; pop %0;" : "=rm"(eflags) );
-  
+    // Allocate event queue
+    task->pEventQueue = (TaskEventQueue*) kmalloc(sizeof(TaskEventQueue), USER_PAGE, false);
+    task->pEventQueue->nEvents = 0;
+
     // Push blank registers onto the stack
     *--task->pStack = 0x23;   // stack segment (ss)
     *--task->pStack = (uint32_t) pStackTop; // esp
-    *--task->pStack = eflags; // eflags
+    *--task->pStack = 0x202; // eflags - default value with interrupts enabled
     *--task->pStack = 0x1B;    // cs (iret uses a 32-bit pop - don't panic!)
     *--task->pStack = entry;  // eip
     *--task->pStack = 0;      // eax
@@ -72,11 +73,15 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     if (task->pNextTask == nullptr) task->pNextTask = pTaskListTail;
 
     nTasks++;
+    processIDCount++;
 
     return task;
 }
 
-void SetTSSForMultitasking(TSS* _tss) { tss = _tss; }
+Task* CreateChildTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location)
+{
+    return CreateTask(sName, entry, size, location, pCurrentTask->processID);
+}
 
 void EnableScheduler()              { bEnableMultitasking = true; }
 void DisableScheduler()             { bEnableMultitasking = false; }
@@ -195,4 +200,152 @@ void TaskGrow(uint32_t size)
 {
     pCurrentTask->size += size;
     lastUserTaskPages = pCurrentTask->size / PAGE_SIZE;
+}
+
+TaskEvent* GetNextEvent()
+{
+    if (pCurrentTask->pEventQueue->nEvents == 0) return (TaskEvent*)nullptr;
+
+    // Get bottom event
+    TaskEvent* event = &pCurrentTask->pEventQueue->events[0];
+
+    // Shift all events down by one
+    for (uint32_t i = 0; i < pCurrentTask->pEventQueue->nEvents; ++i)
+    {
+        memcpy(&pCurrentTask->pEventQueue->events[i], &pCurrentTask->pEventQueue->events[i+1], sizeof(TaskEvent));
+        //memcpy(pCurrentTask->pEventQueue->events[i].data, pCurrentTask->pEventQueue->events[i+1].data, sizeof(event->data));
+        //pCurrentTask->pEventQueue->events[i].source = pCurrentTask->pEventQueue->events[i+1].source;
+        //pCurrentTask->pEventQueue->events[i].id = pCurrentTask->pEventQueue->events[i+1].id;
+    }
+
+    pCurrentTask->pEventQueue->nEvents--;
+
+    return event;
+}
+
+static Task* GetTaskWithProcessID(uint32_t id)
+{
+    if (id == 0) return (Task*)nullptr;
+
+    Task* task = pTaskListTail;
+    unsigned int count = 0;
+    while (count < nTasks)
+    {
+        if (task->processID == id) return task;
+        task = task->pNextTask;
+        count++;
+    }
+
+    return (Task*)nullptr;
+}
+
+int PushEvent(uint32_t processID, TaskEvent* event)
+{
+    // Find process in question
+    Task* task = GetTaskWithProcessID(processID);
+    if (task == nullptr) return -1;
+
+    // Check event queue is not full
+    if (task->pEventQueue->nEvents >= MAX_TASK_EVENTS-1) return -1;
+
+    // Push event
+    task->pEventQueue->nEvents++;
+    memcpy(&task->pEventQueue->events[task->pEventQueue->nEvents].data, event->data, sizeof(event->data));
+    task->pEventQueue->events[task->pEventQueue->nEvents].source = pCurrentTask->processID;
+    task->pEventQueue->events[task->pEventQueue->nEvents].id = event->id;
+    
+    return 0;
+}
+
+void SubscribeToStdout(bool subscribe)
+{
+    pCurrentTask->bSubscribeToStdout = subscribe;
+}
+
+void OnStdout(const char* message)
+{
+    // Walk up process tree before a subscriber of stdout is found
+    Task* task = GetTaskWithProcessID(pCurrentTask->parentID);
+    bool bFound = false;
+
+    while (task != nullptr)
+    {
+        if (task->bSubscribeToStdout)
+        {
+            // Found subscriber, dispatch events in the form of 15 chars at a time (plus null terminator)
+            for (uint32_t i = 0; i < strlen(message); i+=15)
+            {
+                TaskEvent event;
+                
+                event.id = EVENT_QUEUE_PRINTF;
+                for (uint32_t c = 0; c < 15; ++c)
+                {
+                    event.data[c] = message[i+c];
+                    if (message[i+c] == '\0') break; // Break if null terminator
+                }
+                event.data[15] = '\0';
+
+                PushEvent(task->processID, &event);
+            }
+
+            bFound = true;
+        }
+        task = GetTaskWithProcessID(task->parentID);
+    }
+
+    // Else, just print to kernel screen
+    if (!bFound) VGA_printf(message, false);
+}
+
+void OnStdout(uint32_t data, bool hex)
+{
+    // Get number of digits
+    size_t i = data;
+    size_t nDigits = 1;
+    while (i/=(hex ? 16 : 10)) nDigits++;
+
+    auto digitToASCII = [](const size_t number) { return (char)('0' + number); };
+    auto hexToASCII = [](const size_t number) 
+    {
+        char value = number % 16 + 48;
+        if (value > 57) value += 7;
+        return value;
+    };
+    auto getNthDigit = [](const size_t number, const size_t digit, const size_t base) { return int((number / pow(base, digit)) % base); };
+   
+    if (hex) OnStdout("0x");
+
+    char buffer[2];
+    buffer[1] = '\0';
+
+    if (hex) 
+    { 
+        for (size_t d = 0; d < nDigits; ++d) 
+        {
+            buffer[0] = (hexToASCII(getNthDigit(data, nDigits - d - 1, 16)));
+            OnStdout(buffer);
+        }
+    }
+    else
+    {
+        for (size_t d = 0; d < nDigits; ++d) 
+        {
+            buffer[0] = (digitToASCII(getNthDigit(data, nDigits - d - 1, 10)));
+            OnStdout(buffer);
+        }
+    }
+}
+
+uint32_t GetProcess(const char* sName)
+{
+    Task* task = pTaskListTail;
+    unsigned int count = 0;
+    while (count < nTasks)
+    {
+        if (strcmp(task->sName, sName)) return task->processID;
+        task = task->pNextTask;
+        count++;
+    }
+
+    return -1;
 }

@@ -1,9 +1,10 @@
 #include "syscall.h"
+#include "../file/filesystem.h"
 #include "../multitask/multitask.h"
+#include "../multitask/elf.h"
 #include "../memory/paging.h"
 #include "../memory/idt.h"
 #include "../gfx/vga.h"
-#include "../file/filesystem.h"
 
 static int SysPrintf                (Registers syscall);
 static int SysNTasks                (Registers syscall);
@@ -21,6 +22,11 @@ static int SysGetFileName           (Registers syscall);
 static int SysFileRead              (Registers syscall);
 static int SysFileClose             (Registers syscall);
 static int SysGetNextFile           (Registers syscall);
+static int SysGetNextEvent          (Registers syscall);
+static int SysPushEvent             (Registers syscall);
+static int SysLoadProgram           (Registers syscall);
+static int SysSubscribeToStdout     (Registers syscall);
+static int SysGetProcess            (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -39,7 +45,12 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysGetFileName,
     &SysFileRead,
     &SysFileClose,
-    &SysGetNextFile
+    &SysGetNextFile,
+    &SysGetNextEvent,
+    &SysPushEvent,
+    &SysLoadProgram,
+    &SysSubscribeToStdout,
+    &SysGetProcess
 };
 
 int HandleSyscalls(Registers syscall)
@@ -60,10 +71,10 @@ int HandleSyscalls(Registers syscall)
 
 static int SysPrintf(Registers syscall)
 {
-    // Sanity check address in ecx to check it's within range
+    // Sanity check address in ebx to check it's within range
     if (!IsPageWithinUserBounds(syscall.ebx)) return -1;
 
-    VGA_printf((char const*)syscall.ebx, syscall.ecx);
+    OnStdout((char const*)syscall.ebx);
 
     return 0;
 }
@@ -86,7 +97,7 @@ static int SysNPages(Registers syscall __attribute__((unused)))
 
 static int SysPrintn (Registers syscall)
 {
-    VGA_printf<uint32_t>(syscall.ebx, syscall.ecx);
+    OnStdout(syscall.ebx, syscall.ecx);
     return 0;
 }
 
@@ -168,4 +179,51 @@ static int SysFileClose(Registers syscall)
 static int SysGetNextFile(Registers syscall)
 {
     return (int)kGetNextFile((FileHandle)syscall.ebx);
+}
+
+static int SysGetNextEvent(Registers syscall __attribute__((unused)))
+{
+    return (int)((uint32_t)GetNextEvent());
+}
+
+static int SysPushEvent(Registers syscall)
+{
+    uint32_t processID = syscall.ebx;
+    TaskEvent* event = (TaskEvent*)syscall.ecx;
+    return PushEvent(processID, event);
+}
+
+static int SysLoadProgram(Registers syscall)
+{
+    // Open file
+    FileHandle file = kFileOpen((const char*)syscall.ebx);
+    
+    if (file == (FileHandle)-1) return -1;
+
+    // Load into memory and parse
+    void* fileBuffer = kmalloc(kGetFileSize(file));
+    kFileRead(file, fileBuffer);
+    auto elf = LoadElfFile(fileBuffer);
+
+    if (elf.error) return -1;
+
+    // Create child task and return process ID
+    auto task = CreateChildTask((const char*)syscall.ebx, elf.entry, elf.size, elf.location);
+    kfree(fileBuffer, kGetFileSize(file));
+    kFileClose(file);
+
+    return (int)task->processID;
+}
+
+static int SysSubscribeToStdout(Registers syscall)
+{
+    SubscribeToStdout(syscall.ebx);
+    return 0;
+}
+
+static int SysGetProcess(Registers syscall)
+{
+    const char* process = (const char*)syscall.ebx;
+
+    return (int) GetProcess(process);
 }

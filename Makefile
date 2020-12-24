@@ -10,6 +10,7 @@ build/$(NAME).iso:
 	$(MAKE) -C kernel
 	$(MAKE) -C user/pages
 	$(MAKE) -C user/wm
+	$(MAKE) -C user/uptime
 	$(MAKE) -C scripts/filesystem
 
 	cd scripts/filesystem && ./build/filesystem.o && cd ../../
@@ -27,4 +28,5 @@ clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user/pages clean
 	$(MAKE) -C user/wm clean
+	$(MAKE) -C user/uptime clean
 	$(MAKE) -C scripts/filesystem clean

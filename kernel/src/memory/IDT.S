@@ -269,7 +269,7 @@ extern HandleSyscalls
 global IRQSyscall80
 IRQSyscall80:
     cli
-    
+
     ; Preserve segment registers
     ; and use ring 0 ones
     push ds
@@ -309,7 +309,7 @@ IRQSyscall80:
     pop fs
     pop es
     pop ds
-
+    
     ; Perform IRQ jump if nessecaryy
     cmp [bIRQShouldJump], byte 1
     je  SyscallIRQJump

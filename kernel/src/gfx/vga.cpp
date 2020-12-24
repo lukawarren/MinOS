@@ -47,11 +47,15 @@ void VGA_WriteString(char const* string, bool newLine, uint32_t colour)
 {
     for (size_t i = 0; i < strlen(string); ++i) 
     {
-        VGA_WriteChar(string[i], VGA_column, VGA_row, colour);
-        if (++VGA_column >= VGA_charColumns)
+        if (string[i] == '\n') { ++VGA_row; VGA_column = 0; }
+        else
         {
-            VGA_column = 0;
-            if (++VGA_row >= VGA_charRows-1) VGA_row = 0;
+            VGA_WriteChar(string[i], VGA_column, VGA_row, colour);
+            if (++VGA_column >= VGA_charColumns)
+            {
+                VGA_column = 0;
+                if (++VGA_row >= VGA_charRows-1) VGA_row = 0;
+            }
         }
     }
     if (newLine)
