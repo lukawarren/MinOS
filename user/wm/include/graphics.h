@@ -15,7 +15,7 @@ public:
     inline void PutPixel(size_t x, size_t y, uint32_t colour)
     {
         size_t index = x*4 + y*m_Pitch;
-        *(uint32_t*)((uint32_t)m_Address + index) = colour;
+        *(uint32_t*)((uint32_t)m_Buffer + index) = colour;
     }
 
     inline uint32_t GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff)
@@ -31,6 +31,7 @@ public:
     void DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour);
 
     void Blit(void* data);
+    void SwapBuffers();
 
     template <typename T, bool hex = false, size_t digits = 0>
     void DrawNumber(T data, uint32_t x, uint32_t y, uint32_t colour)
@@ -77,6 +78,7 @@ private:
     uint32_t m_Pitch;
 
     void* m_Background;
+    void* m_Buffer;
 };
 
 
