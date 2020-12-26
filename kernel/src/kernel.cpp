@@ -4,6 +4,7 @@
 #include "io/pic.h"
 #include "io/io.h"
 #include "io/pit.h"
+#include "io/cpu.h"
 #include "memory/gdt.h"
 #include "memory/tss.h"
 #include "memory/idt.h"
@@ -86,6 +87,20 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
+
+    // Test for SSE
+    bool bSSE = IsSSESupported();
+    if (bSSE)
+    {
+        VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
+        VGA_printf("SSE2 supported");
+        EnableSSE();
+    }
+    else
+    {
+        VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
+        VGA_printf("SSE not supported!");
+    }
 
     // Load GRUB modules and build filesystem
     uint32_t vfsAddress = LoadGrubVFS(pMultiboot);

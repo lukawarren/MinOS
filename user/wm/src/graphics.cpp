@@ -1,6 +1,7 @@
 #include "graphics.h"
 #include "interrupts/syscall.h"
 #include "bmp.h"
+#include "sseCopy.h"
 
 Graphics::Graphics() {}
 
@@ -89,13 +90,15 @@ void Graphics::DrawString(char const* string, uint32_t x, uint32_t y, uint32_t c
 }
 
 void Graphics::Blit(void* data)
-{
-    memcpy((void*)m_Buffer, data, m_Pitch*m_Height);
+{   
+    MemcpySSE((void*)m_Buffer, data, m_Pitch*m_Height);
+    //memcpy((void*)m_Buffer, data, m_Pitch*m_Height);
 }
 
 void Graphics::SwapBuffers()
 {
-    memcpy((void*)m_Address, m_Buffer, m_Pitch*m_Height);
+    MemcpySSE((void*)m_Address, m_Buffer, m_Pitch*m_Height);
+    //memcpy((void*)m_Address, m_Buffer, m_Pitch*m_Height);
 }
 
 Graphics::~Graphics() {}
