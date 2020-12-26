@@ -57,7 +57,7 @@ void Graphics::DrawBackground()
 void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     const uint32_t barHeight = 20;
-    const uint32_t barPadding = 5;
+    const uint32_t barPadding = 3;
 
     // Draw outlilne and bar
     DrawRect(x, y - barHeight, width, barHeight, GetColour(68, 68, 68));
