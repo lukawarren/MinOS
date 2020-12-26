@@ -75,7 +75,7 @@ PerformTaskSwitch:
     push eax
     
     ; SSE, x87 FPU and MMX states
-    fxrstor [fxsaveBuffer]
+    fxsave [fxsaveBuffer]
 
     ; Copy from fxsaveBuffer to stack
     mov eax, fxsaveBuffer
@@ -111,7 +111,7 @@ copy_load:
     jmp copy_load
 
 finish_load:
-    fxsave [fxsaveBuffer]
+    fxrstor [fxsaveBuffer]
 
     ; Segment registers
     ; 32-bits for easier C code
