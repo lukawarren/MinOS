@@ -79,6 +79,7 @@ private:
 
     void* m_Background;
     void* m_Buffer;
+    bool* m_DirtyRows;
 };
 
 

@@ -30,11 +30,18 @@ void Graphics::Init(uint32_t width, uint32_t height, uint32_t address, uint32_t 
 
     // Create regular buffer
     m_Buffer = malloc(m_Pitch*m_Height);
+
+    // Dirty rows
+    m_DirtyRows = (bool*) malloc(sizeof(bool)*m_Height);
 }
 
 void Graphics::DrawRect(uint32_t x, uint32_t y, uint32_t rectWidth, uint32_t rectHeight, uint32_t colour)
 {
-    // TODO: Optimise!
+    /*
+        I tried doing a bunch of fancy optimising
+        but the compiler beat me to it!
+        In other words, there's no use! 
+    */
 
     for (uint32_t i = x; i < x + rectWidth; ++i)
         for (uint32_t j = y; j < y + rectHeight; ++j)
@@ -44,22 +51,25 @@ void Graphics::DrawRect(uint32_t x, uint32_t y, uint32_t rectWidth, uint32_t rec
 void Graphics::DrawBackground()
 {
     Blit(m_Background);
+    memset(m_DirtyRows, 1, sizeof(bool)*m_Height);
 }
 
 void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
-    const uint32_t outlineWidth = 3;
     const uint32_t barHeight = 20;
     const uint32_t barPadding = 5;
 
     // Draw outlilne and bar
-    DrawRect(x - outlineWidth, y - outlineWidth - barHeight, width + outlineWidth*2, height + outlineWidth*2 + barHeight, GetColour(68, 68, 68));
+    DrawRect(x, y - barHeight, width, barHeight, GetColour(68, 68, 68));
 
     // Draw window
     DrawRect(x, y, width, height, GetColour(51, 51, 51));
 
     // Draw bar text
-    DrawString(sTitle, x - outlineWidth + barPadding, y - outlineWidth - barHeight + barPadding, GetColour(255, 255, 255));
+    DrawString(sTitle, x + barPadding, y - barHeight + barPadding, GetColour(255, 255, 255));
+
+    for (uint32_t row = y - barHeight; row < y+height+barHeight; ++row)
+        m_DirtyRows[row] = 1;
 }
 
 void Graphics::DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour)
@@ -92,13 +102,15 @@ void Graphics::DrawString(char const* string, uint32_t x, uint32_t y, uint32_t c
 void Graphics::Blit(void* data)
 {   
     MemcpySSE((void*)m_Buffer, data, m_Pitch*m_Height);
-    //memcpy((void*)m_Buffer, data, m_Pitch*m_Height);
 }
 
 void Graphics::SwapBuffers()
 {
-    MemcpySSE((void*)m_Address, m_Buffer, m_Pitch*m_Height);
-    //memcpy((void*)m_Address, m_Buffer, m_Pitch*m_Height);
+    for (uint32_t row = 0; row < m_Height; ++row)
+        if (m_DirtyRows[row])
+            MemcpySSE((void*)(m_Address + row*m_Pitch), (void*)((uint32_t)m_Buffer + row*m_Pitch), m_Pitch);
+
+    memset(m_DirtyRows, 0, sizeof(bool)*m_Height);
 }
 
 Graphics::~Graphics() {}
