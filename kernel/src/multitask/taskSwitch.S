@@ -18,6 +18,10 @@ iretStack:
     dd 0
     dd 0
 
+align 16
+fxsaveBuffer:
+    times 512 dd 0
+
 section text
 
 global PerformTaskSwitch
@@ -69,6 +73,21 @@ PerformTaskSwitch:
     push eax
     mov eax, gs
     push eax
+    
+    ; SSE, x87 FPU and MMX states
+    fxrstor [fxsaveBuffer]
+
+    ; Copy from fxsaveBuffer to stack
+    mov eax, fxsaveBuffer
+    mov edx, 512
+copy:
+    push dword [eax+edx]
+    sub edx, 4
+    cmp edx, 0
+    je finish
+    jmp copy
+
+finish:
 
     ; Save old task's stack
     mov edx, [oldTaskStack] ; contains pointer to old stack
@@ -79,6 +98,20 @@ switchToNewTask:
     ; Switch to new task's stack
     mov edx, [newTaskStack]
     mov esp, [edx] ; contains address of new stack
+
+    ; SSE, x87 FPU and MMX states
+    ; Load from stack
+    mov eax, fxsaveBuffer
+    mov edx, 0
+copy_load:
+    pop dword [eax+edx]
+    add edx, 4
+    cmp edx, 512
+    je finish_load
+    jmp copy_load
+
+finish_load:
+    fxsave [fxsaveBuffer]
 
     ; Segment registers
     ; 32-bits for easier C code

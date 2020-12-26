@@ -44,6 +44,7 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     task->pEventQueue->nEvents = 0;
 
     // Push blank registers onto the stack
+    *--task->pStack = 0x00;   // stack alignment (if any)
     *--task->pStack = 0x23;   // stack segment (ss)
     *--task->pStack = (uint32_t) pStackTop; // esp
     *--task->pStack = 0x202; // eflags - default value with interrupts enabled
@@ -62,6 +63,9 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     *--task->pStack = 0x23; // fs
     *--task->pStack = 0x23; // es
     *--task->pStack = 0x23; // gs
+
+    // SSE, x87 FPU and MMX states - 512 bytes
+    for (unsigned int i = 0; i < 512/sizeof(uint32_t); ++i) *--task->pStack = 0;
 
     // Linked list stuff
     Task* oldHead = pTaskListHead;

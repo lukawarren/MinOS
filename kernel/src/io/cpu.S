@@ -6,15 +6,20 @@ IsSSESupported:
     push ecx ; ebx, ecx and
     push edx ; edx  
     
-    mov eax, 0x1
+TestForSSE:
+    mov eax, 1
     cpuid
-    test edx, 1<<25 ; SSE
+    test edx, 1 << 25 ; SSE
     jz noSSE
 
+TestForSSE2:
     ; SSE supported
     ; But what about SSE2?
-    mov eax, 1
-    test edx, 1<<265 ; SSE 2
+    test edx, 1 << 26 ; SSE 2
+    jz noSSE
+
+TestForFXSR: ; FXRSTOR and FXSAVE instructions
+    test edx, 1 << 24
     jz noSSE
 
     pop ebx
