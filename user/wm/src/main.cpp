@@ -4,30 +4,14 @@
 #include "graphics.h"
 #include "bmp.h"
 #include "events.h"
+#include "window.h"
 
 int main();
 
 static Graphics graphics;
 
-struct Window
-{
-    char sName[16];
-    uint32_t x;
-    uint32_t y;
-    uint32_t width;
-    uint32_t height;
-
-    Window() {}
-    Window(const char* name, uint32_t _x, uint32_t _y, uint32_t _width, uint32_t _height)
-    {
-        strncpy(sName, name, 16);
-        x = _x;         y = _y;
-        width = _width; height = _height;
-    }
-} __attribute__((packed));
-
-Window windows[60];
-uint32_t nWindows = 0;
+Window* pWindows = nullptr; // Linked list
+Window* pCurrentWindow = nullptr;
 
 int main()
 {
@@ -43,7 +27,6 @@ int main()
     pagesEvent.data[0] = 0xbe;
     pushEvent(pagesProcess, &pagesEvent);
 
-    int bob = 0;
     while (1)
     {
         // Get events
@@ -52,13 +35,47 @@ int main()
         {
             if (event->id == EVENT_QUEUE_PRINTF)
             {
-                printf((const char*)event->data);
+                //printf((const char*)event->data);
             }
 
             else if (event->id == CREATE_WINDOW_EVENT)
             {
-                windows[nWindows] = Window((const char*)event->data, 50, 50, 640-50*2, 480-50*2);
-                nWindows++;
+                // Enforce maximum of one window per process
+                Window* window = pWindows;
+                bool deny = false;
+                while (window != nullptr)
+                {
+                    if (window->processID == event->source) deny = true;
+                    window = (Window*) window->pNextWindow;
+                }
+
+                if (!deny)
+                {
+                    // Append to linked list
+                    window = (Window*) malloc(sizeof(Window));
+                    if (pWindows == nullptr) pWindows = window;
+                    else pCurrentWindow->pNextWindow = window;
+                    pCurrentWindow = window;
+
+                    // Set data
+                    WindowCreateMessage* message = (WindowCreateMessage*)(event->data);
+                    *pCurrentWindow = Window("Untitled", message->x, message->y, message->width, message->height, event->source);
+                }
+            }
+
+            else if (event->id == SET_TITLE_EVENT)
+            {
+                // Find window and set data
+                Window* window = pWindows;
+                while (window != nullptr)
+                {
+                    if (window->processID == event->source)
+                    {
+                        strncpy(window->sName, (char*)event->data, 16);
+                        break;
+                    }
+                    window = (Window*) window->pNextWindow;
+                }
             }
 
             event = getNextEvent();
@@ -66,11 +83,13 @@ int main()
 
         // Draw
         graphics.DrawBackground();
-        for (unsigned int i = 0; i < nWindows; i++)
-            graphics.DrawWindow(windows[i].sName, windows[i].x+bob, windows[i].y, windows[i].width, windows[i].height);
+        Window* window = pWindows;
+        while (window != nullptr)
+        {
+            graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height);
+            window = (Window*) window->pNextWindow;
+        }
         graphics.SwapBuffers();
-
-        bob++;
     }
 
     sysexit();

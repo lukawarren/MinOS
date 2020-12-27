@@ -8,12 +8,8 @@
 
 int main()
 {
-    uint32_t wm = getProcess("wm");
-
-    TaskEvent event;
-    event.id = CREATE_WINDOW_EVENT;
-    strncpy((char*)event.data, "uptime", 6);
-    pushEvent(wm, &event);
+    CreateWindow(0, 0, 100, 100);
+    SetWindowTitle("Uptime");
 
     sysexit();
     return 0;
