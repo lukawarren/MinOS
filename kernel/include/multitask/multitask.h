@@ -7,7 +7,7 @@
 
 #include "task.h"
 
-#define MAX_TASK_EVENTS 31
+#define MAX_TASK_EVENTS 63
 // ^^^ -1 to account for uint32_t nEvents
 
 struct TaskEventQueue

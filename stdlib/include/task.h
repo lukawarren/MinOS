@@ -7,19 +7,19 @@
 #ifdef __cplusplus
 extern "C"
 {
-    struct TaskEvent // 32 bytes in total
+    struct TaskEvent // 64 bytes in total
     {
         uint32_t source;    // 4 bytes
         uint32_t id;        // 4 bytes
-        uint8_t data[16];   // 16 bytes
+        uint8_t data[32];   // 16 bytes
     } __attribute__((packed));
 }
 #else
-typedef struct taskEvent_t // 32 bytes in total
+typedef struct taskEvent_t // 64 bytes in total
 {
     uint32_t source;    // 4 bytes
     uint32_t id;        // 4 bytes
-    uint32_t data[16];   // 16 bytes
+    uint32_t data[32];   // 16 bytes
 } __attribute__((packed)) TaskEvent;
 #endif
 

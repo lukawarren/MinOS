@@ -8,5 +8,6 @@
 #define DO_SOUND_DEMO true
 
 void OnTimerInterrupt();
+uint32_t GetSeconds();
 
 #endif

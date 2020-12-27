@@ -5,6 +5,7 @@
 #include "../memory/paging.h"
 #include "../memory/idt.h"
 #include "../gfx/vga.h"
+#include "../interrupts/timer.h"
 
 static int SysPrintf                (Registers syscall);
 static int SysNTasks                (Registers syscall);
@@ -28,6 +29,7 @@ static int SysLoadProgram           (Registers syscall);
 static int SysSubscribeToStdout     (Registers syscall);
 static int SysGetProcess            (Registers syscall);
 static int SysSubscribeToSysexit    (Registers syscall);
+static int SysGetSeconds            (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -52,7 +54,8 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysLoadProgram,
     &SysSubscribeToStdout,
     &SysGetProcess,
-    &SysSubscribeToSysexit
+    &SysSubscribeToSysexit,
+    &SysGetSeconds
 };
 
 int HandleSyscalls(Registers syscall)
@@ -235,4 +238,9 @@ static int SysSubscribeToSysexit(Registers syscall)
 {
     SubscribeToSysexit(syscall.ebx);
     return 0;
+}
+
+static int SysGetSeconds(Registers syscall __attribute__((unused)))
+{
+    return GetSeconds();
 }

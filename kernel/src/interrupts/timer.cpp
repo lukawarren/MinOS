@@ -9,6 +9,9 @@ static int soundDelayCount = 0;
 static uint16_t samples[8] = {4560, 4063, 3619, 3416, 3043, 2711, 2415, 2280};
 #endif
 
+static int nSeconds = 0;
+static int nSubseconds = 0;
+
 void OnTimerInterrupt()
 {
     #if DO_SOUND_DEMO
@@ -24,7 +27,15 @@ void OnTimerInterrupt()
     #endif
 
     SetReloadValueInHz(CHANNEL_0_DATA, 60);
+    nSubseconds++;
+    if (nSubseconds == 60)
+    {
+        nSubseconds = 0;
+        nSeconds++;
+    }
 
     // Multitasking
     OnMultitaskPIT();
 }
+
+uint32_t GetSeconds() { return nSeconds; }

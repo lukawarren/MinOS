@@ -2,6 +2,7 @@
 #include "interrupts/syscall.h"
 #include "bmp.h"
 #include "sseCopy.h"
+#include "colours.h"
 
 Graphics::Graphics() {}
 
@@ -54,7 +55,7 @@ void Graphics::DrawBackground()
     memset(m_DirtyRows, 1, sizeof(bool)*m_Height);
 }
 
-void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, void* buffer)
 {
     const uint32_t barHeight = 20;
     const uint32_t barPadding = 3;
@@ -66,19 +67,27 @@ void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t w
     if (y + height >= m_Height) y = m_Height-height-1;
 
     // Draw outlilne and bar
-    DrawRect(x, y - barHeight, width, barHeight, GetColour(68, 68, 68));
+    DrawRect(x, y - barHeight, width, barHeight, WINDOW_BAR_COLOUR);
 
-    // Draw window
-    DrawRect(x, y, width, height, GetColour(51, 51, 51));
-
+    // Draw window contents
+    uint32_t row = y;
+    uint32_t destination = (uint32_t)m_Buffer + m_Pitch*row + x*sizeof(uint32_t);
+    uint32_t source = (uint32_t)buffer;
+    for (row = y; row < y + height; ++row)
+    {
+        memcpy((void*)destination, (void*)source, sizeof(uint32_t)*width);
+        destination += m_Pitch;
+        source += sizeof(uint32_t)*width;
+    }
+    
     // Draw bar text
-    DrawString(sTitle, x + barPadding, y - barHeight + barPadding, GetColour(255, 255, 255));
+    DrawString(sTitle, x + barPadding, y - barHeight + barPadding, GetColour(255, 255, 255), m_Buffer, m_Pitch, GetColour(68, 68, 68));
 
-    for (uint32_t row = y - barHeight; row < y+height+barHeight; ++row)
+    for (row = y - barHeight; row < y+height+barHeight; ++row)
         m_DirtyRows[row] = 1;
 }
 
-void Graphics::DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour)
+void Graphics::DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour, void* buffer, uint32_t pitch, uint32_t backgroundColour)
 {
     const uint8_t* bitmap = GetFontFromChar(c);
 
@@ -90,18 +99,19 @@ void Graphics::DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour)
 
             size_t xPos = x + w;
             size_t yPos = y + h;
-            size_t index = xPos*4 + yPos*m_Pitch;
+            size_t index = xPos*4 + yPos*pitch;
             
-            if (bitmap[h/CHAR_SCALE] & mask) *(uint32_t*)((uint32_t)m_Buffer + index) = colour; 
+            if (bitmap[h/CHAR_SCALE] & mask) *(uint32_t*)((uint32_t)buffer + index) = colour; 
+            else *(uint32_t*)((uint32_t)buffer + index) = backgroundColour;
         }
     }
 }
 
-void Graphics::DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour)
+void Graphics::DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour, void* buffer, uint32_t pitch, uint32_t backgroundColour)
 {
     for (size_t i = 0; i < strlen(string); ++i) 
     {
-        DrawChar(string[i], x + i*CHAR_WIDTH, y, colour);
+        DrawChar(string[i], x + i*CHAR_WIDTH, y, colour, buffer, pitch, backgroundColour);
     }
 }
 

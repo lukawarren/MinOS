@@ -1,10 +1,9 @@
 #include "interrupts/syscall.h"
 #include "stdlib.h"
-
+#include "window.h"
 #include "graphics.h"
 #include "bmp.h"
 #include "events.h"
-#include "window.h"
 
 int main();
 
@@ -63,6 +62,7 @@ int main()
                     if (pCurrentWindow == window) pCurrentWindow = nullptr;
                     if (window == pWindows) pWindows = nullptr;
                     
+                    free(window->buffer, sizeof(uint32_t)*window->width*window->height);
                     free(window, sizeof(Window));
                 }
             }
@@ -78,9 +78,21 @@ int main()
                     if (window->processID == event->source) 
                     {
                         deny = true;
+
+                        uint32_t oldWidth = window->width;
+                        uint32_t oldHeight = window->height;
+
                         WindowCreateMessage* message = (WindowCreateMessage*)(event->data);
                         window->x = message->x; window->width = message->width;
                         window->y = message->y; window->height = message->height;
+
+                        // Recreate window if there has been a resize
+                        if (window->width != oldWidth || window->height != oldHeight)
+                        {
+                            free(window->buffer, sizeof(uint32_t)*window->width*window->height);
+                            window->buffer = malloc(sizeof(uint32_t)*window->width*window->height);
+                            memset(window->buffer, WINDOW_BACKGROUND_COLOUR, sizeof(uint32_t)*window->width*window->height);
+                        }     
                     }
                     window = (Window*) window->pNextWindow;
                 }
@@ -96,6 +108,8 @@ int main()
                     // Set data
                     WindowCreateMessage* message = (WindowCreateMessage*)(event->data);
                     *pCurrentWindow = Window("Untitled", message->x, message->y, message->width, message->height, event->source);
+                    window->buffer = malloc(sizeof(uint32_t)*window->width*window->height);
+                    memset(window->buffer, WINDOW_BACKGROUND_COLOUR, sizeof(uint32_t)*window->width*window->height);
                 }
             }
 
@@ -114,6 +128,59 @@ int main()
                 }
             }
 
+            else if (event->id == DRAW_STRING_EVENT)
+            {
+                // Find window and draw string
+                Window* window = pWindows;
+                while (window != nullptr)
+                {
+                    if (window->processID == event->source)
+                    {
+                        // Translate coordinates to window space
+                        WindowDrawString* message = (WindowDrawString*)event->data;
+                        uint32_t stringWidth = CHAR_WIDTH*strlen(message->message);
+                        uint32_t stringHeight = CHAR_HEIGHT*CHAR_SCALE;
+                        uint32_t stringX = message->x;
+                        uint32_t stringY = message->y;
+
+                        // Check confines
+                        bool deny = ((int32_t)stringX < 0 || (int32_t)stringY < 0 || stringX + stringWidth >= window->width || stringY + stringHeight >= window->height);
+
+                        // Draw string
+                        if (!deny) graphics.DrawString(message->message, stringX, stringY, message->colour, window->buffer, window->width * sizeof(uint32_t));
+
+                        break;
+                    }
+                    window = (Window*) window->pNextWindow;
+                }
+            }
+
+            else if (event->id == DRAW_NUMBER_EVENT)
+            {
+                // Find window and draw string
+                Window* window = pWindows;
+                while (window != nullptr)
+                {
+                    if (window->processID == event->source)
+                    {
+                        WindowDrawNumber* message = (WindowDrawNumber*)event->data;
+                        uint32_t numberWidth = CHAR_WIDTH*graphics.GetDigits(message->number, message->hex ? 16 : 10);
+                        uint32_t numberHeight = CHAR_HEIGHT*CHAR_SCALE;
+                        uint32_t numberX = message->x;
+                        uint32_t numberY = message->y;
+
+                        // Check confines
+                        bool deny = ((int32_t)numberX < 0 || (int32_t)numberY < 0 || numberX + numberWidth >= window->width || numberY + numberHeight >= window->height);
+
+                        // Draw string
+                        if (!deny) graphics.DrawNumber(message->number, numberX, numberY, message->colour, window->buffer, window->width * sizeof(uint32_t));
+
+                        break;
+                    }
+                    window = (Window*) window->pNextWindow;
+                }
+            }
+
             event = getNextEvent();
         }
 
@@ -122,7 +189,7 @@ int main()
         Window* window = pWindows;
         while (window != nullptr)
         {
-            graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height);
+            graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height, window->buffer);
             window = (Window*) window->pNextWindow;
         }
         graphics.SwapBuffers();
