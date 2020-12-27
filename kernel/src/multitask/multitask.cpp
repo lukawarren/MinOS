@@ -79,8 +79,6 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     nTasks++;
     processIDCount++;
 
-    asm volatile("sti");
-
     return task;
 }
 
