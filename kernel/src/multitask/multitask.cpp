@@ -194,7 +194,7 @@ void TaskExit()
     kfree(task->pOriginalStack, 4096); // stack
     if (task->size != 0) kfree((void*)task->location, task->size); // memory
     kfree(task, sizeof(Task)); // task struct
-
+    
     // Switch to new task
     nTasks--;
     OnMultitaskPIT();
@@ -337,6 +337,29 @@ void OnStdout(uint32_t data, bool hex)
             buffer[0] = (digitToASCII(getNthDigit(data, nDigits - d - 1, 10)));
             OnStdout(buffer);
         }
+    }
+}
+
+void SubscribeToSysexit(bool subscribe)
+{
+    pCurrentTask->bSubscribeToSysexit = subscribe;
+}
+
+void OnSysexit()
+{
+    // Walk up process tree before a subscriber of sysexit is found
+    Task* task = GetTaskWithProcessID(pCurrentTask->parentID);
+
+    while (task != nullptr)
+    {
+        if (task->bSubscribeToSysexit)
+        {
+            // Found subscriber, dispatch events in the form of 15 chars at a time (plus null terminator)
+            TaskEvent event;     
+            event.id = EVENT_QUEUE_SYSEXIT;
+            PushEvent(task->processID, &event);
+        }
+        task = GetTaskWithProcessID(task->parentID);
     }
 }
 

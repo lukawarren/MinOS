@@ -27,6 +27,7 @@ static int SysPushEvent             (Registers syscall);
 static int SysLoadProgram           (Registers syscall);
 static int SysSubscribeToStdout     (Registers syscall);
 static int SysGetProcess            (Registers syscall);
+static int SysSubscribeToSysexit    (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -50,7 +51,8 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysPushEvent,
     &SysLoadProgram,
     &SysSubscribeToStdout,
-    &SysGetProcess
+    &SysGetProcess,
+    &SysSubscribeToSysexit
 };
 
 int HandleSyscalls(Registers syscall)
@@ -86,6 +88,7 @@ static int SysNTasks(Registers syscall __attribute__((unused)))
 
 static int SysSysexit(Registers syscall __attribute__((unused)))
 {
+    OnSysexit();
     TaskExit();
     return 0;
 }
@@ -226,4 +229,10 @@ static int SysGetProcess(Registers syscall)
     const char* process = (const char*)syscall.ebx;
 
     return (int) GetProcess(process);
+}
+
+static int SysSubscribeToSysexit(Registers syscall)
+{
+    SubscribeToSysexit(syscall.ebx);
+    return 0;
 }

@@ -16,6 +16,7 @@ Window* pCurrentWindow = nullptr;
 int main()
 {
     subscribeToStdout(true);
+    subscribeToSysexit(true);
     printf("Starting window manager...\n");
 
     graphics.Init(getFramebufferWidth(), getFramebufferHeight(), getFramebufferAddr(), getFramebufferWidth() * sizeof(uint32_t));
@@ -38,14 +39,49 @@ int main()
                 //printf((const char*)event->data);
             }
 
+            else if (event->id == EVENT_QUEUE_SYSEXIT)
+            {
+                // Find window (if any)
+                Window* window = pWindows;
+                Window* prevWindow = nullptr;
+                bool found = false;
+                while (window != nullptr)
+                {
+                    if (window->processID == event->source) 
+                    {
+                        found = true;
+                        break;
+                    }
+                    prevWindow = window;
+                    window = (Window*) window->pNextWindow;
+                }
+
+                // Destroy window
+                if (found)
+                {
+                    if (prevWindow != nullptr && window->pNextWindow != nullptr) prevWindow->pNextWindow = window->pNextWindow;
+                    if (pCurrentWindow == window) pCurrentWindow = nullptr;
+                    if (window == pWindows) pWindows = nullptr;
+                    
+                    free(window, sizeof(Window));
+                }
+            }
+
             else if (event->id == CREATE_WINDOW_EVENT)
             {
-                // Enforce maximum of one window per process
+                // Enforce maximum of one window per process by replacing
+                // window if nessecary
                 Window* window = pWindows;
                 bool deny = false;
                 while (window != nullptr)
                 {
-                    if (window->processID == event->source) deny = true;
+                    if (window->processID == event->source) 
+                    {
+                        deny = true;
+                        WindowCreateMessage* message = (WindowCreateMessage*)(event->data);
+                        window->x = message->x; window->width = message->width;
+                        window->y = message->y; window->height = message->height;
+                    }
                     window = (Window*) window->pNextWindow;
                 }
 

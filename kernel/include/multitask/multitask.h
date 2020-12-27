@@ -28,6 +28,7 @@ struct Task
     Task* pNextTask = nullptr;
     TaskEventQueue* pEventQueue = nullptr;
     bool bSubscribeToStdout = false;
+    bool bSubscribeToSysexit = false;
     uint32_t parentID = 0;
 };
 
@@ -48,6 +49,9 @@ int PushEvent(uint32_t processID, TaskEvent* event);
 void SubscribeToStdout(bool subscribe);
 void OnStdout(const char* message);
 void OnStdout(uint32_t number, bool hex);
+
+void SubscribeToSysexit(bool subscribe);
+void OnSysexit();
 
 uint32_t GetProcess(const char* sName);
 

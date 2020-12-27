@@ -8,7 +8,7 @@
 
 int main()
 {
-    CreateWindow(0, 0, 100, 100);
+    CreateWindow(0, 0, 400, 400);
     SetWindowTitle("Uptime");
 
     sysexit();
