@@ -30,12 +30,17 @@ int main()
                 if (keyEvent->key == 0xD)  // Backspace
                 { 
                     nChars--;
-                    DrawWindowString(" ", nChars*8, nRows*16, WINDOW_WHITE);
+                    DrawWindowString(" ", 10+nChars*8, 10+nRows*16, WINDOW_WHITE);
+                }
+                else if (keyEvent->key == '\n')  // Backspace
+                { 
+                    nChars = 0;
+                    nRows++;
                 }
                 else
                 {
                     char message[2] = { keyEvent->key, '\0' };
-                    DrawWindowString(message, nChars*8, nRows*16, WINDOW_WHITE);
+                    DrawWindowString(message, 10+nChars*8, 10+nRows*16, WINDOW_WHITE);
                     nChars++;
                 }
             }
