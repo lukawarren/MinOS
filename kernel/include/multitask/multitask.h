@@ -7,12 +7,13 @@
 
 #include "task.h"
 
-#define MAX_TASK_EVENTS 63
-// ^^^ -1 to account for uint32_t nEvents
+#define MAX_TASK_EVENTS 63-sizeof(TaskEvent)
+// ^^^ -1 to account for uint32_t nEvents, and temp event
 
 struct TaskEventQueue
 {
     TaskEvent events[MAX_TASK_EVENTS];
+    TaskEvent returnEventBuffer;
     uint32_t nEvents = 0;
 } __attribute__((packed));
 
@@ -29,6 +30,7 @@ struct Task
     TaskEventQueue* pEventQueue = nullptr;
     bool bSubscribeToStdout = false;
     bool bSubscribeToSysexit = false;
+    bool bSubscribeToKeyboard = false;
     uint32_t parentID = 0;
     bool bBlocked = false;
 };
@@ -54,6 +56,9 @@ void OnStdout(uint32_t number, bool hex);
 
 void SubscribeToSysexit(bool subscribe);
 void OnSysexit();
+
+void SubscribeToKeyboard(bool subscribe);
+void OnKeyEvent();
 
 void OnProcessBlock();
 

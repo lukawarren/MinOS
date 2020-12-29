@@ -42,6 +42,8 @@ SYSCALL_ARGS_1(int, subscribeToSysexit, 21, bool, subscribe)
 SYSCALL_ARGS_0(uint32_t, getSeconds, 22)
 SYSCALL_ARGS_0(int, block, 23)
 SYSCALL_ARGS_0(int, popLastEvent, 24)
+SYSCALL_ARGS_0(uint32_t, getKeyBufferAddr, 25)
+SYSCALL_ARGS_1(int, subscribeToKeyboard, 26, bool, subscribe)
 
 #ifdef __cplusplus 
 extern "C"

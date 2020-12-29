@@ -16,6 +16,7 @@ int main()
 {
     subscribeToStdout(true);
     subscribeToSysexit(true);
+    subscribeToKeyboard(true);
     printf("Starting window manager...\n");
 
     graphics.Init(getFramebufferWidth(), getFramebufferHeight(), getFramebufferAddr(), getFramebufferWidth() * sizeof(uint32_t));
@@ -33,6 +34,11 @@ int main()
             if (event->id == EVENT_QUEUE_PRINTF)
             {
                 //printf((const char*)event->data);
+            }
+
+            else if (event->id == EVENT_QUEUE_KEY_PRESS)
+            {
+                printf("Keyboard input");
             }
 
             else if (event->id == EVENT_QUEUE_SYSEXIT)
@@ -184,9 +190,12 @@ int main()
             }
 
             // Send acknowledgement event
-            TaskEvent unblockEvent;
-            unblockEvent.id = UNBLOCK_EVENT;
-            pushEvent(event->source, &unblockEvent);
+            if (event->id != EVENT_QUEUE_PRINTF && event->id != EVENT_QUEUE_KEY_PRESS)
+            {
+                TaskEvent unblockEvent;
+                unblockEvent.id = UNBLOCK_EVENT;
+                pushEvent(event->source, &unblockEvent);
+            }
 
             event = getNextEvent();
         }

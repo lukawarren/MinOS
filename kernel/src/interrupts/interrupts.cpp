@@ -5,6 +5,7 @@
 #include "../gfx/vga.h"
 #include "syscall.h"
 #include "timer.h"
+#include "keyboard.h"
 
 static IDT idt[256];
 
@@ -73,6 +74,8 @@ void HandleInterrupts(uint32_t irq, uint32_t unknown)
 
         case 0x1: // Keyboard
         {
+            uint8_t scancode = inb(0x60);
+            OnKeyboardInterrupt(scancode);
             break;
         }
 

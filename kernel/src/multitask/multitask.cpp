@@ -217,20 +217,17 @@ TaskEvent* GetNextEvent()
     if (pCurrentTask->pEventQueue->nEvents == 0) return (TaskEvent*)nullptr;
 
     // Get bottom event
-    TaskEvent* event = &pCurrentTask->pEventQueue->events[0];
+    memcpy(&pCurrentTask->pEventQueue->returnEventBuffer, &pCurrentTask->pEventQueue->events[0], sizeof(TaskEvent));
 
     // Shift all events down by one
     for (uint32_t i = 0; i < pCurrentTask->pEventQueue->nEvents; ++i)
     {
         memcpy(&pCurrentTask->pEventQueue->events[i], &pCurrentTask->pEventQueue->events[i+1], sizeof(TaskEvent));
-        //memcpy(pCurrentTask->pEventQueue->events[i].data, pCurrentTask->pEventQueue->events[i+1].data, sizeof(event->data));
-        //pCurrentTask->pEventQueue->events[i].source = pCurrentTask->pEventQueue->events[i+1].source;
-        //pCurrentTask->pEventQueue->events[i].id = pCurrentTask->pEventQueue->events[i+1].id;
     }
 
     pCurrentTask->pEventQueue->nEvents--;
 
-    return event;
+    return &pCurrentTask->pEventQueue->returnEventBuffer;
 }
 
 static Task* GetTaskWithProcessID(uint32_t id)
@@ -259,11 +256,11 @@ int PushEvent(uint32_t processID, TaskEvent* event)
     if (task->pEventQueue->nEvents >= MAX_TASK_EVENTS-1) return -1;
 
     // Push event
-    task->pEventQueue->nEvents++;
     memcpy(&task->pEventQueue->events[task->pEventQueue->nEvents].data, event->data, sizeof(event->data));
     task->pEventQueue->events[task->pEventQueue->nEvents].source = pCurrentTask->processID;
     task->pEventQueue->events[task->pEventQueue->nEvents].id = event->id;
-    
+    task->pEventQueue->nEvents++;
+
     // Unblock process
     task->bBlocked = false;
 
@@ -385,6 +382,42 @@ void OnSysexit()
             PushEvent(task->processID, &event);
         }
         task = GetTaskWithProcessID(task->parentID);
+    }
+}
+
+void SubscribeToKeyboard(bool subscribe)
+{
+    pCurrentTask->bSubscribeToKeyboard = subscribe;
+}
+
+void OnKeyEvent()
+{
+    // Walk through each task and sent event if applicable
+    int count = 0;
+    Task* task = pTaskListTail;
+    while (task != nullptr && count < nTasks)
+    {
+        if (task->bSubscribeToKeyboard)
+        {
+            /*
+                Only send event if no other key event
+                has already been sent to avoid saturating buffer
+            */
+            bool bAlreadySaturated = false;
+            for (unsigned int i = 0; i < task->pEventQueue->nEvents; ++i)
+                if (task->pEventQueue->events[i].id == EVENT_QUEUE_KEY_PRESS)
+                    bAlreadySaturated = true;
+
+            if (!bAlreadySaturated)
+            {
+                TaskEvent event;
+                event.id = EVENT_QUEUE_KEY_PRESS;
+                PushEvent(task->processID, &event);
+            }
+        }
+
+        task = task->pNextTask;
+        ++count;
     }
 }
 

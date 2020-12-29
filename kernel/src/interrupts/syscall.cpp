@@ -6,6 +6,7 @@
 #include "../memory/idt.h"
 #include "../gfx/vga.h"
 #include "../interrupts/timer.h"
+#include "../interrupts/keyboard.h"
 
 static int SysPrintf                (Registers syscall);
 static int SysNTasks                (Registers syscall);
@@ -32,6 +33,8 @@ static int SysSubscribeToSysexit    (Registers syscall);
 static int SysGetSeconds            (Registers syscall);
 static int SysBlock                 (Registers syscall);
 static int SysPopLastEvent          (Registers syscall);
+static int SysGetKeyBufferAddr      (Registers syscall);
+static int SysSubscribeToKeyboard   (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -59,7 +62,9 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysSubscribeToSysexit,
     &SysGetSeconds,
     &SysBlock,
-    &SysPopLastEvent
+    &SysPopLastEvent,
+    &SysGetKeyBufferAddr,
+    &SysSubscribeToKeyboard
 };
 
 int HandleSyscalls(Registers syscall)
@@ -258,4 +263,15 @@ static int SysBlock(Registers syscall __attribute__((unused)))
 static int SysPopLastEvent(Registers syscall __attribute__((unused)))
 {
     return (int)PopLastEvent();
+}
+
+static int SysGetKeyBufferAddr(Registers sycall __attribute__((unused)))
+{
+    return (int)GetKeyBufferAddress();
+}
+
+static int SysSubscribeToKeyboard(Registers syscall)
+{
+    SubscribeToKeyboard(syscall.ebx);
+    return 0;
 }

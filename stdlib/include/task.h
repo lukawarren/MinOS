@@ -25,5 +25,6 @@ typedef struct taskEvent_t // 64 bytes in total
 
 #define EVENT_QUEUE_PRINTF 0xdeadbeef
 #define EVENT_QUEUE_SYSEXIT 0xefefefe
+#define EVENT_QUEUE_KEY_PRESS 0x1234321
 
 #endif
