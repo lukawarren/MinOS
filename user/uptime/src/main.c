@@ -9,7 +9,7 @@
 
 int main()
 {
-    CreateWindow(0, 0, 200, 36);
+    CreateWindow(0, getFramebufferHeight()-36, getFramebufferWidth(), 36);
     SetWindowTitle("Uptime");
 
     const char* message = "Total uptime (s): ";

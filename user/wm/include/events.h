@@ -7,6 +7,7 @@
 #define DRAW_STRING_EVENT   0xaffbeefa
 #define DRAW_NUMBER_EVENT   0x10101010
 #define UNBLOCK_EVENT       0xbbbbbbbb
+#define KEY_EVENT           0xfacefeed
 
 #include "stdlib.h"
 #include "interrupts/syscall.h"
@@ -41,6 +42,10 @@ typedef struct WindowDrawNumber
     bool hex;
 } WindowDrawNumber;
 
+typedef struct WindowKeyEvent
+{
+    char key;
+} WindowKeyEvent;
 
 void CreateWindow(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 void CreateWindow(uint32_t x, uint32_t y, uint32_t width, uint32_t height)

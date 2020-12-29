@@ -63,8 +63,8 @@ void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t w
     // Confine window to reasonable bounds
     if ((int32_t)x < 0) x = 0;
     if (y < barHeight) y = barHeight;
-    if (x + width >= m_Width) x = m_Width-width-1;
-    if (y + height >= m_Height) y = m_Height-height-1;
+    if (x + width >= m_Width) x = m_Width-width;
+    if (y + height >= m_Height) y = m_Height-height;
 
     // Draw outlilne and bar
     DrawRect(x, y - barHeight, width, barHeight, WINDOW_BAR_COLOUR);

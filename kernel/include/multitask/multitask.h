@@ -7,8 +7,7 @@
 
 #include "task.h"
 
-#define MAX_TASK_EVENTS 63-sizeof(TaskEvent)
-// ^^^ -1 to account for uint32_t nEvents, and temp event
+#define MAX_TASK_EVENTS 48  // 2016 bytes
 
 struct TaskEventQueue
 {

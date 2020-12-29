@@ -248,6 +248,7 @@ static Task* GetTaskWithProcessID(uint32_t id)
 
 int PushEvent(uint32_t processID, TaskEvent* event)
 {
+
     // Find process in question
     Task* task = GetTaskWithProcessID(processID);
     if (task == nullptr) return -1;
@@ -256,9 +257,9 @@ int PushEvent(uint32_t processID, TaskEvent* event)
     if (task->pEventQueue->nEvents >= MAX_TASK_EVENTS-1) return -1;
 
     // Push event
-    memcpy(&task->pEventQueue->events[task->pEventQueue->nEvents].data, event->data, sizeof(event->data));
-    task->pEventQueue->events[task->pEventQueue->nEvents].source = pCurrentTask->processID;
+    memcpy(&task->pEventQueue->events[task->pEventQueue->nEvents], event, sizeof(TaskEvent));
     task->pEventQueue->events[task->pEventQueue->nEvents].id = event->id;
+    task->pEventQueue->events[task->pEventQueue->nEvents].source = pCurrentTask->processID;
     task->pEventQueue->nEvents++;
 
     // Unblock process
@@ -393,7 +394,7 @@ void SubscribeToKeyboard(bool subscribe)
 void OnKeyEvent()
 {
     // Walk through each task and sent event if applicable
-    int count = 0;
+    unsigned int count = 0;
     Task* task = pTaskListTail;
     while (task != nullptr && count < nTasks)
     {

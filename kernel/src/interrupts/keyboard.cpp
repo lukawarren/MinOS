@@ -4,24 +4,18 @@
 #include "../gfx/vga.h"
 #include "../multitask/multitask.h"
 
-static bool bInitialised = false;
-
 // Keyboard state
 static uint8_t* keyBuffer;
 static bool bShift = false;
 
-static void Init()
+void KeyboardInit()
 {
-    bInitialised = true;
-
-    keyBuffer = (uint8_t*) kmalloc(256, USER_PAGE, false);
+    keyBuffer = (uint8_t*) kmalloc(256, USER_PAGE, true);
     memset(keyBuffer, 0, 256);
 }
 
 void OnKeyboardInterrupt(uint8_t scancode)
 {
-    if (!bInitialised) Init();
-
     bool released = scancode & 128;
     
     // Capital letters
@@ -54,10 +48,10 @@ void OnKeyboardInterrupt(uint8_t scancode)
         return '\0'; // If key not detected, ignore it
     };
     
-    scancode ^= 128; // Remove released bit
-    keyBuffer[ScancodeToAscii(scancode)] = !released;
+    scancode &= (uint8_t)(~128); // Remove released bit
+    keyBuffer[(unsigned int)ScancodeToAscii(scancode)] = !released;
 
     OnKeyEvent();
 }
 
-uint32_t GetKeyBufferAddress() { return (uint32_t) &keyBuffer; }
+uint32_t GetKeyBufferAddress() { return (uint32_t) keyBuffer; }

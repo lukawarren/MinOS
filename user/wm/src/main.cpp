@@ -12,6 +12,9 @@ static Graphics graphics;
 Window* pWindows = nullptr; // Linked list
 Window* pCurrentWindow = nullptr;
 
+uint8_t* keyBuffer = nullptr;
+uint8_t* keyBufferOld = nullptr;
+
 int main()
 {
     subscribeToStdout(true);
@@ -21,6 +24,9 @@ int main()
 
     graphics.Init(getFramebufferWidth(), getFramebufferHeight(), getFramebufferAddr(), getFramebufferWidth() * sizeof(uint32_t));
     graphics.DrawBackground();
+
+    keyBuffer =     (uint8_t*)getKeyBufferAddr();
+    keyBufferOld =  (uint8_t*)malloc(256);
 
     loadProgram("uptime.bin");
     loadProgram("terminal.bin");
@@ -33,12 +39,25 @@ int main()
         {
             if (event->id == EVENT_QUEUE_PRINTF)
             {
-                //printf((const char*)event->data);
+                printf((const char*)event->data);
             }
 
             else if (event->id == EVENT_QUEUE_KEY_PRESS)
             {
-                printf("Keyboard input");
+                // For each key that has changed
+                for (unsigned int key = 0; key < 256; ++key)
+                {
+                    if (keyBuffer[key] != keyBufferOld[key] && keyBuffer[key])
+                    {
+                        // Send event to active window
+                        TaskEvent keyEvent;
+                        keyEvent.id = KEY_EVENT;
+                        memset(&keyEvent.data[0], (char)key, sizeof(char)); // GCC likes to optimise a bit too much otherwise
+                        pushEvent(pCurrentWindow->processID, &keyEvent);
+                    }
+
+                    keyBufferOld[key] = keyBuffer[key];
+                }
             }
 
             else if (event->id == EVENT_QUEUE_SYSEXIT)
@@ -62,9 +81,14 @@ int main()
                 if (found)
                 {
                     if (prevWindow != nullptr && window->pNextWindow != nullptr) prevWindow->pNextWindow = window->pNextWindow;
-                    if (pCurrentWindow == window) pCurrentWindow = nullptr;
-                    if (window == pWindows) pWindows = nullptr;
                     
+                    if (pCurrentWindow == window && prevWindow == nullptr && window->pNextWindow == nullptr) pCurrentWindow = nullptr;
+                    else if (pCurrentWindow == window && prevWindow != nullptr) pCurrentWindow = prevWindow;
+                    else if (pCurrentWindow == window && window->pNextWindow != nullptr) pCurrentWindow = (Window*) window->pNextWindow;
+                    
+                    if  (window == pWindows && window->pNextWindow == nullptr) pWindows = nullptr;
+                    else if (window == pWindows && window->pNextWindow != nullptr) pWindows = (Window*) window->pNextWindow;
+
                     free(window->buffer, sizeof(uint32_t)*window->width*window->height);
                     free(window, sizeof(Window));
                 }
@@ -208,7 +232,6 @@ int main()
             graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height, window->buffer);
             window = (Window*) window->pNextWindow;
         }
-
         graphics.SwapBuffers();
     }
 

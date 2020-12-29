@@ -10,6 +10,7 @@
 #include "memory/idt.h"
 #include "memory/paging.h"
 #include "interrupts/interrupts.h"
+#include "interrupts/keyboard.h"
 #include "interrupts/timer.h"
 #include "multitask/taskSwitch.h"
 #include "multitask/multitask.h"
@@ -87,6 +88,9 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL);
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("IDT sucessfully loaded");
+
+    // Setup keyboard driver
+    KeyboardInit();
 
     // Test for SSE
     bool bSSE = IsSSESupported();
