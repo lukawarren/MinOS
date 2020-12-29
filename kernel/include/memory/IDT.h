@@ -140,5 +140,6 @@ extern "C"
 extern volatile bool bIRQShouldJump;
 extern volatile uint32_t IRQReturnAddress;
 extern volatile uint32_t IRQJumpEIP;
+extern volatile bool bSysexitCall;
 
 #endif

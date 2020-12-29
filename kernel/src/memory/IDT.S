@@ -6,6 +6,10 @@ global bIRQShouldJump
 bIRQShouldJump:
     db 0
 
+global bSysexitCall
+bSysexitCall:
+    db 0
+
 section text
 
 global LoadIDT
@@ -316,8 +320,21 @@ IRQSyscall80:
     jmp SyscallFinishJump
 
 SyscallIRQJump:
+
     mov [bIRQShouldJump], byte 0
+
+    ; If sysexit is called,
+    ; the switch must be
+    ; one way as we have no
+    ; stack!
+    cmp [bSysexitCall], byte 1
+    je OneWay
+    jmp PerformTaskSwitch
+
+OneWay:
+    mov [bSysexitCall], byte 0
     jmp PerformOneWaySwitch
+
 SyscallFinishJump:
     ; Returun value is in eax,
     ; hence the failure to preserve

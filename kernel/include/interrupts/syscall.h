@@ -40,6 +40,8 @@ SYSCALL_ARGS_1(int, subscribeToStdout, 19, bool, subscribe)
 SYSCALL_ARGS_1(uint32_t, getProcess, 20, const char*, sName)
 SYSCALL_ARGS_1(int, subscribeToSysexit, 21, bool, subscribe)
 SYSCALL_ARGS_0(uint32_t, getSeconds, 22)
+SYSCALL_ARGS_0(int, block, 23)
+SYSCALL_ARGS_0(int, popLastEvent, 24)
 
 #ifdef __cplusplus 
 extern "C"

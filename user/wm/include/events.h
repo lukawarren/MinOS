@@ -6,6 +6,7 @@
 #define SET_TITLE_EVENT     0xafafafaf
 #define DRAW_STRING_EVENT   0xaffbeefa
 #define DRAW_NUMBER_EVENT   0x10101010
+#define UNBLOCK_EVENT       0xbbbbbbbb
 
 #include "stdlib.h"
 #include "interrupts/syscall.h"
@@ -54,6 +55,9 @@ void CreateWindow(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
     event.id = CREATE_WINDOW_EVENT;
     memcpy(event.data, &message, sizeof(WindowCreateMessage));
     pushEvent(getProcess("wm"), &event);
+
+    block();
+    popLastEvent();
 }
 
 void SetWindowTitle(const char* sTitle);
@@ -66,6 +70,9 @@ void SetWindowTitle(const char* sTitle)
     event.id = SET_TITLE_EVENT;
     memcpy(event.data, &message, sizeof(WindowTitleMessage));
     pushEvent(getProcess("wm"), &event);
+
+    block();
+    popLastEvent();
 }
 
 void DrawWindowString(const char* string, uint32_t x, uint32_t y, uint32_t colour);
@@ -79,6 +86,9 @@ void DrawWindowString(const char* string, uint32_t x, uint32_t y, uint32_t colou
     event.id = DRAW_STRING_EVENT;
     memcpy(event.data, &message, sizeof(WindowTitleMessage));
     pushEvent(getProcess("wm"), &event);
+
+    block();
+    popLastEvent();
 }
 
 void DrawWindowNumber(uint32_t number, uint32_t x, uint32_t y, uint32_t colour, bool hex);
@@ -95,6 +105,9 @@ void DrawWindowNumber(uint32_t number, uint32_t x, uint32_t y, uint32_t colour, 
     event.id = DRAW_NUMBER_EVENT;
     memcpy(event.data, &message, sizeof(WindowDrawNumber));
     pushEvent(getProcess("wm"), &event);
+
+    block();
+    popLastEvent();
 }
 
 uint32_t GetWindowColour(uint8_t r, uint8_t g, uint8_t b);

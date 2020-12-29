@@ -30,6 +30,7 @@ struct Task
     bool bSubscribeToStdout = false;
     bool bSubscribeToSysexit = false;
     uint32_t parentID = 0;
+    bool bBlocked = false;
 };
 
 void EnableScheduler();
@@ -45,6 +46,7 @@ void TaskGrow(uint32_t size);
 
 TaskEvent* GetNextEvent();
 int PushEvent(uint32_t processID, TaskEvent* event);
+int PopLastEvent();
 
 void SubscribeToStdout(bool subscribe);
 void OnStdout(const char* message);
@@ -52,6 +54,8 @@ void OnStdout(uint32_t number, bool hex);
 
 void SubscribeToSysexit(bool subscribe);
 void OnSysexit();
+
+void OnProcessBlock();
 
 uint32_t GetProcess(const char* sName);
 

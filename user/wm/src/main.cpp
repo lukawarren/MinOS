@@ -21,17 +21,14 @@ int main()
     graphics.Init(getFramebufferWidth(), getFramebufferHeight(), getFramebufferAddr(), getFramebufferWidth() * sizeof(uint32_t));
     graphics.DrawBackground();
 
-    uint32_t pagesProcess = loadProgram("uptime.bin");
-
-    TaskEvent pagesEvent = {};
-    pagesEvent.data[0] = 0xbe;
-    pushEvent(pagesProcess, &pagesEvent);
+    loadProgram("uptime.bin");
+    loadProgram("terminal.bin");
 
     while (1)
     {
         // Get events
         TaskEvent* event = getNextEvent();
-        while (event != NULL)
+        while (event != nullptr)
         {
             if (event->id == EVENT_QUEUE_PRINTF)
             {
@@ -181,9 +178,19 @@ int main()
                 }
             }
 
+            else
+            {
+                printf("Error: Unknown event!\n");
+            }
+
+            // Send acknowledgement event
+            TaskEvent unblockEvent;
+            unblockEvent.id = UNBLOCK_EVENT;
+            pushEvent(event->source, &unblockEvent);
+
             event = getNextEvent();
         }
-
+        
         // Draw
         graphics.DrawBackground();
         Window* window = pWindows;
@@ -192,6 +199,7 @@ int main()
             graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height, window->buffer);
             window = (Window*) window->pNextWindow;
         }
+
         graphics.SwapBuffers();
     }
 

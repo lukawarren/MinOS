@@ -30,6 +30,8 @@ static int SysSubscribeToStdout     (Registers syscall);
 static int SysGetProcess            (Registers syscall);
 static int SysSubscribeToSysexit    (Registers syscall);
 static int SysGetSeconds            (Registers syscall);
+static int SysBlock                 (Registers syscall);
+static int SysPopLastEvent          (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -55,7 +57,9 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysSubscribeToStdout,
     &SysGetProcess,
     &SysSubscribeToSysexit,
-    &SysGetSeconds
+    &SysGetSeconds,
+    &SysBlock,
+    &SysPopLastEvent
 };
 
 int HandleSyscalls(Registers syscall)
@@ -217,7 +221,7 @@ static int SysLoadProgram(Registers syscall)
     auto task = CreateChildTask((const char*)syscall.ebx, elf.entry, elf.size, elf.location);
     kfree(fileBuffer, kGetFileSize(file));
     kFileClose(file);
-
+    
     return (int)task->processID;
 }
 
@@ -243,4 +247,15 @@ static int SysSubscribeToSysexit(Registers syscall)
 static int SysGetSeconds(Registers syscall __attribute__((unused)))
 {
     return GetSeconds();
+}
+
+static int SysBlock(Registers syscall __attribute__((unused)))
+{
+    OnProcessBlock();
+    return 0;
+}
+
+static int SysPopLastEvent(Registers syscall __attribute__((unused)))
+{
+    return (int)PopLastEvent();
 }

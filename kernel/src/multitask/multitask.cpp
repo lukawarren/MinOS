@@ -24,6 +24,7 @@ Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t loca
     task->processID = processIDCount;
     task->parentID = parentID;
     strncpy(task->sName, sName, 32);
+    task->bBlocked = false;
 
     // Round task to nearest page
     uint32_t originalSize = size;
@@ -110,7 +111,7 @@ static void MapNewUserTask(Task* task)
 void OnMultitaskPIT()
 {
     if (nTasks == 0 || !bEnableMultitasking) { bIRQShouldJump = false; return; }
-
+    
     // If one task, switch to it if nessecary
     if (nTasks == 1 && pCurrentTask == nullptr) 
     {
@@ -128,6 +129,9 @@ void OnMultitaskPIT()
         {
             pCurrentTask = pTaskListTail;
             Task* newTask = pCurrentTask;
+
+            while (newTask->bBlocked && nTasks > 1) newTask = newTask->pNextTask;
+
             oldTaskStack = 0;
             newTaskStack = (uint32_t) &newTask->pStack;
             MapNewUserTask(newTask);
@@ -140,6 +144,8 @@ void OnMultitaskPIT()
             Task* oldTask = pCurrentTask;
             Task* newTask = pCurrentTask->pNextTask;
 
+            while (newTask->bBlocked && nTasks > 1) newTask = newTask->pNextTask;
+
             pCurrentTask = newTask;
             oldTaskStack = (uint32_t) &oldTask->pStack;
             newTaskStack = (uint32_t) &newTask->pStack;
@@ -147,7 +153,6 @@ void OnMultitaskPIT()
             bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
         }
     }
-    
 }
 
 uint32_t GetNumberOfTasks()
@@ -197,6 +202,7 @@ void TaskExit()
     
     // Switch to new task
     nTasks--;
+    bSysexitCall = true;
     OnMultitaskPIT();
 }
 
@@ -258,6 +264,25 @@ int PushEvent(uint32_t processID, TaskEvent* event)
     task->pEventQueue->events[task->pEventQueue->nEvents].source = pCurrentTask->processID;
     task->pEventQueue->events[task->pEventQueue->nEvents].id = event->id;
     
+    // Unblock process
+    task->bBlocked = false;
+
+    return 0;
+}
+
+int PopLastEvent()
+{
+    if (pCurrentTask->pEventQueue->nEvents == 0) return -1;
+
+    // Get top event
+    TaskEvent* event = &pCurrentTask->pEventQueue->events[pCurrentTask->pEventQueue->nEvents-1];
+
+    // Zero it out
+    memset(event, 0, sizeof(TaskEvent));
+
+    // Decrement event counter
+    pCurrentTask->pEventQueue->nEvents--;
+
     return 0;
 }
 
@@ -361,6 +386,12 @@ void OnSysexit()
         }
         task = GetTaskWithProcessID(task->parentID);
     }
+}
+
+void OnProcessBlock()
+{
+    pCurrentTask->bBlocked = true;
+    OnMultitaskPIT();
 }
 
 uint32_t GetProcess(const char* sName)
