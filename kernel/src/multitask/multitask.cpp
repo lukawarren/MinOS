@@ -299,18 +299,18 @@ void OnStdout(const char* message)
     {
         if (task->bSubscribeToStdout)
         {
-            // Found subscriber, dispatch events in the form of 15 chars at a time (plus null terminator)
-            for (uint32_t i = 0; i < strlen(message); i+=15)
+            // Found subscriber, dispatch events in the form of 31 chars at a time (plus null terminator)
+            for (uint32_t i = 0; i < strlen(message); i+=31)
             {
                 TaskEvent event;
                 
                 event.id = EVENT_QUEUE_PRINTF;
-                for (uint32_t c = 0; c < 15; ++c)
+                for (uint32_t c = 0; c < 31; ++c)
                 {
                     event.data[c] = message[i+c];
                     if (message[i+c] == '\0') break; // Break if null terminator
                 }
-                event.data[15] = '\0';
+                event.data[31] = '\0';
 
                 PushEvent(task->processID, &event);
             }

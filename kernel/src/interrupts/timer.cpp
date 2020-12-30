@@ -34,6 +34,9 @@ void OnTimerInterrupt()
         nSeconds++;
     }
 
+    // Poll keyboard events
+    OnKeyEvent();
+
     // Multitasking
     OnMultitaskPIT();
 }
