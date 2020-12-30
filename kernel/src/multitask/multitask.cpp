@@ -88,7 +88,7 @@ Task* CreateChildTask(char const* sName, uint32_t entry, uint32_t size, uint32_t
     return CreateTask(sName, entry, size, location, pCurrentTask->processID);
 }
 
-void EnableScheduler()              { bEnableMultitasking = true; }
+void EnableScheduler()              { bEnableMultitasking = true; asm volatile("sti"); }
 void DisableScheduler()             { bEnableMultitasking = false; }
 
 static void MapNewUserTask(Task* task)

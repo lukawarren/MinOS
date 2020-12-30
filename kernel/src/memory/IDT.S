@@ -20,7 +20,7 @@ LoadIDT:
     mov eax, [esp + 8]
     lidt [eax]
     pop eax
-    sti ; enable interrupts
+    ;sti ; enable interrupts
     ret
 
 extern HandleInterrupts
