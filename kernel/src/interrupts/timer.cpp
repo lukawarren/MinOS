@@ -28,7 +28,7 @@ void OnTimerInterrupt()
 
     SetReloadValueInHz(CHANNEL_0_DATA, 120);
     nSubseconds++;
-    if (nSubseconds == 60)
+    if (nSubseconds == 120)
     {
         nSubseconds = 0;
         nSeconds++;
