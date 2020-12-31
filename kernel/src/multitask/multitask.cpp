@@ -230,7 +230,7 @@ TaskEvent* GetNextEvent()
     return &pCurrentTask->pEventQueue->returnEventBuffer;
 }
 
-static Task* GetTaskWithProcessID(uint32_t id)
+Task* GetTaskWithProcessID(uint32_t id)
 {
     if (id == 0) return (Task*)nullptr;
 
@@ -246,13 +246,8 @@ static Task* GetTaskWithProcessID(uint32_t id)
     return (Task*)nullptr;
 }
 
-int PushEvent(uint32_t processID, TaskEvent* event)
+int PushEvent(Task* task, TaskEvent* event)
 {
-
-    // Find process in question
-    Task* task = GetTaskWithProcessID(processID);
-    if (task == nullptr) return -1;
-
     // Check event queue is not full
     if (task->pEventQueue->nEvents >= MAX_TASK_EVENTS-1) return -1;
 
@@ -312,7 +307,7 @@ void OnStdout(const char* message)
                 }
                 event.data[31] = '\0';
 
-                PushEvent(task->processID, &event);
+                PushEvent(task, &event);
             }
 
             bFound = true;
@@ -380,7 +375,7 @@ void OnSysexit()
             // Found subscriber, dispatch events in the form of 15 chars at a time (plus null terminator)
             TaskEvent event;     
             event.id = EVENT_QUEUE_SYSEXIT;
-            PushEvent(task->processID, &event);
+            PushEvent(task, &event);
         }
         task = GetTaskWithProcessID(task->parentID);
     }
@@ -400,21 +395,9 @@ void OnKeyEvent()
     {
         if (task->bSubscribeToKeyboard)
         {
-            /*
-                Only send event if no other key event
-                has already been sent to avoid saturating buffer
-            */
-            bool bAlreadySaturated = false;
-            for (unsigned int i = 0; i < task->pEventQueue->nEvents; ++i)
-                if (task->pEventQueue->events[i].id == EVENT_QUEUE_KEY_PRESS)
-                    bAlreadySaturated = true;
-
-            if (!bAlreadySaturated)
-            {
-                TaskEvent event;
-                event.id = EVENT_QUEUE_KEY_PRESS;
-                PushEvent(task->processID, &event);
-            }
+            TaskEvent event;
+            event.id = EVENT_QUEUE_KEY_PRESS;
+            PushEvent(task, &event);
         }
 
         task = task->pNextTask;

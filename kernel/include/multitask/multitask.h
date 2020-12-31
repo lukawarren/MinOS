@@ -46,8 +46,10 @@ void TaskExit();
 void TaskGrow(uint32_t size);
 
 TaskEvent* GetNextEvent();
-int PushEvent(uint32_t processID, TaskEvent* event);
+int PushEvent(Task* task, TaskEvent* event);
 int PopLastEvent();
+
+Task* GetTaskWithProcessID(uint32_t id);
 
 void SubscribeToStdout(bool subscribe);
 void OnStdout(const char* message);

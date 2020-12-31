@@ -26,7 +26,7 @@ void OnTimerInterrupt()
         soundDelayCount++;
     #endif
 
-    SetReloadValueInHz(CHANNEL_0_DATA, 60);
+    SetReloadValueInHz(CHANNEL_0_DATA, 120);
     nSubseconds++;
     if (nSubseconds == 60)
     {
@@ -34,7 +34,7 @@ void OnTimerInterrupt()
         nSeconds++;
     }
 
-    // Poll keyboard events
+    // Poll keyboard events all at once (see keyboard.cpp)
     OnKeyEvent();
 
     // Multitasking

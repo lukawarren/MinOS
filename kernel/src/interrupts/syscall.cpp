@@ -206,7 +206,10 @@ static int SysPushEvent(Registers syscall)
     uint32_t processID = syscall.ebx;
     TaskEvent* event = (TaskEvent*)syscall.ecx;
     
-    return PushEvent(processID, event);
+    Task* task = GetTaskWithProcessID(processID);
+    if (task == nullptr) return -1;
+
+    return PushEvent(task, event);
 }
 
 static int SysLoadProgram(Registers syscall)
