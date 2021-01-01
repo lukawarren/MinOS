@@ -31,9 +31,6 @@ extern PerformOneWaySwitch
 %macro IRQHandler 1
 global IRQ%1
 IRQ%1:
-    cli ; Disable interrupts until iret is called
-    cli ; For some reason bochs does not trigger a
-    cli ; breakpoint unless I do 3 in a row, and I am paranoid
 
     ; Preserve state
     push eax
@@ -113,7 +110,6 @@ IRQHandler 15
 ; Unmapped IRQ handler
 global IRQUnknown
 IRQUnknown:
-    cli
 
     ; Preserve state
     push eax
@@ -164,7 +160,6 @@ IRQUnknown:
 %macro IRQException 1
 global IRQException%1
 IRQException%1:
-    cli
 
     ; Preserve segment registers
     ; and use ring 0 ones
@@ -272,7 +267,6 @@ extern __tss_stack
 extern HandleSyscalls
 global IRQSyscall80
 IRQSyscall80:
-    cli
 
     ; Preserve segment registers
     ; and use ring 0 ones

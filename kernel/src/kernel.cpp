@@ -120,7 +120,6 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     kFileClose(wm);
 
     EnableScheduler();
-
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }
 }

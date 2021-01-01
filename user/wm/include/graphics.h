@@ -42,8 +42,8 @@ public:
         return nDigits;
     };
 
-    template <typename T, bool hex = false, size_t digits = 0>
-    void DrawNumber(T data, uint32_t x, uint32_t y, uint32_t colour, void* buffer, uint32_t pitch)
+    template <typename T, size_t digits = 0>
+    void DrawNumber(T data, uint32_t x, uint32_t y, uint32_t colour, bool hex, void* buffer, uint32_t pitch)
     {
         // Get number of digits
         size_t nDigits = digits;

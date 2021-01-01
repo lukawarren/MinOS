@@ -11,6 +11,7 @@
 
 #include "stdlib.h"
 #include "interrupts/syscall.h"
+#include "font.h"
 
 typedef struct WindowCreateMessage
 {
@@ -30,7 +31,7 @@ typedef struct WindowDrawString
     uint32_t x;
     uint32_t y;
     uint32_t colour;
-    char message[29];
+    char message[20];
 } WindowDrawString;
 
 typedef struct WindowDrawNumber
@@ -61,8 +62,8 @@ void CreateWindow(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
     memcpy(event.data, &message, sizeof(WindowCreateMessage));
     pushEvent(getProcess("wm"), &event);
 
-    block();
-    popLastEvent();
+    blockUntil(UNBLOCK_EVENT);
+    popLastEvent(UNBLOCK_EVENT);
 }
 
 void SetWindowTitle(const char* sTitle);
@@ -76,8 +77,8 @@ void SetWindowTitle(const char* sTitle)
     memcpy(event.data, &message, sizeof(WindowTitleMessage));
     pushEvent(getProcess("wm"), &event);
 
-    block();
-    popLastEvent();
+    blockUntil(UNBLOCK_EVENT);
+    popLastEvent(UNBLOCK_EVENT);
 }
 
 void DrawWindowString(const char* string, uint32_t x, uint32_t y, uint32_t colour);
@@ -85,15 +86,33 @@ void DrawWindowString(const char* string, uint32_t x, uint32_t y, uint32_t colou
 {
     WindowDrawString message;
     message.x = x;  message.y = y; message.colour = colour;
-    strncpy(message.message, string, 29);
 
-    TaskEvent event;
-    event.id = DRAW_STRING_EVENT;
-    memcpy(event.data, &message, sizeof(WindowTitleMessage));
-    pushEvent(getProcess("wm"), &event);
+    // Dispatch events in the form of 19 chars at a time (plus null terminator)
+    uint32_t nEvents = 0;
+    for (uint32_t i = 0; i < strlen(string); i+=19)
+    {
+        // Create event and fill parameters
+        TaskEvent event;
+        event.id = DRAW_STRING_EVENT;
+        memcpy(event.data, &message, sizeof(uint32_t)*3);
+        
+        // Fill string data
+        for (uint32_t c = 0; c < 19; ++c)
+        {
+            event.data[sizeof(uint32_t)*3 + c] = (uint8_t) string[i+c];
+            //if (string[i+c] == '\0') break; // Break if null terminator
+        }
+        event.data[sizeof(uint32_t)*3 + 19] = '\0';
 
-    block();
-    popLastEvent();
+        // Increment x
+        message.x += 19*CHAR_WIDTH;
+
+        pushEvent(getProcess("wm"), &event);
+        nEvents++;
+    }
+
+    blockUntil(UNBLOCK_EVENT);
+    for (uint32_t i = 0; i < nEvents; ++i) popLastEvent(UNBLOCK_EVENT);
 }
 
 void DrawWindowNumber(uint32_t number, uint32_t x, uint32_t y, uint32_t colour, bool hex);
@@ -111,8 +130,8 @@ void DrawWindowNumber(uint32_t number, uint32_t x, uint32_t y, uint32_t colour, 
     memcpy(event.data, &message, sizeof(WindowDrawNumber));
     pushEvent(getProcess("wm"), &event);
 
-    block();
-    popLastEvent();
+    blockUntil(UNBLOCK_EVENT);
+    popLastEvent(UNBLOCK_EVENT);
 }
 
 uint32_t GetWindowColour(uint8_t r, uint8_t g, uint8_t b);

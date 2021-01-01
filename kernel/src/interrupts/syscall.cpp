@@ -35,6 +35,8 @@ static int SysBlock                 (Registers syscall);
 static int SysPopLastEvent          (Registers syscall);
 static int SysGetKeyBufferAddr      (Registers syscall);
 static int SysSubscribeToKeyboard   (Registers syscall);
+static int SysGetSubseconds         (Registers syscall);
+static int SysBlockUntil            (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -64,7 +66,9 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysBlock,
     &SysPopLastEvent,
     &SysGetKeyBufferAddr,
-    &SysSubscribeToKeyboard
+    &SysSubscribeToKeyboard,
+    &SysGetSubseconds,
+    &SysBlockUntil
 };
 
 int HandleSyscalls(Registers syscall)
@@ -264,9 +268,9 @@ static int SysBlock(Registers syscall __attribute__((unused)))
     return 0;
 }
 
-static int SysPopLastEvent(Registers syscall __attribute__((unused)))
+static int SysPopLastEvent(Registers syscall)
 {
-    return (int)PopLastEvent();
+    return (int)PopLastEvent((uint32_t)syscall.ebx);
 }
 
 static int SysGetKeyBufferAddr(Registers sycall __attribute__((unused)))
@@ -277,5 +281,16 @@ static int SysGetKeyBufferAddr(Registers sycall __attribute__((unused)))
 static int SysSubscribeToKeyboard(Registers syscall)
 {
     SubscribeToKeyboard(syscall.ebx);
+    return 0;
+}
+
+static int SysGetSubseconds(Registers syscall __attribute__((unused)))
+{
+    return GetSubseconds();
+}
+
+static int SysBlockUntil(Registers syscall)
+{
+    OnProcessBlock((uint32_t) syscall.ebx);
     return 0;
 }

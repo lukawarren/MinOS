@@ -9,5 +9,6 @@
 
 void OnTimerInterrupt();
 uint32_t GetSeconds();
+uint32_t GetSubseconds();
 
 #endif

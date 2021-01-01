@@ -253,30 +253,36 @@ int PushEvent(Task* task, TaskEvent* event)
 
     // Push event
     memcpy(&task->pEventQueue->events[task->pEventQueue->nEvents], event, sizeof(TaskEvent));
-    task->pEventQueue->events[task->pEventQueue->nEvents].id = event->id;
     task->pEventQueue->events[task->pEventQueue->nEvents].source = pCurrentTask->processID;
     task->pEventQueue->nEvents++;
 
     // Unblock process
-    task->bBlocked = false;
+    if (task->blockedEvent == 0 || event->id == task->blockedEvent) task->bBlocked = false;
 
     return 0;
 }
 
-int PopLastEvent()
+int PopLastEvent(uint32_t event)
 {
     if (pCurrentTask->pEventQueue->nEvents == 0) return -1;
 
-    // Get top event
-    TaskEvent* event = &pCurrentTask->pEventQueue->events[pCurrentTask->pEventQueue->nEvents-1];
+    // Find first  event in question
+    for (uint32_t i = 0; i < pCurrentTask->pEventQueue->nEvents; ++i)
+    {
+        if (pCurrentTask->pEventQueue->events[i].id == event)
+        {
+            // Shift next events down by one
+            for (uint32_t j = i; j < pCurrentTask->pEventQueue->nEvents; ++j)
+            {
+                memcpy(&pCurrentTask->pEventQueue->events[j], &pCurrentTask->pEventQueue->events[j+1], sizeof(TaskEvent));
+            }
+            
+            pCurrentTask->pEventQueue->nEvents--;
+            return 0;
+        }
+    }
 
-    // Zero it out
-    memset(event, 0, sizeof(TaskEvent));
-
-    // Decrement event counter
-    pCurrentTask->pEventQueue->nEvents--;
-
-    return 0;
+    return -1;
 }
 
 void SubscribeToStdout(bool subscribe)
@@ -386,7 +392,7 @@ void SubscribeToKeyboard(bool subscribe)
     pCurrentTask->bSubscribeToKeyboard = subscribe;
 }
 
-void OnKeyEvent()
+void OnKeyEvent(char key)
 {
     // Walk through each task and sent event if applicable
     unsigned int count = 0;
@@ -397,6 +403,7 @@ void OnKeyEvent()
         {
             TaskEvent event;
             event.id = EVENT_QUEUE_KEY_PRESS;
+            event.data[0] = key;
             PushEvent(task, &event);
         }
 
@@ -405,9 +412,10 @@ void OnKeyEvent()
     }
 }
 
-void OnProcessBlock()
+void OnProcessBlock(uint32_t event)
 {
     pCurrentTask->bBlocked = true;
+    pCurrentTask->blockedEvent = event;
     OnMultitaskPIT();
 }
 

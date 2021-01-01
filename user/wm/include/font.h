@@ -9,7 +9,7 @@
 #define CHAR_WIDTH 8
 #define CHAR_SCALE 2
 
-const inline uint8_t* GetFontFromChar(int c) 
+inline const uint8_t* GetFontFromChar(int c) 
 {
 	static const unsigned char f[128][8] = 
     {

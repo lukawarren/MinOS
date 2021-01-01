@@ -49,9 +49,11 @@ void OnKeyboardInterrupt(uint8_t scancode)
     };
     
     scancode &= (uint8_t)(~128); // Remove released bit
-    keyBuffer[(unsigned int)ScancodeToAscii(scancode)] = !released;
+    char key = ScancodeToAscii(scancode);
+    keyBuffer[(unsigned int)key] = !released;
 
-    OnKeyEvent(); // Wait until the PIT interrupt to do key events, to avoid not recieving the next key interrupt (if any)
+    if (!released) OnKeyEvent(key);
+
 }
 
 uint32_t GetKeyBufferAddress() { return (uint32_t) keyBuffer; }

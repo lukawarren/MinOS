@@ -33,12 +33,10 @@ void OnTimerInterrupt()
         nSubseconds = 0;
         nSeconds++;
     }
-
-    // Poll keyboard events all at once (see keyboard.cpp)
-    OnKeyEvent();
-
+    
     // Multitasking
     OnMultitaskPIT();
 }
 
-uint32_t GetSeconds() { return nSeconds; }
+uint32_t GetSeconds()       { return nSeconds;    }
+uint32_t GetSubseconds()    { return nSubseconds; }

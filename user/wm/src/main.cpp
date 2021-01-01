@@ -44,20 +44,11 @@ int main()
 
             else if (event->id == EVENT_QUEUE_KEY_PRESS)
             {
-                // For each key that has changed
-                for (unsigned int key = 0; key < 256; ++key)
-                {
-                    if (keyBuffer[key] != keyBufferOld[key] && keyBuffer[key])
-                    {
-                        // Send event to active window
-                        TaskEvent keyEvent;
-                        keyEvent.id = KEY_EVENT;
-                        memset(&keyEvent.data[0], (char)key, sizeof(char)); // GCC likes to optimise a bit too much otherwise
-                        pushEvent(pCurrentWindow->processID, &keyEvent);
-                    }
-
-                    keyBufferOld[key] = keyBuffer[key];
-                }
+                // Send event to active window
+                TaskEvent keyEvent;
+                keyEvent.id = KEY_EVENT;
+                memset(&keyEvent.data[0], event->data[0], sizeof(char)); // GCC likes to optimise a bit too much otherwise
+                pushEvent(pCurrentWindow->processID, &keyEvent);
             }
 
             else if (event->id == EVENT_QUEUE_SYSEXIT)
@@ -200,7 +191,7 @@ int main()
                         bool deny = ((int32_t)numberX < 0 || (int32_t)numberY < 0 || numberX + numberWidth >= window->width || numberY + numberHeight >= window->height);
 
                         // Draw string
-                        if (!deny) graphics.DrawNumber(message->number, numberX, numberY, message->colour, window->buffer, window->width * sizeof(uint32_t));
+                        if (!deny) graphics.DrawNumber(message->number, numberX, numberY, message->colour, message->hex, window->buffer, window->width * sizeof(uint32_t));
 
                         break;
                     }
