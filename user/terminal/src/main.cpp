@@ -10,7 +10,7 @@
 
 // Window dimensions
 constexpr unsigned int width = 500;
-constexpr unsigned int height = 400;
+constexpr unsigned int height = 300;
 
 // Blinking cursor and prompt
 constexpr unsigned int promptWidth = CHAR_WIDTH*2;
@@ -34,7 +34,7 @@ void OnCommand();
 int main()
 {
     // Create window
-    CreateWindow(getFramebufferWidth() / 2 - width / 2, getFramebufferHeight() / 2 - height / 2 - 17, width, height);
+    CreateWindow(getFramebufferWidth() / 2 - width / 2, 50, width, height);
     SetWindowTitle("Terminal");
 
     // Clear viewport prompt

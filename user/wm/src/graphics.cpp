@@ -58,16 +58,25 @@ void Graphics::DrawBackground()
 void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, void* buffer)
 {
     const uint32_t barHeight = 20;
-    const uint32_t barPadding = 3;
+    const uint32_t barPadding = 5;
+    const uint32_t outlineShift = 2;
+    const uint32_t outlineSize = 1;
 
     // Confine window to reasonable bounds
     if ((int32_t)x < 0) x = 0;
     if (y < barHeight) y = barHeight;
-    if (x + width >= m_Width) x = m_Width-width;
-    if (y + height >= m_Height) y = m_Height-height;
+    if (x + width + outlineSize + outlineShift >= m_Width) x = m_Width-width-outlineSize-outlineShift;
+    if (y + height + outlineSize + outlineShift >= m_Height) y = m_Height-height-outlineSize-outlineShift;
 
-    // Draw outlilne and bar
+    // Draw shadow
+    DrawRect(x + outlineShift, y-barHeight + outlineShift, width+outlineSize, height+barHeight+outlineSize, WINDOW_SHADOW_COLOUR);
+
+    // Draw bar
     DrawRect(x, y - barHeight, width, barHeight, WINDOW_BAR_COLOUR);
+
+    // Draw bar text
+    uint32_t titleWidth = strlen(sTitle) * CHAR_WIDTH; 
+    DrawString(sTitle, x + width / 2 - titleWidth/2, y - barHeight + barPadding, GetColour(255, 255, 255), m_Buffer, m_Pitch);
 
     // Draw window contents
     uint32_t row = y;
@@ -79,9 +88,6 @@ void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t w
         destination += m_Pitch;
         source += sizeof(uint32_t)*width;
     }
-    
-    // Draw bar text
-    DrawString(sTitle, x + barPadding, y - barHeight + barPadding, GetColour(255, 255, 255), m_Buffer, m_Pitch, GetColour(68, 68, 68));
 
     for (row = y - barHeight; row < y+height+barHeight; ++row)
         m_DirtyRows[row] = 1;
