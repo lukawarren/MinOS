@@ -40,7 +40,7 @@ void OnKeyboardInterrupt(uint8_t scancode)
 
         char asciiShiftOffset = bShift * 32; 
 
-        if (code >= 0x2 && code <= 0xa) return (char)(numbers[code - 0x2] - asciiShiftOffset);
+        if (code >= 0x2 && code <= 0xa && !bShift) return (char)(numbers[code - 0x2] - asciiShiftOffset);
         if(code >= 0x10 && code <= 0x1C) return (char)(qwertzuiop[code - 0x10] - asciiShiftOffset);
         else if(code >= 0x1E && code <= 0x26) return (char)(asdfghjkl[code - 0x1E] - asciiShiftOffset);
         else if(code >= 0x2C && code <= 0x32) return (char)(yxcvbnm[code - 0x2C] - asciiShiftOffset);
