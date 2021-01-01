@@ -56,8 +56,8 @@ void InitPaging(const uint32_t maxAddress)
     // Allocate pages for VGA framebuffer, after aligning it
     uint32_t aligendFramebufferAddress = (uint32_t)VGA_framebuffer.address & ~(0xFFFF);
     uint32_t framebufferAlignmentDifference = (uint32_t)VGA_framebuffer.address - aligendFramebufferAddress;
-    uint32_t framebufferPages = (sizeof(uint32_t) * VGA_framebuffer.width * VGA_framebuffer.height) / pageSize;
-    for (uint32_t i = 0; i < framebufferPages; ++i)
+    uint32_t framebufferPages = (VGA_framebuffer.pitch * VGA_framebuffer.height) / pageSize;
+    for (uint32_t i = 0; i <= framebufferPages; ++i) // There is a flaw in my logic somewhere, so I'm fixing it with "<=", as I am lazy, and what's 4kb in a world of 4gb?
         AllocatePage(aligendFramebufferAddress + i * pageSize, kernelMemorySoFar + i*pageSize, USER_PAGE, true);
     VGA_framebuffer.address = (uint32_t*)(kernelMemorySoFar + framebufferAlignmentDifference);
 

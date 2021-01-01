@@ -44,11 +44,14 @@ int main()
 
             else if (event->id == EVENT_QUEUE_KEY_PRESS)
             {
-                // Send event to active window
-                TaskEvent keyEvent;
-                keyEvent.id = KEY_EVENT;
-                memset(&keyEvent.data[0], event->data[0], sizeof(char)); // GCC likes to optimise a bit too much otherwise
-                pushEvent(pCurrentWindow->processID, &keyEvent);
+                if (pCurrentWindow != nullptr)
+                {
+                    // Send event to active window
+                    TaskEvent keyEvent;
+                    keyEvent.id = KEY_EVENT;
+                    memset(&keyEvent.data[0], event->data[0], sizeof(char)); // GCC likes to optimise a bit too much otherwise
+                    pushEvent(pCurrentWindow->processID, &keyEvent);
+                }
             }
 
             else if (event->id == EVENT_QUEUE_SYSEXIT)
