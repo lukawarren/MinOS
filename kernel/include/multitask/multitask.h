@@ -42,11 +42,12 @@ void OnMultitaskPIT();
 
 uint32_t GetNumberOfTasks();
 
-void TaskExit();
+void TaskExit(Task* task = nullptr);
 
 void TaskGrow(uint32_t size);
 
 TaskEvent* GetNextEvent();
+int PushEvent(Task* task, TaskEvent* event, uint32_t processIDSource);
 int PushEvent(Task* task, TaskEvent* event);
 int PopLastEvent(uint32_t event);
 
@@ -57,10 +58,13 @@ void OnStdout(const char* message);
 void OnStdout(uint32_t number, bool hex);
 
 void SubscribeToSysexit(bool subscribe);
+void OnSysexit(uint32_t exitingProcessID);
 void OnSysexit();
 
 void SubscribeToKeyboard(bool subscribe);
 void OnKeyEvent(char key, bool bSpecial);
+
+void KillTask(Task* task);
 
 void OnProcessBlock(uint32_t event = 0);
 

@@ -26,7 +26,9 @@ unsigned int viewportRow = 0;
 unsigned int viewportColumn = 0;
 char viewportPrompt[nColumns+1];    // +1 for null terminator
 
+// Running program
 bool bInCommand = false;
+uint32_t processID = 0;
 
 int main();
 void ParseKeyEvent(WindowKeyEvent* event);
@@ -38,6 +40,9 @@ int main()
     // Subscribe to evnts
     subscribeToStdout(true);
     subscribeToSysexit(true);
+
+    // Get access to keyboard buffer for keyboard shortcuts
+    uint8_t* pKeyboardBuffer = (uint8_t*) getKeyBufferAddr();
 
     // Create window
     CreateWindow(getFramebufferWidth() / 2 - width / 2, 50, width, height);
@@ -60,6 +65,28 @@ int main()
                 WindowKeyEvent* keyEvent = (WindowKeyEvent*)event->data;
                 ParseKeyEvent(keyEvent);
                 if (!bInCommand) DrawPrompt();
+            }
+
+            else if (event->id == KEY_EVENT && bInCommand)
+            {
+                // CTRL + C kills the running program
+                WindowKeyEvent* keyEvent = (WindowKeyEvent*)event->data;
+                if (pKeyboardBuffer[KEY_EVENT_CTRL] && keyEvent->key == 'c') kill(processID);
+                
+                bInCommand = false;
+
+                // Increment row again
+                viewportRow++;
+                if (viewportRow >= nRows) viewportRow = 0;
+                viewportColumn = 0;
+
+                // Clear prompt
+                memset(viewportPrompt, ' ', nColumns);
+                viewportPrompt[nColumns] = '\0';
+                
+                // Draw prompt
+                bInCommand = false;
+                DrawPrompt();
             }
 
             else if (event->id == EVENT_QUEUE_PRINTF && bInCommand)
@@ -198,7 +225,8 @@ void OnCommand()
 
     // Run program
     bInCommand = true;
-    if (loadProgram(programName) == -1)
+    processID = loadProgram(programName);
+    if ((int) processID == -1)
     {
         // "In-program" commands
         if (strcmp(programName, "exit")) sysexit();

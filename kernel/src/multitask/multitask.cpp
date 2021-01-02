@@ -160,9 +160,12 @@ uint32_t GetNumberOfTasks()
     return nTasks;
 }
 
-void TaskExit()
+void TaskExit(Task* task)
 {
-    Task* task = pCurrentTask;
+    if (task == nullptr) task = pCurrentTask;
+
+    bool bSysexit = false;
+    if (task == pCurrentTask) bSysexit = true;
 
     // Case 1: There is one element in the list
     if (nTasks == 1)
@@ -193,17 +196,21 @@ void TaskExit()
         task->pNextTask->pPrevTask = task->pPrevTask;
     }
 
-    pCurrentTask = nullptr;
+    if (bSysexit) pCurrentTask = nullptr;
 
     // Unallocate all memory
     kfree(task->pOriginalStack, 4096); // stack
     if (task->size != 0) kfree((void*)task->location, task->size); // memory
     kfree(task, sizeof(Task)); // task struct
-    
+
     // Switch to new task
     nTasks--;
-    bSysexitCall = true;
-    OnMultitaskPIT();
+    
+    if (bSysexit)
+    {
+        bSysexitCall = true;
+        OnMultitaskPIT();
+    }
 }
 
 void TaskGrow(uint32_t size)
@@ -246,20 +253,25 @@ Task* GetTaskWithProcessID(uint32_t id)
     return (Task*)nullptr;
 }
 
-int PushEvent(Task* task, TaskEvent* event)
+int PushEvent(Task* task, TaskEvent* event, uint32_t processIDSource)
 {
     // Check event queue is not full
     if (task->pEventQueue->nEvents >= MAX_TASK_EVENTS-1) return -1;
 
     // Push event
     memcpy(&task->pEventQueue->events[task->pEventQueue->nEvents], event, sizeof(TaskEvent));
-    task->pEventQueue->events[task->pEventQueue->nEvents].source = pCurrentTask->processID;
+    task->pEventQueue->events[task->pEventQueue->nEvents].source = processIDSource;
     task->pEventQueue->nEvents++;
 
     // Unblock process
     if (task->blockedEvent == 0 || event->id == task->blockedEvent) task->bBlocked = false;
 
     return 0;
+}
+
+int PushEvent(Task* task, TaskEvent* event)
+{
+    return PushEvent(task, event, pCurrentTask->processID);
 }
 
 int PopLastEvent(uint32_t event)
@@ -369,22 +381,27 @@ void SubscribeToSysexit(bool subscribe)
     pCurrentTask->bSubscribeToSysexit = subscribe;
 }
 
-void OnSysexit()
+void OnSysexit(uint32_t exitingProcessID)
 {
     // Walk up process tree before a subscriber of sysexit is found
-    Task* task = GetTaskWithProcessID(pCurrentTask->parentID);
+    Task* task = GetTaskWithProcessID(GetTaskWithProcessID(exitingProcessID)->parentID);
 
     while (task != nullptr)
     {
         if (task->bSubscribeToSysexit)
         {
-            // Found subscriber, dispatch events in the form of 15 chars at a time (plus null terminator)
+            // Found subscriber, dispatch event
             TaskEvent event;     
             event.id = EVENT_QUEUE_SYSEXIT;
-            PushEvent(task, &event);
+            PushEvent(task, &event, exitingProcessID);
         }
         task = GetTaskWithProcessID(task->parentID);
     }
+}
+
+void OnSysexit()
+{
+    OnSysexit(pCurrentTask->processID);
 }
 
 void SubscribeToKeyboard(bool subscribe)
@@ -411,6 +428,11 @@ void OnKeyEvent(char key, bool bSpecial)
         task = task->pNextTask;
         ++count;
     }
+}
+
+void KillTask(Task* task)
+{
+    TaskExit(task);
 }
 
 void OnProcessBlock(uint32_t event)

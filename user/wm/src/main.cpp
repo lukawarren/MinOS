@@ -54,7 +54,7 @@ int main()
                         else pCurrentWindow = pWindows;
                     }
 
-                    // CTRL + arrow key - move windows around
+                    // Arrow keys + alt (optional) - move windows around
                     if (pCurrentWindow != nullptr && (event->data[0] == KEY_EVENT_UP || event->data[0] == KEY_EVENT_DOWN || 
                         event->data[0] == KEY_EVENT_LEFT || event->data[0] == KEY_EVENT_RIGHT))
                     {
@@ -85,6 +85,7 @@ int main()
 
             else if (event->id == EVENT_QUEUE_SYSEXIT)
             {
+
                 // Find window (if any)
                 Window* window = pWindows;
                 Window* prevWindow = nullptr;
@@ -99,30 +100,30 @@ int main()
                     prevWindow = window;
                     window = (Window*) window->pNextWindow;
                 }
-
+                
                 // Destroy window
                 if (found)
                 {
                     // If in the middle
                     if (prevWindow != nullptr && window->pNextWindow != nullptr) prevWindow->pNextWindow = window->pNextWindow;
                     
-                    // If 2nd (and last) elemtent in the list
-                    if (pCurrentWindow == window && prevWindow != nullptr) prevWindow->pNextWindow = nullptr;
+                    // If last elemtent in the list
+                    else if (window->pNextWindow == nullptr) prevWindow->pNextWindow = nullptr;
 
                     // If only element in list
                     if (pCurrentWindow == window && prevWindow == nullptr && window->pNextWindow == nullptr) pCurrentWindow = nullptr;
                     
-                    // If 2nd (and last) element in list
+                    // If not first (but current) element in list
                     else if (pCurrentWindow == window && prevWindow != nullptr) pCurrentWindow = prevWindow;
                     
-                    // If first element in list
+                    // If first (and current) element in list, but not last
                     else if (pCurrentWindow == window && window->pNextWindow != nullptr) pCurrentWindow = (Window*) window->pNextWindow;
                     
                     // If beginning of list and only one window
                     if  (window == pWindows && window->pNextWindow == nullptr) pWindows = nullptr;
 
                     // If beginning of list but there's more than one window
-                    else if (window == pWindows && window->pNextWindow != nullptr) pWindows = (Window*) window->pNextWindow;
+                    if (window == pWindows && window->pNextWindow != nullptr) pWindows = (Window*) window->pNextWindow;
 
                     free(window->buffer, sizeof(uint32_t)*window->width*window->height);
                     free(window, sizeof(Window));
@@ -249,7 +250,7 @@ int main()
             }
 
             // Send acknowledgement event
-            if (event->id != EVENT_QUEUE_PRINTF && event->id != EVENT_QUEUE_KEY_PRESS)
+            if (event->id != EVENT_QUEUE_PRINTF && event->id != EVENT_QUEUE_KEY_PRESS && event->id != EVENT_QUEUE_SYSEXIT)
             {
                 TaskEvent unblockEvent;
                 unblockEvent.id = UNBLOCK_EVENT;

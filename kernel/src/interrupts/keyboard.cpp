@@ -61,6 +61,7 @@ void OnKeyboardInterrupt(uint8_t scancode)
             case 0x50:  return (char) KEY_EVENT_DOWN;
             case 0x4B:  return (char) KEY_EVENT_LEFT;
             case 0x4D:  return (char) KEY_EVENT_RIGHT;   
+            case 0x1D:  return (char) KEY_EVENT_CTRL;
         }
 
         //UART::pCOM->printf("Unknown scancode ", false);

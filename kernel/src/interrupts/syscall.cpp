@@ -37,6 +37,7 @@ static int SysGetKeyBufferAddr      (Registers syscall);
 static int SysSubscribeToKeyboard   (Registers syscall);
 static int SysGetSubseconds         (Registers syscall);
 static int SysBlockUntil            (Registers syscall);
+static int SysKill                  (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -68,7 +69,8 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysGetKeyBufferAddr,
     &SysSubscribeToKeyboard,
     &SysGetSubseconds,
-    &SysBlockUntil
+    &SysBlockUntil,
+    &SysKill
 };
 
 int HandleSyscalls(Registers syscall)
@@ -291,5 +293,16 @@ static int SysGetSubseconds(Registers syscall __attribute__((unused)))
 static int SysBlockUntil(Registers syscall)
 {
     OnProcessBlock((uint32_t) syscall.ebx);
+    return 0;
+}
+
+static int SysKill(Registers syscall)
+{
+    uint32_t processID = syscall.ebx;
+    Task* task = GetTaskWithProcessID(processID);
+
+    if (task == nullptr) return -1;
+    else { OnSysexit(processID); KillTask(task); }
+    
     return 0;
 }
