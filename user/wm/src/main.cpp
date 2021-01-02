@@ -71,6 +71,19 @@ int main()
                         if ((int32_t)pCurrentWindow->x < 0) pCurrentWindow->x = 0;
                         if ((int32_t)pCurrentWindow->y < 0) pCurrentWindow->y = 0;
                     }
+
+                    // Alt + ctrl - terminate current window
+                    if (pCurrentWindow != nullptr && keyBuffer[KEY_EVENT_ALT] && keyBuffer[KEY_EVENT_CTRL])
+                    {
+                        kill(pCurrentWindow->processID);
+                    }
+
+                }
+
+                // Alt + t - launch terminal
+                else if (keyBuffer[KEY_EVENT_ALT] && keyBuffer['t']) 
+                {
+                    loadProgram("terminal.bin");
                 }
 
                 else if (pCurrentWindow != nullptr)
@@ -107,8 +120,8 @@ int main()
                     // If in the middle
                     if (prevWindow != nullptr && window->pNextWindow != nullptr) prevWindow->pNextWindow = window->pNextWindow;
                     
-                    // If last elemtent in the list
-                    else if (window->pNextWindow == nullptr) prevWindow->pNextWindow = nullptr;
+                    // If last elemtent in the list but not first
+                    else if (window->pNextWindow == nullptr && prevWindow != nullptr) prevWindow->pNextWindow = nullptr;
 
                     // If only element in list
                     if (pCurrentWindow == window && prevWindow == nullptr && window->pNextWindow == nullptr) pCurrentWindow = nullptr;
