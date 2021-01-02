@@ -55,7 +55,7 @@ void Graphics::DrawBackground()
     memset(m_DirtyRows, 1, sizeof(bool)*m_Height);
 }
 
-void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, void* buffer)
+void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, void* buffer, bool bShadow)
 {
     const uint32_t barHeight = 20;
     const uint32_t barPadding = 5;
@@ -69,7 +69,8 @@ void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t w
     if (y + height + outlineSize + outlineShift >= m_Height) y = m_Height-height-outlineSize-outlineShift;
 
     // Draw shadow
-    DrawRect(x + outlineShift, y-barHeight + outlineShift, width+outlineSize, height+barHeight+outlineSize, WINDOW_SHADOW_COLOUR);
+    if (bShadow)
+        DrawRect(x + outlineShift, y-barHeight + outlineShift, width+outlineSize, height+barHeight+outlineSize, WINDOW_SHADOW_COLOUR);
 
     // Draw bar
     DrawRect(x, y - barHeight, width, barHeight, WINDOW_BAR_COLOUR);

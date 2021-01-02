@@ -44,7 +44,36 @@ int main()
 
             else if (event->id == EVENT_QUEUE_KEY_PRESS)
             {
-                if (pCurrentWindow != nullptr)
+                // Special keys
+                if (event->data[1])
+                {
+                    // Tab - cycle through windows
+                    if (event->data[0] == '\t' && pCurrentWindow != nullptr)
+                    {
+                        if (pCurrentWindow->pNextWindow  != nullptr) pCurrentWindow = (Window*) pCurrentWindow->pNextWindow;
+                        else pCurrentWindow = pWindows;
+                    }
+
+                    // CTRL + arrow key - move windows around
+                    if (pCurrentWindow != nullptr && (event->data[0] == KEY_EVENT_UP || event->data[0] == KEY_EVENT_DOWN || 
+                        event->data[0] == KEY_EVENT_LEFT || event->data[0] == KEY_EVENT_RIGHT))
+                    {
+                        uint32_t speed = 1 + keyBuffer[KEY_EVENT_ALT]*4;
+
+                        if (event->data[0] == KEY_EVENT_UP)     pCurrentWindow->y -= speed;
+                        if (event->data[0] == KEY_EVENT_DOWN)   pCurrentWindow->y += speed;
+                        if (event->data[0] == KEY_EVENT_LEFT)   pCurrentWindow->x -= speed;
+                        if (event->data[0] == KEY_EVENT_RIGHT)  pCurrentWindow->x += speed;
+
+                        // Confine window to reasonable bounds
+                        if (pCurrentWindow->x + pCurrentWindow->width >= graphics.m_Width) pCurrentWindow->x = graphics.m_Width - pCurrentWindow->width;
+                        if (pCurrentWindow->y + pCurrentWindow->height >= graphics.m_Height) pCurrentWindow->y = graphics.m_Height - pCurrentWindow->height;
+                        if ((int32_t)pCurrentWindow->x < 0) pCurrentWindow->x = 0;
+                        if ((int32_t)pCurrentWindow->y < 0) pCurrentWindow->y = 0;
+                    }
+                }
+
+                else if (pCurrentWindow != nullptr)
                 {
                     // Send event to active window
                     TaskEvent keyEvent;
@@ -235,10 +264,10 @@ int main()
         Window* window = pWindows;
         while (window != nullptr)
         {
-            if (window != pCurrentWindow) graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height, window->buffer);
+            if (window != pCurrentWindow) graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height, window->buffer, false);
             window = (Window*) window->pNextWindow;
         }
-        if (pCurrentWindow != nullptr) graphics.DrawWindow(pCurrentWindow->sName, pCurrentWindow->x, pCurrentWindow->y, pCurrentWindow->width, pCurrentWindow->height,pCurrentWindow->buffer);
+        if (pCurrentWindow != nullptr) graphics.DrawWindow(pCurrentWindow->sName, pCurrentWindow->x, pCurrentWindow->y, pCurrentWindow->width, pCurrentWindow->height,pCurrentWindow->buffer, true);
         graphics.SwapBuffers();
     }
 

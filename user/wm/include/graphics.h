@@ -26,7 +26,7 @@ public:
 
     void DrawRect(uint32_t x, uint32_t y, uint32_t rectWidth, uint32_t rectHeight, uint32_t colour);
     void DrawBackground();
-    void DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, void* buffer);
+    void DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, void* buffer, bool bShadow);
 
     void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour, void* buffer, uint32_t pitch, uint32_t backgroundColour = WINDOW_BACKGROUND_COLOUR);
     void DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour, void* buffer, uint32_t pitch, uint32_t backgroundColour = WINDOW_BACKGROUND_COLOUR);
@@ -80,9 +80,10 @@ public:
         }
     }
 
-private:
     uint32_t m_Width;
     uint32_t m_Height;
+
+private:
     uint32_t m_Address;
     uint32_t m_Pitch;
 

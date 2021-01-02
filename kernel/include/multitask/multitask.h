@@ -60,7 +60,7 @@ void SubscribeToSysexit(bool subscribe);
 void OnSysexit();
 
 void SubscribeToKeyboard(bool subscribe);
-void OnKeyEvent(char key);
+void OnKeyEvent(char key, bool bSpecial);
 
 void OnProcessBlock(uint32_t event = 0);
 

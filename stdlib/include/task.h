@@ -27,4 +27,10 @@ typedef struct taskEvent_t // 42 bytes in total
 #define EVENT_QUEUE_SYSEXIT 0xefefefe
 #define EVENT_QUEUE_KEY_PRESS 0x1234321
 
+#define KEY_EVENT_ALT   0x1
+#define KEY_EVENT_DOWN  0x2
+#define KEY_EVENT_UP    0x3
+#define KEY_EVENT_LEFT  0x4
+#define KEY_EVENT_RIGHT 0x5
+
 #endif

@@ -392,7 +392,7 @@ void SubscribeToKeyboard(bool subscribe)
     pCurrentTask->bSubscribeToKeyboard = subscribe;
 }
 
-void OnKeyEvent(char key)
+void OnKeyEvent(char key, bool bSpecial)
 {
     // Walk through each task and sent event if applicable
     unsigned int count = 0;
@@ -404,6 +404,7 @@ void OnKeyEvent(char key)
             TaskEvent event;
             event.id = EVENT_QUEUE_KEY_PRESS;
             event.data[0] = key;
+            event.data[1] = bSpecial;
             PushEvent(task, &event);
         }
 

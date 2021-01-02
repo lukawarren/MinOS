@@ -1,8 +1,10 @@
 #include "keyboard.h"
 #include "../memory/paging.h"
-#include "stdlib.h"
 #include "../gfx/vga.h"
 #include "../multitask/multitask.h"
+#include "../io/uart.h"
+#include "stdlib.h"
+#include "task.h"
 
 // Keyboard state
 static uint8_t* keyBuffer;
@@ -48,11 +50,33 @@ void OnKeyboardInterrupt(uint8_t scancode)
         return '\0'; // If key not detected, ignore it
     };
     
+    auto ScancodeToSpecial = [&](uint8_t code)
+    {
+        // Special keys
+        switch (code)
+        {
+            case 0xF:   return '\t';  // Tab
+            case 0x38:  return (char) KEY_EVENT_ALT;
+            case 0x48:  return (char) KEY_EVENT_UP;
+            case 0x50:  return (char) KEY_EVENT_DOWN;
+            case 0x4B:  return (char) KEY_EVENT_LEFT;
+            case 0x4D:  return (char) KEY_EVENT_RIGHT;   
+        }
+
+        //UART::pCOM->printf("Unknown scancode ", false);
+        //UART::pCOM->printf<uint32_t, true>(code);
+
+        return '\0';
+    };
+
+    bool bSpecial = false;
+
     scancode &= (uint8_t)(~128); // Remove released bit
     char key = ScancodeToAscii(scancode);
+    if (key == '\0') {bSpecial = true; key = ScancodeToSpecial(scancode); }
     keyBuffer[(unsigned int)key] = !released;
 
-    if (!released) OnKeyEvent(key);
+    if (!released) OnKeyEvent(key, bSpecial);
 
 }
 
