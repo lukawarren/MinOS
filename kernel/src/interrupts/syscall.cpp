@@ -220,7 +220,6 @@ static int SysLoadProgram(Registers syscall)
 {
     // Open file
     FileHandle file = kFileOpen((const char*)syscall.ebx);
-    
     if (file == (FileHandle)-1) return -1;
 
     // Load into memory and parse
@@ -234,7 +233,7 @@ static int SysLoadProgram(Registers syscall)
     auto task = CreateChildTask((const char*)syscall.ebx, elf.entry, elf.size, elf.location);
     kfree(fileBuffer, kGetFileSize(file));
     kFileClose(file);
-    
+
     return (int)task->processID;
 }
 

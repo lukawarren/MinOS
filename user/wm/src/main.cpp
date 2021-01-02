@@ -74,13 +74,25 @@ int main()
                 // Destroy window
                 if (found)
                 {
+                    // If in the middle
                     if (prevWindow != nullptr && window->pNextWindow != nullptr) prevWindow->pNextWindow = window->pNextWindow;
                     
+                    // If 2nd (and last) elemtent in the list
+                    if (pCurrentWindow == window && prevWindow != nullptr) prevWindow->pNextWindow = nullptr;
+
+                    // If only element in list
                     if (pCurrentWindow == window && prevWindow == nullptr && window->pNextWindow == nullptr) pCurrentWindow = nullptr;
+                    
+                    // If 2nd (and last) element in list
                     else if (pCurrentWindow == window && prevWindow != nullptr) pCurrentWindow = prevWindow;
+                    
+                    // If first element in list
                     else if (pCurrentWindow == window && window->pNextWindow != nullptr) pCurrentWindow = (Window*) window->pNextWindow;
                     
+                    // If beginning of list and only one window
                     if  (window == pWindows && window->pNextWindow == nullptr) pWindows = nullptr;
+
+                    // If beginning of list but there's more than one window
                     else if (window == pWindows && window->pNextWindow != nullptr) pWindows = (Window*) window->pNextWindow;
 
                     free(window->buffer, sizeof(uint32_t)*window->width*window->height);
@@ -218,14 +230,15 @@ int main()
             event = getNextEvent();
         }
         
-        // Draw
+        // Draw background and window and swap buffers
         graphics.DrawBackground();
         Window* window = pWindows;
         while (window != nullptr)
         {
-            graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height, window->buffer);
+            if (window != pCurrentWindow) graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height, window->buffer);
             window = (Window*) window->pNextWindow;
         }
+        if (pCurrentWindow != nullptr) graphics.DrawWindow(pCurrentWindow->sName, pCurrentWindow->x, pCurrentWindow->y, pCurrentWindow->width, pCurrentWindow->height,pCurrentWindow->buffer);
         graphics.SwapBuffers();
     }
 

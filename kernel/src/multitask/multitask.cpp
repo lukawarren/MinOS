@@ -298,7 +298,7 @@ void OnStdout(const char* message)
 
     while (task != nullptr)
     {
-        if (task->bSubscribeToStdout)
+        if (task->bSubscribeToStdout && !bFound)
         {
             // Found subscriber, dispatch events in the form of 31 chars at a time (plus null terminator)
             for (uint32_t i = 0; i < strlen(message); i+=31)
