@@ -43,6 +43,3 @@ Just build the project and either run the iso in the build directory as a virtua
 ```
 sudo dd if=/path/to/MinOS.iso of=/dev/sdx && sync
 ```
-
-### Qemu Performance
-When using Qemu, use `-vga vmware` as an argument unless you want extremely poor graphics performance.

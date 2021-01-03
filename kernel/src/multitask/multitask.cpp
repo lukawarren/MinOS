@@ -201,6 +201,7 @@ void TaskExit(Task* task)
     // Unallocate all memory
     kfree(task->pOriginalStack, 4096); // stack
     if (task->size != 0) kfree((void*)task->location, task->size); // memory
+    kfree(task->pEventQueue, sizeof(TaskEventQueue));
     kfree(task, sizeof(Task)); // task struct
 
     // Switch to new task

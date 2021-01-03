@@ -188,6 +188,7 @@ void* kmalloc(uint32_t bytes, uint32_t flags, bool kernel)
     return NULL;
 }
 
+
 void kfree(void* ptr, uint32_t bytes)
 {
     auto RoundUpToNextPageSize = [&](uint32_t number)
@@ -197,7 +198,7 @@ void kfree(void* ptr, uint32_t bytes)
             return number;
         return number + pageSize - remainder;
     };
-
+    
     uint32_t pagesRequired = RoundUpToNextPageSize(bytes) / pageSize;
 
     for (uint32_t i = 0; i < pagesRequired; ++i)
