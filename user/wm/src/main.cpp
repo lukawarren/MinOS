@@ -23,13 +23,12 @@ int main()
     printf("Starting window manager...\n");
 
     graphics.Init(getFramebufferWidth(), getFramebufferHeight(), getFramebufferAddr(), getFramebufferWidth() * sizeof(uint32_t));
-    graphics.DrawBackground();
 
     keyBuffer =     (uint8_t*)getKeyBufferAddr();
     keyBufferOld =  (uint8_t*)malloc(256);
 
     loadProgram("uptime.bin");
-    loadProgram("terminal.bin");
+    //loadProgram("terminal.bin");
 
     while (1)
     {
@@ -58,8 +57,10 @@ int main()
                     if (pCurrentWindow != nullptr && (event->data[0] == KEY_EVENT_UP || event->data[0] == KEY_EVENT_DOWN || 
                         event->data[0] == KEY_EVENT_LEFT || event->data[0] == KEY_EVENT_RIGHT))
                     {
-                        uint32_t speed = 1 + keyBuffer[KEY_EVENT_ALT]*4;
+                        if (!pCurrentWindow->bMoved) { pCurrentWindow->oldX = pCurrentWindow->x; pCurrentWindow->oldY = pCurrentWindow->y; }
 
+                        uint32_t speed = 1 + keyBuffer[KEY_EVENT_ALT]*4;
+                        
                         if (event->data[0] == KEY_EVENT_UP)     pCurrentWindow->y -= speed;
                         if (event->data[0] == KEY_EVENT_DOWN)   pCurrentWindow->y += speed;
                         if (event->data[0] == KEY_EVENT_LEFT)   pCurrentWindow->x -= speed;
@@ -67,9 +68,11 @@ int main()
 
                         // Confine window to reasonable bounds
                         if (pCurrentWindow->x + pCurrentWindow->width >= graphics.m_Width) pCurrentWindow->x = graphics.m_Width - pCurrentWindow->width;
-                        if (pCurrentWindow->y + pCurrentWindow->height >= graphics.m_Height) pCurrentWindow->y = graphics.m_Height - pCurrentWindow->height;
+                        if (pCurrentWindow->y + BAR_HEIGHT + pCurrentWindow->height >= graphics.m_Height) pCurrentWindow->y = graphics.m_Height - pCurrentWindow->height - BAR_HEIGHT;
                         if ((int32_t)pCurrentWindow->x < 0) pCurrentWindow->x = 0;
                         if ((int32_t)pCurrentWindow->y < 0) pCurrentWindow->y = 0;
+
+                        pCurrentWindow->bMoved = true;
                     }
 
                     // Alt + ctrl - terminate current window
@@ -138,6 +141,8 @@ int main()
                     // If beginning of list but there's more than one window
                     if (window == pWindows && window->pNextWindow != nullptr) pWindows = (Window*) window->pNextWindow;
 
+                    graphics.OnWindowDestroy(*window);
+
                     free(window->buffer, sizeof(uint32_t)*window->width*window->height);
                     free(window, sizeof(Window));
                 }
@@ -159,16 +164,21 @@ int main()
                         uint32_t oldHeight = window->height;
 
                         WindowCreateMessage* message = (WindowCreateMessage*)(event->data);
+                        if (!window->bMoved) { window->oldX = window->x; window->oldY = window->y; }
                         window->x = message->x; window->width = message->width;
-                        window->y = message->y; window->height = message->height;
+                        window->y = message->y - BAR_HEIGHT; 
+                        window->height = message->height;
+                        window->bMoved = true;
 
                         // Recreate window if there has been a resize
                         if (window->width != oldWidth || window->height != oldHeight)
                         {
-                            free(window->buffer, sizeof(uint32_t)*window->width*window->height);
-                            window->buffer = malloc(sizeof(uint32_t)*window->width*window->height);
-                            memset(window->buffer, WINDOW_BACKGROUND_COLOUR, sizeof(uint32_t)*window->width*window->height);
-                        }     
+                            free(window->buffer, sizeof(uint32_t)*window->width*(window->height+BAR_HEIGHT));
+                            window->buffer = malloc(sizeof(uint32_t)*window->width*(window->height + BAR_HEIGHT));
+                            memset(window->buffer, WINDOW_BACKGROUND_COLOUR, sizeof(uint32_t)*window->width*(window->height + BAR_HEIGHT));
+                        }
+
+                        break; 
                     }
                     window = (Window*) window->pNextWindow;
                 }
@@ -183,10 +193,14 @@ int main()
 
                     // Set data
                     WindowCreateMessage* message = (WindowCreateMessage*)(event->data);
-                    *pCurrentWindow = Window("Untitled", message->x, message->y, message->width, message->height, event->source);
-                    window->buffer = malloc(sizeof(uint32_t)*window->width*window->height);
-                    memset(window->buffer, WINDOW_BACKGROUND_COLOUR, sizeof(uint32_t)*window->width*window->height);
+                    *pCurrentWindow = Window("Untitled", message->x, message->y - BAR_HEIGHT, message->width, message->height, event->source);
+                    window->buffer = malloc(sizeof(uint32_t)*window->width*(window->height + BAR_HEIGHT));
+                    memset(window->buffer, WINDOW_BACKGROUND_COLOUR, sizeof(uint32_t)*window->width*(window->height+BAR_HEIGHT));
                 }
+
+                // Draw window
+                if (deny) graphics.OnWindowMove(*window);
+                graphics.DrawWindow(*window);
             }
 
             else if (event->id == SET_TITLE_EVENT)
@@ -198,6 +212,7 @@ int main()
                     if (window->processID == event->source)
                     {
                         strncpy(window->sName, (char*)event->data, 16);
+                        graphics.OnWindowTitleChange(*window);
                         break;
                     }
                     window = (Window*) window->pNextWindow;
@@ -212,7 +227,7 @@ int main()
                 {
                     if (window->processID == event->source)
                     {
-                        // Translate coordinates to window space
+                        // No need to translate coordinates to window space
                         WindowDrawString* message = (WindowDrawString*)event->data;
                         uint32_t stringWidth = CHAR_WIDTH*strlen(message->message);
                         uint32_t stringHeight = CHAR_HEIGHT*CHAR_SCALE;
@@ -223,7 +238,7 @@ int main()
                         bool deny = ((int32_t)stringX < 0 || (int32_t)stringY < 0 || stringX + stringWidth >= window->width || stringY + stringHeight >= window->height);
 
                         // Draw string
-                        if (!deny) graphics.DrawString(message->message, stringX, stringY, message->colour, window->buffer, window->width * sizeof(uint32_t));
+                        if (!deny) graphics.DrawString(message->message, stringX, stringY + BAR_HEIGHT, message->colour, *window);
 
                         break;
                     }
@@ -249,7 +264,7 @@ int main()
                         bool deny = ((int32_t)numberX < 0 || (int32_t)numberY < 0 || numberX + numberWidth >= window->width || numberY + numberHeight >= window->height);
 
                         // Draw string
-                        if (!deny) graphics.DrawNumber(message->number, numberX, numberY, message->colour, message->hex, window->buffer, window->width * sizeof(uint32_t));
+                        if (!deny) graphics.DrawNumber(message->number, numberX, numberY, message->colour, message->hex, *window);
 
                         break;
                     }
@@ -269,20 +284,25 @@ int main()
                 unblockEvent.id = UNBLOCK_EVENT;
                 pushEvent(event->source, &unblockEvent);
             }
-
+            
             event = getNextEvent();
         }
-        
-        // Draw background and window and swap buffers
-        graphics.DrawBackground();
+
+        // Move windows that need to be moved
         Window* window = pWindows;
         while (window != nullptr)
         {
-            if (window != pCurrentWindow) graphics.DrawWindow(window->sName, window->x, window->y, window->width, window->height, window->buffer, false);
+            if (window->bMoved)
+            {
+                graphics.OnWindowMove(*window);
+                graphics.DrawWindow(*window);
+                window->bMoved = false;
+            }
             window = (Window*) window->pNextWindow;
         }
-        if (pCurrentWindow != nullptr) graphics.DrawWindow(pCurrentWindow->sName, pCurrentWindow->x, pCurrentWindow->y, pCurrentWindow->width, pCurrentWindow->height,pCurrentWindow->buffer, true);
-        graphics.SwapBuffers();
+
+        // Draw background and window and swap buffers
+        graphics.DrawFrame();
     }
 
     sysexit();

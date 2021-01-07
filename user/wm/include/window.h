@@ -16,6 +16,11 @@ struct Window
     void* buffer;
     void* pNextWindow = nullptr;
 
+    uint32_t oldX = 0xFFFFFFFF;
+    uint32_t oldY = 0xFFFFFFFF;
+
+    bool bMoved = false;
+
     Window() {}
     Window(const char* name, uint32_t _x, uint32_t _y, uint32_t _width, uint32_t _height, uint32_t id)
     {

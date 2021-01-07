@@ -29,74 +29,113 @@ void Graphics::Init(uint32_t width, uint32_t height, uint32_t address, uint32_t 
     free(data, getFileSize(file));
     fileClose(file);
 
-    // Create regular buffer
+    // Get double buffer
     m_Buffer = malloc(m_Pitch*m_Height);
 
-    // Dirty rows
-    m_DirtyRows = (bool*) malloc(sizeof(bool)*m_Height);
+    // Dirty rects
+    memset(m_DirtyRects, 0, sizeof(m_DirtyRects));
+    nRects = 0;
+
+    // Draw background
+    PushRect(0, 0, m_Width, m_Height, nullptr);
 }
 
-void Graphics::DrawRect(uint32_t x, uint32_t y, uint32_t rectWidth, uint32_t rectHeight, uint32_t colour)
+void Graphics::DrawRect(uint32_t x, uint32_t y, uint32_t rectWidth, uint32_t rectHeight, uint32_t colour, Window& window)
 {
-    /*
-        I tried doing a bunch of fancy optimising
-        but the compiler beat me to it!
-        In other words, there's no use! 
-    */
+    const uint32_t pitch = window.width * sizeof(uint32_t);
 
-    for (uint32_t i = x; i < x + rectWidth; ++i)
-        for (uint32_t j = y; j < y + rectHeight; ++j)
-            PutPixel(i, j, colour);
+    for (uint32_t row = y; row < y + rectHeight; ++row)
+        memset((void*)((uint32_t)window.buffer + row*pitch + x * sizeof(uint32_t)), colour, sizeof(uint32_t)*rectWidth);
 }
 
-void Graphics::DrawBackground()
+void Graphics::ConfineWindowToReasonableBounds(Window& window)
 {
-    Blit(m_Background);
-    memset(m_DirtyRows, 1, sizeof(bool)*m_Height);
-}
-
-void Graphics::DrawWindow(const char* sTitle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, void* buffer, bool bShadow)
-{
-    const uint32_t barHeight = 20;
-    const uint32_t barPadding = 5;
-    const uint32_t outlineShift = 2;
-    const uint32_t outlineSize = 1;
-
     // Confine window to reasonable bounds
-    if ((int32_t)x < 0) x = 0;
-    if (y < barHeight) y = barHeight;
-    if (x + width + outlineSize + outlineShift >= m_Width) x = m_Width-width-outlineSize-outlineShift;
-    if (y + height + outlineSize + outlineShift >= m_Height) y = m_Height-height-outlineSize-outlineShift;
+    if ((int32_t)window.x < 0) window.x = 0;
+    if ((int32_t)window.y < 0) window.y = 0;
+    if (window.x + window.width >= m_Width) window.x = m_Width-window.width;
+    if (window.y + window.height + BAR_HEIGHT >= m_Height) window.y = m_Height-window.height-BAR_HEIGHT;
+}
 
-    // Draw shadow
-    if (bShadow)
-        DrawRect(x + outlineShift, y-barHeight + outlineShift, width+outlineSize, height+barHeight+outlineSize, WINDOW_SHADOW_COLOUR);
+void Graphics::DrawWindow(Window& window)
+{
+    // Confine window to reasonable bounds
+    ConfineWindowToReasonableBounds(window);
 
     // Draw bar
-    DrawRect(x, y - barHeight, width, barHeight, WINDOW_BAR_COLOUR);
-
+    DrawRect(0, 0, window.width, BAR_HEIGHT, WINDOW_BAR_COLOUR, window);
+    
     // Draw bar text
-    uint32_t titleWidth = strlen(sTitle) * CHAR_WIDTH; 
-    DrawString(sTitle, x + width / 2 - titleWidth/2, y - barHeight + barPadding, GetColour(255, 255, 255), m_Buffer, m_Pitch);
+    uint32_t titleWidth = strlen(window.sName) * CHAR_WIDTH; 
+    DrawString(window.sName, window.width / 2 - titleWidth/2, BAR_PADDING, GetColour(255, 255, 255), window);
 
-    // Draw window contents
-    uint32_t row = y;
-    uint32_t destination = (uint32_t)m_Buffer + m_Pitch*row + x*sizeof(uint32_t);
-    uint32_t source = (uint32_t)buffer;
-    for (row = y; row < y + height; ++row)
-    {
-        memcpy((void*)destination, (void*)source, sizeof(uint32_t)*width);
-        destination += m_Pitch;
-        source += sizeof(uint32_t)*width;
-    }
-
-    for (row = y - barHeight; row < y+height+barHeight; ++row)
-        m_DirtyRows[row] = 1;
+    PushRect(0, 0, window.width, window.height + BAR_HEIGHT, &window);
 }
 
-void Graphics::DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour, void* buffer, uint32_t pitch, uint32_t backgroundColour)
+void Graphics::OnWindowTitleChange(Window& window)
+{
+    // Draw bar
+    DrawRect(0, 0, window.width, BAR_HEIGHT, WINDOW_BAR_COLOUR, window);
+
+    // Draw bar text
+    uint32_t titleWidth = strlen(window.sName) * CHAR_WIDTH; 
+    DrawString(window.sName, window.width / 2 - titleWidth/2, BAR_PADDING, GetColour(255, 255, 255), window);
+
+    PushRect(0, 0, window.width, BAR_HEIGHT, &window);
+}
+
+void Graphics::OnWindowMove(Window& window)
+{
+    ConfineWindowToReasonableBounds(window);
+
+    // Find directions moved
+    const bool bHorizontal = window.x != window.oldX;
+    const bool bVertical = window.y != window.oldY;
+    const bool bRight = window.x > window.oldX;
+    const bool bDown = window.y > window.oldY;
+
+    // Vertical movement
+    if (bVertical)
+    {
+        if (bDown) PushRect(window.x, window.oldY, window.width, window.y - window.oldY, nullptr);
+        else PushRect(window.x, window.y + window.height + BAR_HEIGHT, window.width, window.oldY - window.y, nullptr);
+    }
+
+    // Horizontal movement
+    if (bHorizontal)
+    {
+        if (bRight) PushRect(window.oldX, window.y, window.x - window.oldX, window.height + BAR_HEIGHT, nullptr);
+        else PushRect(window.x + window.width, window.y, window.oldX - window.x, window.height + BAR_HEIGHT, nullptr);
+    }
+
+    // Diagonal overlap
+    if (bHorizontal && bVertical)
+    {
+        if (bRight && bDown) PushRect(window.oldX, window.oldY, window.x - window.oldX, window.y - window.oldY, nullptr);
+        else if (bRight && !bDown) PushRect(window.oldX, window.y + window.height + BAR_HEIGHT, window.x - window.oldX, window.oldY - window.y, nullptr);
+        else if (!bRight && bDown) PushRect(window.x + window.width, window.oldY, window.oldX - window.x, window.y - window.oldY, nullptr);
+        else if (!bRight && !bDown) PushRect(window.x + window.width, window.y + window.height + BAR_HEIGHT, window.oldX - window.x, window.oldY - window.y, nullptr);
+    }
+}
+
+void Graphics::OnWindowDestroy(Window& window)
+{
+    // First, nullify all existing draw commands refering the window
+    for (uint32_t i = 0; i < nRects; ++i)
+        if (m_DirtyRects[i].window == &window)
+        {
+            m_DirtyRects[i].window = nullptr;
+            m_DirtyRects[i].width = 0;
+            m_DirtyRects[i].height = 0;
+        }
+
+    PushRect(window.x, window.y, window.width, window.height + BAR_HEIGHT, nullptr);
+}
+
+void Graphics::DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour, Window& window, uint32_t backgroundColour)
 {
     const uint8_t* bitmap = GetFontFromChar(c);
+    const uint32_t pitch = window.width * sizeof(uint32_t);
 
     for (int w = 0; w < CHAR_WIDTH; ++w)
     {
@@ -106,34 +145,121 @@ void Graphics::DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour, void* b
 
             size_t xPos = x + w;
             size_t yPos = y + h;
-            size_t index = xPos*4 + yPos*pitch;
+            size_t index = xPos*sizeof(uint32_t) + yPos*pitch;
             
-            if (bitmap[h/CHAR_SCALE] & mask) *(uint32_t*)((uint32_t)buffer + index) = colour; 
-            else *(uint32_t*)((uint32_t)buffer + index) = backgroundColour;
+            if (bitmap[h/CHAR_SCALE] & mask) *(uint32_t*)((uint32_t)window.buffer + index) = colour; 
+            else *(uint32_t*)((uint32_t)window.buffer + index) = backgroundColour;
         }
     }
 }
 
-void Graphics::DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour, void* buffer, uint32_t pitch, uint32_t backgroundColour)
+void Graphics::DrawString(char const* string, uint32_t x, uint32_t y, uint32_t colour, Window& window, uint32_t backgroundColour)
 {
     for (size_t i = 0; i < strlen(string); ++i) 
     {
-        DrawChar(string[i], x + i*CHAR_WIDTH, y, colour, buffer, pitch, backgroundColour);
+        DrawChar(string[i], x + i*CHAR_WIDTH, y, colour, window, backgroundColour);
     }
+
+    PushRect(x, y, strlen(string)*CHAR_WIDTH, CHAR_HEIGHT*CHAR_SCALE, &window);
 }
 
-void Graphics::Blit(void* data)
-{   
-    MemcpySSE((void*)m_Buffer, data, m_Pitch*m_Height);
-}
-
-void Graphics::SwapBuffers()
+void Graphics::DrawNumber(uint32_t number, uint32_t x, uint32_t y, uint32_t colour, bool hex, Window& window)
 {
-    for (uint32_t row = 0; row < m_Height; ++row)
-        if (m_DirtyRows[row])
-            MemcpySSE((void*)(m_Address + row*m_Pitch), (void*)((uint32_t)m_Buffer + row*m_Pitch), m_Pitch);
+    // Adjust coordinates
+    y += BAR_HEIGHT;
 
-    memset(m_DirtyRows, 0, sizeof(bool)*m_Height);
+    // Get number of digits
+    size_t nDigits = 1;
+    size_t i = number;
+    while (i/=(hex ? 16 : 10)) nDigits++;
+
+    // Helpers for conversion
+    auto digitToASCII = [](const size_t n) { return (char)('0' + n); };
+    auto hexToASCII = [](const size_t n) 
+    {
+        char value = n % 16 + 48;
+        if (value > 57) value += 7;
+        return value;
+    };
+    auto getNthDigit = [](const size_t n, const size_t digit, const size_t base) { return int((n / pow(base, digit)) % base); };
+
+    if (hex) DrawString("0x", x, y, colour, window);
+    for (size_t d = 0; d < nDigits; ++d)
+    { 
+        if (hex) DrawChar(hexToASCII(getNthDigit(number, nDigits - d - 1, 16)), x+CHAR_WIDTH*(d+2), y, colour, window);
+        else DrawChar(digitToASCII(getNthDigit(number, nDigits - d - 1, 10)), x+CHAR_WIDTH*d, y, colour, window);
+    }
+
+    PushRect(x, y, nDigits*CHAR_WIDTH, CHAR_HEIGHT*CHAR_SCALE, &window);
+}
+
+void Graphics::DrawFrame()
+{
+    if (nRects == 0) return;
+
+    auto DrawDirtyRect = [&](Rect& rect)
+    {
+        if (rect.width == 0 && rect.height == 0) return;
+
+        if (rect.window == nullptr)
+        {
+            // Draw background pixels instead
+            for (uint32_t row = rect.y; row < rect.y + rect.height; ++row)
+            {
+                uint32_t source = (uint32_t)m_Background + row*m_Pitch + rect.x*sizeof(uint32_t);
+                uint32_t destination = (uint32_t)m_Buffer + row*m_Pitch + rect.x*sizeof(uint32_t);
+
+                memcpy((void*)destination, (void*)source, sizeof(uint32_t)*rect.width);
+            }
+            
+            return;
+        }
+
+        for (uint32_t row = rect.y; row < rect.y + rect.height; ++row)
+        {
+            uint32_t screenX = rect.x + rect.window->x;
+            uint32_t screenY = row + rect.window->y;
+            uint32_t windowPitch = rect.window->width * sizeof(uint32_t);
+
+            uint32_t source = (uint32_t)rect.window->buffer + row*windowPitch + rect.x*sizeof(uint32_t);
+            uint32_t destination = (uint32_t)m_Buffer + screenY*m_Pitch + screenX*sizeof(uint32_t);
+
+            for (uint32_t i = 0; i < sizeof(uint32_t)*rect.width; i += sizeof(uint32_t))
+                *((uint32_t*)(destination+i)) = *((uint32_t*)(source+i));
+        }
+        
+    };
+
+    // For double buffering
+    auto BlitDirtyRect = [&](Rect& rect)
+    {
+        if (rect.width == 0 && rect.height == 0) return;
+
+        uint32_t offsetX = 0;
+        uint32_t offsetY = 0;
+
+        if (rect.window != nullptr) { offsetX = rect.window->x; offsetY = rect.window->y; }
+
+        // Draw background pixels instead
+        for (uint32_t row = rect.y; row < rect.y + rect.height; ++row)
+        {
+            const uint32_t x = rect.x + offsetX;
+            const uint32_t y = row + offsetY;
+            
+            const uint32_t source = (uint32_t)m_Buffer + y*m_Pitch + x*sizeof(uint32_t);
+            const uint32_t destination = m_Address + y*m_Pitch + x*sizeof(uint32_t);
+            
+            for (uint32_t i = 0; i < sizeof(uint32_t)*rect.width; i += sizeof(uint32_t))
+                *((uint32_t*)(destination+i)) = *((uint32_t*)(source+i));
+        }
+    };
+
+    // Draw dirty rects
+    for (uint32_t i = 0; i < nRects; ++i) DrawDirtyRect(m_DirtyRects[i]);
+    for (uint32_t i = 0; i < nRects; ++i) BlitDirtyRect(m_DirtyRects[i]);
+
+    // Clear dirty rects
+    nRects = 0;
 }
 
 Graphics::~Graphics() {}
