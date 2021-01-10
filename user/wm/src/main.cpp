@@ -302,7 +302,7 @@ int main()
         }
 
         // Draw background and window and swap buffers
-        graphics.DrawFrame();
+        graphics.DrawFrame(pWindows);
     }
 
     sysexit();

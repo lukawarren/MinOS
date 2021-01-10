@@ -33,7 +33,7 @@ public:
     void DrawNumber(uint32_t number, uint32_t x, uint32_t y, uint32_t colour, bool hex, Window& window);
 
     void Blit(void* data);
-    void DrawFrame();
+    void DrawFrame(Window* pWindows);
 
     inline uint32_t GetDigits(uint32_t number, uint32_t base)
     {

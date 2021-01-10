@@ -193,13 +193,56 @@ void Graphics::DrawNumber(uint32_t number, uint32_t x, uint32_t y, uint32_t colo
     PushRect(x, y, nDigits*CHAR_WIDTH, CHAR_HEIGHT*CHAR_SCALE, &window);
 }
 
-void Graphics::DrawFrame()
+void Graphics::DrawFrame(Window* pWindows)
 {
     if (nRects == 0) return;
+
+    auto IsRectOccluded = [&](Rect rect)
+    {
+        // Transform rect coordinates if in window-space
+        if (rect.window != nullptr)
+        {
+            rect.x += rect.window->x;
+            rect.y += rect.window->y;
+        }
+        
+        // Iterate through all windows
+        Window* window = pWindows;
+        while (window != nullptr)
+        {
+            // If window rect is within bounds and differs from rect's window
+            if (window != rect.window)
+            {
+                if (rect.x < window->x + window->width &&                   // Behind X-wise
+                    rect.y < window->y + window->height + BAR_HEIGHT  &&    // Behind Y-wise
+                    rect.x + rect.width > window->x &&                      // Ahead  X-wise
+                    rect.y + rect.height > window->y)                       // Ahead  Y-wise
+                {
+                    return window; // Return window
+                }
+            }
+            
+            window = (Window*) window->pNextWindow;
+        }
+        
+        return (Window*) nullptr;
+    };
 
     auto DrawDirtyRect = [&](Rect& rect)
     {
         if (rect.width == 0 && rect.height == 0) return;
+        
+        // If rect is occluded, push rect for occluder
+        Window* occluder = IsRectOccluded(rect);
+        if (occluder != nullptr)
+        {
+            // Find window with higher z-order (well, the highest pointer anyway)
+            Window* occlusionWindow = occluder;
+            if (rect.window != nullptr && rect.window > occlusionWindow) occlusionWindow = rect.window;
+            
+            // Dirty entire window (for now, at least)
+            PushRect(0, 0, occlusionWindow->width, occlusionWindow->height + BAR_HEIGHT, occlusionWindow);
+        }
 
         if (rect.window == nullptr)
         {
