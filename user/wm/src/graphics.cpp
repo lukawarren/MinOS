@@ -208,10 +208,10 @@ void Graphics::DrawFrame(Window* pWindows)
         
         // Iterate through all windows
         Window* window = pWindows;
-        while (window != nullptr)
+        while ((uint32_t)window != (uint32_t)nullptr)
         {
             // If window rect is within bounds and differs from rect's window
-            if (window != rect.window)
+            if (window != rect.window && !rect.bIgnoreOccluding)
             {
                 if (rect.x < window->x + window->width &&                   // Behind X-wise
                     rect.y < window->y + window->height + BAR_HEIGHT  &&    // Behind Y-wise
@@ -236,12 +236,46 @@ void Graphics::DrawFrame(Window* pWindows)
         Window* occluder = IsRectOccluded(rect);
         if (occluder != nullptr)
         {
-            // Find window with higher z-order (well, the highest pointer anyway)
+            // Find window with higher z-order
             Window* occlusionWindow = occluder;
             if (rect.window != nullptr && rect.window > occlusionWindow) occlusionWindow = rect.window;
             
-            // Dirty entire window (for now, at least)
-            PushRect(0, 0, occlusionWindow->width, occlusionWindow->height + BAR_HEIGHT, occlusionWindow);
+            /*
+                Behold! The sloppiest, most confusing, and hardest-to-debug
+                code in existence! After hours of troubleshooting,
+                I realised that "computers are so fast these days", even
+                with slow Qemu VRAM, so too bad! I'm redrawing the entire
+                window now, and if you don't like it, wait a nanosecond
+                or two!
+            */
+            
+            /*
+                // Convert rect coords to occluder's window space
+                uint32_t rectX = rect.x;
+                uint32_t rectY = rect.y;
+                if (rect.window != nullptr)
+                {
+                    rectX += rect.window->x; // Remove previous "window-space"
+                    rectY += rect.window->y;
+                }
+                rectX -= occluder->x;
+                rectY -= occluder->y;
+                
+                // Transform to occlusionWindow's window space
+                uint32_t x = rectX + occluder->x - occlusionWindow->x;
+                uint32_t y = rectY + occluder->y - occlusionWindow->y;
+                
+                // Rect collides at least partially with occluder, so that all that need be done is confine this intersection to reasonable bounds.
+                uint32_t width = rect.width;
+                uint32_t height = rect.height;
+                if (x + width > occlusionWindow->width) width = occlusionWindow->width - x;
+                if (y + height > occlusionWindow->height + BAR_HEIGHT) height = occlusionWindow->height + BAR_HEIGHT - y;
+                
+                PushRect(x, y, width, height, occlusionWindow, true);
+            */
+            
+            // Give up and draw the entire occluded window
+            PushRect(0, 0, occlusionWindow->width, occlusionWindow->height + BAR_HEIGHT, occlusionWindow, true);
         }
 
         if (rect.window == nullptr)

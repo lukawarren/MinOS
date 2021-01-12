@@ -60,18 +60,20 @@ private:
         uint32_t width;
         uint32_t height;
         Window* window;
+        bool bIgnoreOccluding = false;
     };
 
     Rect m_DirtyRects[64];
     uint32_t nRects = 0;
 
-    void PushRect(uint32_t x, uint32_t y, uint32_t width, uint32_t height, Window* window)
+    void PushRect(uint32_t x, uint32_t y, uint32_t width, uint32_t height, Window* window, bool bIgnoreOccluding = false)
     {
         if (nRects == sizeof(m_DirtyRects) / sizeof(m_DirtyRects[0])) return;
 
         m_DirtyRects[nRects].x = x; m_DirtyRects[nRects].width = width;
         m_DirtyRects[nRects].y = y; m_DirtyRects[nRects].height = height;
         m_DirtyRects[nRects].window = window;
+        m_DirtyRects[nRects].bIgnoreOccluding = bIgnoreOccluding;
         nRects++;
     }
 
