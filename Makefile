@@ -9,9 +9,7 @@ build/$(NAME).iso:
 	$(MAKE) -C stdlib
 	$(MAKE) -C kernel
 	$(MAKE) -C user/pages
-	$(MAKE) -C user/wm
-	$(MAKE) -C user/uptime
-	$(MAKE) -C user/terminal
+	$(MAKE) -C user/cli
 	$(MAKE) -C scripts/filesystem
 
 	cd scripts/filesystem && ./build/filesystem.o && cd ../../
@@ -28,7 +26,5 @@ clean:
 	$(MAKE) -C stdlib clean
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user/pages clean
-	$(MAKE) -C user/wm clean
-	$(MAKE) -C user/uptime clean
-	$(MAKE) -C user/terminal clean
+	$(MAKE) -C user/cli clean
 	$(MAKE) -C scripts/filesystem clean

@@ -1,4 +1,4 @@
-NAME := wm
+NAME := cli
 
 PROJDIRS := src
 INCLUDEDIRS := -Iinclude -I../../kernel/include -I../../stdlib/include

@@ -12,9 +12,7 @@ $(shell mkdir -p build)
 
 all:
 	cp ../../user/pages/build/pages.bin root/pages.bin
-	cp ../../user/wm/build/wm.bin root/wm.bin
-	cp ../../user/uptime/build/uptime.bin root/uptime.bin
-	cp ../../user/terminal/build/terminal.bin root/terminal.bin
+	cp ../../user/cli/build/cli.bin root/cli.bin
 	@$(CPP) $(FLAGS) src/main.cpp -o build/$(NAME).o $(INCLUDEDIRS) $(LINKS)
 
 clean:

@@ -111,13 +111,13 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     BuildVFS(vfsAddress);
 
     // Load window manager
-    FileHandle wm = kFileOpen("wm.bin");
-    void* wmBuffer = kmalloc(kGetFileSize(wm));
-    kFileRead(wm, wmBuffer);
-    auto elf = LoadElfFile(wmBuffer);
-    CreateTask("wm", elf.entry, elf.size, elf.location);
-    kfree(wmBuffer, kGetFileSize(wm));
-    kFileClose(wm);
+    FileHandle cli = kFileOpen("cli.bin");
+    void* cliBuffer = kmalloc(kGetFileSize(cli));
+    kFileRead(cli, cliBuffer);
+    auto elf = LoadElfFile(cliBuffer);
+    CreateTask("cli", elf.entry, elf.size, elf.location);
+    kfree(cliBuffer, kGetFileSize(cli));
+    kFileClose(cli);
 
     EnableScheduler();
     // Hang and wait for interrupts

@@ -18,7 +18,7 @@ align 4
 	dd CHECKSUM
 	dd 0, 0, 0, 0, 0
 	dd 0  ; set graphics mode
-	dd 800, 600, 32 ; width, height, depth
+	dd 640, 480, 32 ; width, height, depth
  
 ; The multiboot standard does not define the value of the stack pointer register
 ; (esp) and it is up to the kernel to provide a stack. This allocates room for a
