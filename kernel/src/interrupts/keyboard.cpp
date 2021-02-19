@@ -34,7 +34,8 @@ void OnKeyboardInterrupt(uint8_t scancode)
 
         if (code == 0x1c) return '\n';
         if (code == 0x39) return ' ';
-        if (code == 0x0e) return '\r';
+        if (code == 0x0e) return '\0';
+
         if (code == 0x33 && !bShift) return ','; else if (code == 0x33) return '<';
         if (code == 0x34 && !bShift) return '.'; else if (code == 0x34) return '>';
         if (code == 0x35 && !bShift) return '/'; else if (code == 0x35) return '?';
@@ -62,6 +63,7 @@ void OnKeyboardInterrupt(uint8_t scancode)
             case 0x4B:  return (char) KEY_EVENT_LEFT;
             case 0x4D:  return (char) KEY_EVENT_RIGHT;   
             case 0x1D:  return (char) KEY_EVENT_CTRL;
+            case 0xE:   return (char) KEY_EVENT_BACKSPACE;
         }
 
         //UART::pCOM->printf("Unknown scancode ", false);

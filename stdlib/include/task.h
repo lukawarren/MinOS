@@ -33,5 +33,6 @@ typedef struct taskEvent_t // 42 bytes in total
 #define KEY_EVENT_LEFT  0x4
 #define KEY_EVENT_RIGHT 0x5
 #define KEY_EVENT_CTRL  0x6
+#define KEY_EVENT_BACKSPACE 0x7
 
 #endif
