@@ -111,7 +111,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     BuildVFS(vfsAddress);
 
     // Load window manager
-    FileHandle cli = kFileOpen("cli.bin");
+    FileHandle cli = kFileOpen("cli");
     void* cliBuffer = kmalloc(kGetFileSize(cli));
     kFileRead(cli, cliBuffer);
     auto elf = LoadElfFile(cliBuffer);
