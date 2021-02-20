@@ -27,10 +27,10 @@ ASSEMBLER := nasm
 
 $(shell mkdir -p build)
 
-all: build/$(NAME).bin
+all: build/$(NAME)
 
-build/$(NAME).bin: $(OBJFILES)
-	@$(TOOLCHAIN)-g++ -T src/linker.ld -o build/$(NAME).bin -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
+build/$(NAME): $(OBJFILES)
+	@$(TOOLCHAIN)-g++ -T src/linker.ld -o build/$(NAME) -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
 
 build/%.cpp.o: src/%.cpp
 	@$(TOOLCHAIN)-g++ $(CPPFLAGS) -c $< -o $@ $(INCLUDEDIRS)

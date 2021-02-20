@@ -11,8 +11,8 @@ CPP := g++
 $(shell mkdir -p build)
 
 all:
-	cp ../../user/pages/build/pages.bin root/pages.bin
-	cp ../../user/cli/build/cli.bin root/cli.bin
+	cp ../../user/pages/build/pages root/pages
+	cp ../../user/cli/build/cli root/cli
 	@$(CPP) $(FLAGS) src/main.cpp -o build/$(NAME).o $(INCLUDEDIRS) $(LINKS)
 
 clean:
