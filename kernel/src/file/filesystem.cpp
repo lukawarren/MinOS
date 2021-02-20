@@ -57,6 +57,11 @@ void kFileRead(FileHandle file, void* data, uint32_t size)
 
 void kFileClose(FileHandle file __attribute__((unused))) {}
 
+FileHandle kGetFirstFile()
+{
+    return 0;
+}
+
 FileHandle kGetNextFile(FileHandle file)
 {
     File* nextFile = (File*)((File*)(sFilesystem + file))->pNext;

@@ -17,6 +17,7 @@ char*    kGetFileName(FileHandle file);
 void kFileRead(FileHandle file, void* data, uint32_t size = 0);
 void kFileClose(FileHandle file);
 
+FileHandle kGetFirstFile();
 FileHandle kGetNextFile(FileHandle file);
 void PrintFiles();
 

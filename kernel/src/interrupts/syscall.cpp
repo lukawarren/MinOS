@@ -38,6 +38,7 @@ static int SysSubscribeToKeyboard   (Registers syscall);
 static int SysGetSubseconds         (Registers syscall);
 static int SysBlockUntil            (Registers syscall);
 static int SysKill                  (Registers syscall);
+static int SysGetFirstFile          (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -70,7 +71,8 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysSubscribeToKeyboard,
     &SysGetSubseconds,
     &SysBlockUntil,
-    &SysKill
+    &SysKill,
+    &SysGetFirstFile
 };
 
 int HandleSyscalls(Registers syscall)
@@ -305,4 +307,9 @@ static int SysKill(Registers syscall)
     else { OnSysexit(processID); KillTask(task); }
     
     return 0;
+}
+
+static int SysGetFirstFile(Registers syscall __attribute__((unused)))
+{
+    return (int)kGetFirstFile();
 }
