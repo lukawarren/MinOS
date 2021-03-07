@@ -2,12 +2,14 @@
 A tiny x86 kernel written in modern C++ and Assembly.
 
 ## Features
+* Fully working usermode
 * Multiboot 2 compliant kernel
 * Interrupts
 * Paging
-* Pre-emptive multitasking (ring 3 and 0)
-* VGA text mode output
+* VGA output
 * Serial UART output
+* Pre-emptive multitaksing 
+* Ramdisk for loading elf binaries in user space
 
 ## Depdendencies
 If you want to build with Docker, then as it would turn out, all you need is:

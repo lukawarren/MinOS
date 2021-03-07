@@ -106,6 +106,11 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
         VGA_printf("SSE not supported!");
     }
 
+    // TODO: Detect if APM is suported
+    multiboot_apm_info* apmInfo = (multiboot_apm_info*)(pMultiboot->apm_table);
+    VGA_printf<uint16_t, true>(apmInfo->version, true);
+    //asm("hlt");
+
     // Load GRUB modules and build filesystem
     uint32_t vfsAddress = LoadGrubVFS(pMultiboot);
     BuildVFS(vfsAddress);
@@ -120,6 +125,7 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     kFileClose(cli);
 
     EnableScheduler();
+
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }
 }

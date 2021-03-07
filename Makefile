@@ -11,6 +11,7 @@ build/$(NAME).iso:
 	$(MAKE) -C user/pages
 	$(MAKE) -C user/cli
 	$(MAKE) -C user/ls
+	$(MAKE) -C user/sleep
 	$(MAKE) -C scripts/filesystem
 
 	cd scripts/filesystem && ./build/filesystem.o && cd ../../
@@ -29,4 +30,5 @@ clean:
 	$(MAKE) -C user/pages clean
 	$(MAKE) -C user/cli clean
 	$(MAKE) -C user/ls clean
+	$(MAKE) -C user/sleep clean
 	$(MAKE) -C scripts/filesystem clean

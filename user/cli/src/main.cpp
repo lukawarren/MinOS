@@ -6,13 +6,17 @@
 int main();
 
 void ClearScreen();
+void DrawChar(char c, bool notDrawingPrompt, const uint32_t x, const uint32_t y);
 void DrawChar(char c, bool notDrawingPrompt = true);
+int DrawNumber(unsigned int data, const uint32_t x, const uint32_t y);
 
 // Colours
 constexpr uint32_t GetColour(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a = 0xff) { return a << 24 | r << 16 | g << 8 | b; }
 constexpr uint32_t TEXT_COLOUR = GetColour(0xff, 0xff, 0xff);
 constexpr uint32_t PROMPT_COLOUR = GetColour(0xeb, 0xeb, 0xeb);
-constexpr uint32_t BACKGROUND_COLOUR = GetColour(200, 200, 200);
+constexpr uint32_t BACKGROUND_COLOUR = GetColour(0, 0, 0xaa);
+constexpr uint32_t TERMINAL_COLOUR = GetColour(0xaa, 0xaa, 0xaa);
+constexpr uint32_t BAR_COLOUR = GetColour(100, 100, 200);
 
 // Background
 inline uint32_t GetBackgroundColour(const uint32_t x, const uint32_t y);
@@ -22,7 +26,7 @@ uint32_t nWidth, nHeight, nRows, nColumns;
 uint32_t* pFramebuffer;
 
 // Padding
-constexpr uint32_t nBorder = CHAR_WIDTH*2;
+constexpr uint32_t nBorder = CHAR_WIDTH*5;
 constexpr uint32_t nTerminalBorder = 1;
 
 // Text buffer
@@ -34,6 +38,7 @@ size_t nVisualRow = 0;
 
 // Running commands
 bool bInCommand = false;
+uint32_t pid;
 
 // Recieving and handling commands
 void HandleSpecialKeys(char character);
@@ -41,6 +46,11 @@ void HandleRegularKeys(char character);
 void OnCommand();
 void OnCommandFinish();
 void DrawPrompt();
+
+// Top bar
+constexpr uint32_t barPadding = 2;
+constexpr uint32_t barHeight = CHAR_HEIGHT*2 + barPadding*2;
+void DrawTopBar();
 
 int main()
 {
@@ -67,15 +77,15 @@ int main()
         while (event != nullptr)
         {
             // Key input
-            if (event->id == EVENT_QUEUE_KEY_PRESS && !bInCommand)
+            if (event->id == EVENT_QUEUE_KEY_PRESS)
             {
                 const char character = event->data[0];
                 const bool special = event->data[1];
 
                 // Delegate input
                 if (special) HandleSpecialKeys(character);
-                else if (character == '\n') OnCommand();
-                else if (nCharacter < sizeof(textBuffer) / sizeof(textBuffer[0]) - 1) HandleRegularKeys(character);
+                else if (!bInCommand && character == '\n') OnCommand();
+                else if (!bInCommand && nCharacter < sizeof(textBuffer) / sizeof(textBuffer[0]) - 1) HandleRegularKeys(character);
             }
 
             // Stdout
@@ -112,9 +122,10 @@ int main()
             event = getNextEvent();
         }
         
+        DrawTopBar();
 
-        // Sleep
-        block();
+        // We *must not* block, as if both processes block, we'll be in drouble trouble!
+        //block();
     }
 
     sysexit();
@@ -134,18 +145,14 @@ void ClearScreen()
 
 inline uint32_t GetBackgroundColour(const uint32_t x, const uint32_t y)
 {
-    uint32_t colour = BACKGROUND_COLOUR;
-
-    // Apply "transparency"
+    // Figure out which section we're in
     const bool withinTerminal = x > nBorder && x < nWidth-nBorder && y > nBorder && y < nHeight-nBorder;
-    if (withinTerminal) colour -= GetColour(100, 100, 100);
-    return colour;
+    if (withinTerminal) return TERMINAL_COLOUR;
+    else return y < barHeight ? BAR_COLOUR : BACKGROUND_COLOUR;
 }
 
-void DrawChar(char c, bool notDrawingPrompt)
+void DrawChar(char c, bool notDrawingPrompt, const uint32_t x, const uint32_t y)
 {
-    const uint32_t x = nBorder + (nVisualCharacter+nTerminalBorder+promptWidth*notDrawingPrompt)*CHAR_WIDTH;
-    const uint32_t y = nBorder + nVisualRow*CHAR_HEIGHT*CHAR_SCALE+CHAR_HEIGHT*nTerminalBorder;
     const uint8_t* bitmap = GetFontFromChar(c);
 
     for (int w = 0; w < CHAR_WIDTH; ++w)
@@ -163,14 +170,44 @@ void DrawChar(char c, bool notDrawingPrompt)
     }
 }
 
+void DrawChar(char c, bool notDrawingPrompt)
+{
+    const uint32_t x = nBorder + (nVisualCharacter+nTerminalBorder+promptWidth*notDrawingPrompt)*CHAR_WIDTH;
+    const uint32_t y = nBorder + nVisualRow*CHAR_HEIGHT*CHAR_SCALE+CHAR_HEIGHT*nTerminalBorder;
+    DrawChar(c, notDrawingPrompt, x, y);
+}
+
+int DrawNumber(unsigned int data, const uint32_t x, const uint32_t y)
+{
+    auto digitToASCII = [](const size_t number) { return (char)('0' + number); };
+    auto getNthDigit = [](const size_t number, const size_t digit, const size_t base) { return int((number / pow(base, digit)) % base); };
+
+    // Get number of digits
+    size_t nDigits = 0;
+    size_t i = data;
+    nDigits = 1;
+    while (i/=10) nDigits++;
+    
+    for (size_t d = 0; d < nDigits; ++d)
+        DrawChar(digitToASCII(getNthDigit(data, nDigits - d - 1, 10)), false, x + d * CHAR_WIDTH, y);
+
+    return nDigits;
+}
+
 void HandleSpecialKeys(char character)
 {
-    if (character == KEY_EVENT_BACKSPACE && nCharacter > 0 && nVisualCharacter > 0) // Backspace
+    if (!bInCommand && character == KEY_EVENT_BACKSPACE && nCharacter > 0 && nVisualCharacter > 0) // Backspace
     {
         if (nVisualCharacter-- == 0) { nVisualCharacter = nColumns-1; nVisualRow--; }
         nCharacter--;
         textBuffer[nCharacter] = '\0';
         DrawChar(' ');
+    }
+
+    if (character == KEY_EVENT_CTRL && bInCommand) // Force quit
+    {
+        kill(pid);
+        OnCommandFinish();
     }
 }
 
@@ -210,7 +247,8 @@ void OnCommand()
     bInCommand = true;
 
     // Get command
-    if (loadProgram(textBuffer) == -1)
+    pid = loadProgram(textBuffer);
+    if ((int32_t)pid == -1)
     {
         const char* errorMessage = "Unknown command";
         for (unsigned int i = 0; i < 15; ++i)
@@ -232,7 +270,7 @@ void OnCommandFinish()
     // Advance cursor
     nVisualCharacter = 0;
     nCharacter = 0;
-    nVisualRow++;
+    //nVisualRow++;
        
     if (nVisualRow >= nRows)
     {
@@ -252,4 +290,27 @@ void DrawPrompt()
 
     // Also reset text buffer
     memset(textBuffer, '\0', sizeof(textBuffer)/sizeof(textBuffer[0]));
+}
+
+void DrawTopBar()
+{
+    uint32_t x = barPadding;
+
+    // Uptime
+    const char* sUptime = "Uptime: ";
+    for (size_t i = 0; i < strlen(sUptime); ++i) DrawChar(sUptime[i], true, barPadding + CHAR_WIDTH*i, barPadding);
+    x = barPadding + CHAR_WIDTH*strlen(sUptime);
+    x += DrawNumber(getSeconds(), x, barPadding) * CHAR_WIDTH;
+
+    // Pages
+    const char* sPages = ", pages: ";
+    for (size_t i = 0; i < strlen(sPages); ++i) DrawChar(sPages[i], true, x + CHAR_WIDTH*i, barPadding);
+    x += CHAR_WIDTH*strlen(sPages);
+    x += DrawNumber(nPages(), x, barPadding) * CHAR_WIDTH;
+
+    // Tasks
+    const char* sTasks = ", tasks: ";
+    for (size_t i = 0; i < strlen(sTasks); ++i) DrawChar(sTasks[i], true, x + CHAR_WIDTH*i, barPadding);
+    x += CHAR_WIDTH*strlen(sTasks);
+    x += DrawNumber(nTasks(), x, barPadding) * CHAR_WIDTH;
 }
