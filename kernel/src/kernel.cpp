@@ -106,11 +106,6 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
         VGA_printf("SSE not supported!");
     }
 
-    // TODO: Detect if APM is suported
-    multiboot_apm_info* apmInfo = (multiboot_apm_info*)(pMultiboot->apm_table);
-    VGA_printf<uint16_t, true>(apmInfo->version, true);
-    //asm("hlt");
-
     // Load GRUB modules and build filesystem
     uint32_t vfsAddress = LoadGrubVFS(pMultiboot);
     BuildVFS(vfsAddress);
@@ -123,6 +118,12 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     CreateTask("cli", elf.entry, elf.size, elf.location);
     kfree(cliBuffer, kGetFileSize(cli));
     kFileClose(cli);
+
+    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
+    VGA_printf("Loaded cli from ramdisk");
+    
+    VGA_printf("");
+    VGA_printf("Enabling scheduler and interrupts...");
 
     EnableScheduler();
 

@@ -14,7 +14,7 @@ int DrawNumber(unsigned int data, const uint32_t x, const uint32_t y);
 constexpr uint32_t GetColour(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a = 0xff) { return a << 24 | r << 16 | g << 8 | b; }
 constexpr uint32_t TEXT_COLOUR = GetColour(0xff, 0xff, 0xff);
 constexpr uint32_t PROMPT_COLOUR = GetColour(0xeb, 0xeb, 0xeb);
-constexpr uint32_t BACKGROUND_COLOUR = GetColour(0, 0, 0);
+constexpr uint32_t BACKGROUND_COLOUR = GetColour(0xff, 0xff, 0xff);
 constexpr uint32_t TERMINAL_COLOUR = GetColour(0xaa, 0xaa, 0xaa);
 constexpr uint32_t BAR_COLOUR = GetColour(0, 0, 200);
 
@@ -106,13 +106,13 @@ int main()
                         {
                             nVisualCharacter = 0;
                             nVisualRow++;
-
-                            if (nVisualRow >= nRows)
-                            {
-                                nVisualRow = 0;
-                                ClearScreen();
-                            }
                         }
+                    }
+
+                    if (nVisualRow >= nRows)
+                    {
+                        nVisualRow = 0;
+                        ClearScreen();
                     }
                 }
             }
@@ -257,14 +257,16 @@ void OnCommand()
     pid = loadProgram(textBuffer);
     if ((int32_t)pid == -1)
     {
-        const char* errorMessage = "Unknown command";
-        for (unsigned int i = 0; i < 15; ++i)
-        {
-            DrawChar(errorMessage[i]);
-            nVisualCharacter++;
-        }
+        /*
+            const char* errorMessage = "Unknown command";
+            for (unsigned int i = 0; i < 15; ++i)
+            {
+                DrawChar(errorMessage[i]);
+                nVisualCharacter++;
+            }
 
-        nVisualRow++; // OnCommandFinish() will santitise it
+            nVisualRow++; // OnCommandFinish() will santitise it
+        */
 
         OnCommandFinish();
     }
@@ -301,23 +303,27 @@ void DrawPrompt()
 
 void DrawTopBar()
 {
-    uint32_t x = barPadding;
+    uint32_t x = barPadding + nBorder;
 
-    // Uptime
-    const char* sUptime = "Uptime: ";
-    for (size_t i = 0; i < strlen(sUptime); ++i) DrawChar(sUptime[i], true, barPadding + CHAR_WIDTH*i, barPadding);
-    x = barPadding + CHAR_WIDTH*strlen(sUptime);
-    x += DrawNumber(getSeconds(), x, barPadding) * CHAR_WIDTH;
+    const auto PrintString = [&](const char* sText) 
+    { 
+        for (size_t i = 0; i < strlen(sText); ++i) DrawChar(sText[i], true, x + CHAR_WIDTH*i, barPadding);
+    };
+    const auto PrintInfo = [&](const char* sText, uint32_t iData)
+    {
+        PrintString(sText);
+        x += CHAR_WIDTH*strlen(sText);
+        x += DrawNumber(iData, x, barPadding) * CHAR_WIDTH;
+    };
 
-    // Pages
-    const char* sPages = ", pages: ";
-    for (size_t i = 0; i < strlen(sPages); ++i) DrawChar(sPages[i], true, x + CHAR_WIDTH*i, barPadding);
-    x += CHAR_WIDTH*strlen(sPages);
-    x += DrawNumber(nPages(), x, barPadding) * CHAR_WIDTH;
+    // Print info
+    PrintInfo("Uptime: ",   getSeconds());
+    PrintInfo(", pages: ",  nPages());
+    PrintInfo(", tasks: ",  nTasks());
 
-    // Tasks
-    const char* sTasks = ", tasks: ";
-    for (size_t i = 0; i < strlen(sTasks); ++i) DrawChar(sTasks[i], true, x + CHAR_WIDTH*i, barPadding);
-    x += CHAR_WIDTH*strlen(sTasks);
-    x += DrawNumber(nTasks(), x, barPadding) * CHAR_WIDTH;
+    // Source code macro fun
+    const char* sSource1 = "Window manager: ";
+    x = nWidth - barPadding - nBorder - CHAR_WIDTH*(strlen(sSource1) + strlen(__FILE__));
+    PrintString(sSource1); x += CHAR_WIDTH*strlen(sSource1);
+    PrintString(__FILE__); x += CHAR_WIDTH*strlen(__FILE__);
 }

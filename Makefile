@@ -12,6 +12,7 @@ build/$(NAME).iso:
 	$(MAKE) -C user/cli
 	$(MAKE) -C user/ls
 	$(MAKE) -C user/sleep
+	$(MAKE) -C user/assert
 	$(MAKE) -C scripts/filesystem
 
 	cd scripts/filesystem && ./build/filesystem.o && cd ../../
@@ -31,4 +32,5 @@ clean:
 	$(MAKE) -C user/cli clean
 	$(MAKE) -C user/ls clean
 	$(MAKE) -C user/sleep clean
+	$(MAKE) -C user/assert clean
 	$(MAKE) -C scripts/filesystem clean

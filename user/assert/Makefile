@@ -1,7 +1,7 @@
-NAME := pages
+NAME := assert
 
 PROJDIRS := src
-INCLUDEDIRS := -Iinclude -I../kernel/include
+INCLUDEDIRS := -Iinclude -I../../kernel/include -I../../stdlib/include
 
 CPPFILES := $(shell find $(PROJDIRS) -type f -name "*.cpp")
 CFILES += $(shell find $(PROJDIRS) -type f -name "*.c")
@@ -13,20 +13,24 @@ OBJFILES := $(patsubst %.cpp,%.cpp.o,$(CPPFILES))
 OBJFILES += $(patsubst %.c,%.c.o,$(CFILES))
 OBJFILES += $(patsubst %.S,%.S.o,$(ASMFILES))
 OBJFILES := $(patsubst src/%,build/%,$(OBJFILES))
+OBJFILES += $(shell find ../../stdlib/build/ -type f -name "*.o")
 
 WARNINGS := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
 			-Wwrite-strings -Wmissing-declarations \
 			-Wredundant-decls -Winline -Wno-long-long \
 			-Wconversion
 CFLAGS := -std=gnu99 $(WARNINGS) -ffreestanding -O2 -nostdlib -lgcc
-CPPFLAGS := -std=c++17 $(WARNINGS) -ffreestanding -ffreestanding -O2 -fno-exceptions -fno-rtti -nostdlib -libstdc++
+CPPFLAGS := -std=c++17 $(WARNINGS) -ffreestanding -ffreestanding -O2 -fno-exceptions -fno-rtti -nostdlib -libstdc++ -fno-use-cxa-atexit
 
 TOOLCHAIN := i686-elf
 ASSEMBLER := nasm
 
 $(shell mkdir -p build)
 
-all: $(OBJFILES)
+all: build/$(NAME)
+
+build/$(NAME): $(OBJFILES)
+	@$(TOOLCHAIN)-g++ -T src/linker.ld -o build/$(NAME) -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
 
 build/%.cpp.o: src/%.cpp
 	@$(TOOLCHAIN)-g++ $(CPPFLAGS) -c $< -o $@ $(INCLUDEDIRS)

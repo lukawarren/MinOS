@@ -1,4 +1,5 @@
 #include "stdlib.h"
+#include "interrupts/syscall.h"
 
 size_t strlen(const char* string)
 {
@@ -52,4 +53,15 @@ void memcpy(void *dest, void *src, size_t n)
 
     for (size_t i=0; i<n; i++) 
         cdest[i] = csrc[i]; 
+}
+
+void error(const char* file, unsigned int line, const char* expression)
+{
+    printf(file);
+    printf(":");
+    printn(line, false);
+    printf(": assertion '");
+    printf(expression);
+    printf("' failed\n");
+    sysexit();
 }
