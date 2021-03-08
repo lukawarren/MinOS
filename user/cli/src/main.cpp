@@ -14,9 +14,9 @@ int DrawNumber(unsigned int data, const uint32_t x, const uint32_t y);
 constexpr uint32_t GetColour(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a = 0xff) { return a << 24 | r << 16 | g << 8 | b; }
 constexpr uint32_t TEXT_COLOUR = GetColour(0xff, 0xff, 0xff);
 constexpr uint32_t PROMPT_COLOUR = GetColour(0xeb, 0xeb, 0xeb);
-constexpr uint32_t BACKGROUND_COLOUR = GetColour(0, 0, 0xaa);
+constexpr uint32_t BACKGROUND_COLOUR = GetColour(0, 0, 0);
 constexpr uint32_t TERMINAL_COLOUR = GetColour(0xaa, 0xaa, 0xaa);
-constexpr uint32_t BAR_COLOUR = GetColour(100, 100, 200);
+constexpr uint32_t BAR_COLOUR = GetColour(0, 0, 200);
 
 // Background
 inline uint32_t GetBackgroundColour(const uint32_t x, const uint32_t y);
@@ -26,8 +26,9 @@ uint32_t nWidth, nHeight, nRows, nColumns;
 uint32_t* pFramebuffer;
 
 // Padding
-constexpr uint32_t nBorder = CHAR_WIDTH*5;
+constexpr uint32_t nBorder = CHAR_WIDTH*3;
 constexpr uint32_t nTerminalBorder = 1;
+constexpr uint32_t nShadowPixels = 2;
 
 // Text buffer
 constexpr uint32_t promptWidth = 2;
@@ -147,8 +148,14 @@ inline uint32_t GetBackgroundColour(const uint32_t x, const uint32_t y)
 {
     // Figure out which section we're in
     const bool withinTerminal = x > nBorder && x < nWidth-nBorder && y > nBorder && y < nHeight-nBorder;
+    const bool withinTerminalShadow = 
+        (x >= nWidth - nBorder && x < nWidth - nBorder + nShadowPixels && y > nBorder + nShadowPixels && y < nHeight - nBorder + nShadowPixels) || // Right side
+        (x > nBorder + nShadowPixels && x < nWidth - nBorder + nShadowPixels && y >= nHeight - nBorder && y <= nHeight-nBorder+nShadowPixels); // Bottom side
+    
+    // Colour appropriately
     if (withinTerminal) return TERMINAL_COLOUR;
-    else return y < barHeight ? BAR_COLOUR : BACKGROUND_COLOUR;
+    else if (withinTerminalShadow) return TERMINAL_COLOUR - GetColour(50, 50, 50);
+    return y < barHeight ? BAR_COLOUR : BACKGROUND_COLOUR;
 }
 
 void DrawChar(char c, bool notDrawingPrompt, const uint32_t x, const uint32_t y)
