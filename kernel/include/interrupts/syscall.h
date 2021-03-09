@@ -48,6 +48,8 @@ SYSCALL_ARGS_0(uint32_t, getSubseconds, 27)
 SYSCALL_ARGS_1(int, blockUntil, 28, uint32_t, event)
 SYSCALL_ARGS_1(int, kill, 29, uint32_t, processID)
 SYSCALL_ARGS_0(int, getFirstFile, 30)
+SYSCALL_ARGS_1(int, getGDT, 31, void*, data)
+SYSCALL_ARGS_0(uint32_t, nTotalPages, 32)
 
 #ifdef __cplusplus 
 extern "C"

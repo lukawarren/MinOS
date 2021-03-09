@@ -71,6 +71,8 @@ inline constexpr uint64_t CreateGDTEntry(const uint32_t base, const uint32_t lim
 
 void PrintGDT(const uint64_t* pTable, const unsigned int nEntries);
 
+extern uint64_t GDTTable[6];
+
 extern "C"
 {
     extern void LoadGDT(const uint64_t* GDT, const size_t size);

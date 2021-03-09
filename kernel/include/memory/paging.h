@@ -58,6 +58,7 @@ void  kfree(void* ptr, uint32_t bytes);
 
 void PrintPaging();
 uint32_t GetNumberOfPages();
+uint32_t GetNumberOfTotalPages();
 
 bool IsPageWithinUserBounds(uint32_t address);
 

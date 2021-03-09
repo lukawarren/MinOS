@@ -4,6 +4,7 @@
 #include "../multitask/elf.h"
 #include "../memory/paging.h"
 #include "../memory/idt.h"
+#include "../memory/gdt.h"
 #include "../gfx/vga.h"
 #include "../interrupts/timer.h"
 #include "../interrupts/keyboard.h"
@@ -39,6 +40,8 @@ static int SysGetSubseconds         (Registers syscall);
 static int SysBlockUntil            (Registers syscall);
 static int SysKill                  (Registers syscall);
 static int SysGetFirstFile          (Registers syscall);
+static int SysGetGDT                (Registers syscall);
+static int SysNTotalPages           (Registers syscall);
 
 static int (*pSyscalls[])(Registers syscall) =
 {
@@ -72,7 +75,9 @@ static int (*pSyscalls[])(Registers syscall) =
     &SysGetSubseconds,
     &SysBlockUntil,
     &SysKill,
-    &SysGetFirstFile
+    &SysGetFirstFile,
+    &SysGetGDT,
+    &SysNTotalPages
 };
 
 int HandleSyscalls(Registers syscall)
@@ -312,4 +317,16 @@ static int SysKill(Registers syscall)
 static int SysGetFirstFile(Registers syscall __attribute__((unused)))
 {
     return (int)kGetFirstFile();
+}
+
+static int SysGetGDT(Registers syscall)
+{
+    void* data = (void*) syscall.ebx;
+    memcpy(data, GDTTable, sizeof(GDTTable));
+    return 0;
+}
+
+static int SysNTotalPages(Registers syscall __attribute__((unused)))
+{
+    return (int)GetNumberOfTotalPages();
 }

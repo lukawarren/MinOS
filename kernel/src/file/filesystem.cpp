@@ -68,14 +68,3 @@ FileHandle kGetNextFile(FileHandle file)
     if (nextFile == nullptr) return -1;
     return (uint32_t)nextFile - sFilesystem;
 }
-
-void PrintFiles()
-{
-    FileHandle file = 0;
-    while (file != (FileHandle)-1)
-    {
-        VGA_printf("-- ", false);
-        VGA_printf(kGetFileName(file));
-        file = kGetNextFile(file);
-    }
-}

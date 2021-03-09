@@ -278,6 +278,11 @@ uint32_t GetNumberOfPages()
     return pages;
 }
 
+uint32_t GetNumberOfTotalPages()
+{
+    return maxPhysicalPages;
+}
+
 uint32_t GetMaxMemoryRange(multiboot_info_t* pMultiboot)
 {
     /*

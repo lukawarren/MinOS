@@ -21,9 +21,7 @@
 
 extern uint32_t __tss_stack;
 TSS tssEntry;
-uint64_t GDTTable[6];
 multiboot_info_t* pMultiboot;
-
 
 extern "C" void kernel_main(multiboot_info_t* mbd) 
 {
@@ -63,6 +61,9 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     LoadGDT(GDTTable, sizeof(GDTTable));
     VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
     VGA_printf("GDT sucessfully loaded");
+    VGA_printf("");
+    PrintGDT(GDTTable, 6);
+    VGA_printf("");
 
     // Load TSS
     LoadTSS(((uint32_t)&GDTTable[5] - (uint32_t)&GDTTable) | 0b11); // Set last 2 bits for RPL 3
@@ -123,41 +124,12 @@ extern "C" void kernel_main(multiboot_info_t* mbd)
     VGA_printf("Loaded cli from ramdisk");
     
     VGA_printf("");
+    PrintPaging();
+    VGA_printf("");
     VGA_printf("Enabling scheduler and interrupts...");
-
+    
     EnableScheduler();
 
     // Hang and wait for interrupts
     while (true) { asm("hlt"); }
 }
-
-/*
-void OnCommand(char* buffer)
-{
-    #if DO_SOUND_DEMO
-    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, paging, jingle", false);
-    #else
-    if (strcmp(buffer, "$ help")) VGA_printf("Commands: gdt, paging", false);
-    #endif
-    else if (strcmp(buffer, "$ gdt"))
-    {
-        PrintGDT(GDTTable, sizeof(GDTTable) / sizeof(GDTTable[0]));
-    }
-    else if (strcmp(buffer, "$ paging"))
-    {
-        PrintPaging();
-    }
-    else if (strcmp(buffer, "$ ls"))
-    {
-        PrintFiles();
-    }
-    else if (strcmp(buffer, "$ ")) {}
-    #if DO_SOUND_DEMO
-    else if (strcmp(buffer, "$ jingle"))
-    {
-        EnablePCSpeaker();
-    }
-    #endif
-    else VGA_printf("Command not found", false, VGA_COLOUR_LIGHT_RED);
-}
-*/

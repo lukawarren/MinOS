@@ -1,6 +1,8 @@
 #include "gdt.h"
 #include "../gfx/vga.h"
 
+uint64_t GDTTable[6];
+
 void PrintGDT(const uint64_t* pTable, const unsigned int nEntries)
 {
     VGA_printf("GDT loaded at ", false);

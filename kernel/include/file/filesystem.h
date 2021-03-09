@@ -19,6 +19,5 @@ void kFileClose(FileHandle file);
 
 FileHandle kGetFirstFile();
 FileHandle kGetNextFile(FileHandle file);
-void PrintFiles();
 
 #endif
