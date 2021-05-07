@@ -20,6 +20,7 @@ Building natively requires:
 * Grub 2.0
 * NASM
 * Make
+* CMake
 
 ## Building with Docker
 First download the project and build the toolchain with:

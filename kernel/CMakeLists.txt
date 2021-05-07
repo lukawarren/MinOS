@@ -1,0 +1,10 @@
+# Linker
+set(LINKER_SCRIPT ${PROJECT_SOURCE_DIR}/kernel/linker.ld)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${LINKER_SCRIPT}")
+set_target_properties(${TARGET_NAME} PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
+
+# Add source files
+FILE(GLOB C_SRCS src/*.c)
+FILE(GLOB CPP_SRCS src/*.cpp)
+FILE(GLOB ASM_SRCS src/*.S)
+ADD_EXECUTABLE(kernel.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})
