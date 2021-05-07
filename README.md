@@ -45,3 +45,8 @@ Just build the project and either run the iso in the build directory as a virtua
 ```
 sudo dd if=/path/to/MinOS.iso of=/dev/sdx && sync
 ```
+
+On Qemu:
+```
+qemu-system-i386 -cdrom build/MinOS.iso -serial stdio
+```
