@@ -31,14 +31,15 @@ docker build -t minos/toolchain:1.0 .
 ```
 Then compile the kernel:
 ```
-docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd code && make"
+docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd code && mkdir -p build && cd build && cmake .. && cmake --build ."
 ```
 
 ## Building natively
 ```
 git clone https://github.com/lukawarren/MinOS
 cd MinOS
-make
+mkdir -p build && cd build
+cmake .. && cmake --build .
 ```
 
 ## Running
@@ -49,5 +50,5 @@ sudo dd if=/path/to/MinOS.iso of=/dev/sdx && sync
 
 On Qemu:
 ```
-qemu-system-i386 -cdrom build/MinOS.iso -serial stdio
+qemu-system-i386 -cdrom build/MinOS.iso -serial stdio -vga std
 ```
