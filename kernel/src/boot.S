@@ -31,8 +31,8 @@ _start:
 	; Call C code (double push is for 16-byte stack alignment)
 	push ebx
 	push ebx
-	extern kernel_main
-	;call kernel_main
+	extern kMain
+	call kMain
 	pop ebx
 	pop ebx
 
