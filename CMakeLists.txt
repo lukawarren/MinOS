@@ -10,9 +10,8 @@ set(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> <INCLUDES> \
     <FLAGS> -f ${CMAKE_ASM_NASM_OBJECT_FORMAT} -o <OBJECT> <SOURCE>")
 
 # Rest of toolchain
-set(tools $ENV{HOME}/opt/cross/bin/)
-set(CMAKE_C_COMPILER ${tools}i686-elf-gcc)
-set(CMAKE_CXX_COMPILER ${tools}i686-elf-g++)
+set(CMAKE_C_COMPILER i686-elf-gcc)
+set(CMAKE_CXX_COMPILER i686-elf-g++)
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
