@@ -35,7 +35,7 @@ docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd c
 
 ## Building natively
 ```
-git clone https://github.com/TheUltimateKerbonaut/MinOS
+git clone https://github.com/lukawarren/MinOS
 cd MinOS
 make
 ```
