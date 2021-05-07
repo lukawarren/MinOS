@@ -1,4 +1,5 @@
 #include "stdout/uart.h"
+#include "stdlib.h"
 #include "cpu.h"
 
 namespace UART
@@ -24,4 +25,9 @@ void UART::WriteChar(const char c)
     auto IsTransitEmpty = [&]() { return CPU::inb((uint16_t)sCom + 5) & 0x20; };
     while (!IsTransitEmpty()) {}
     CPU::outb((uint16_t)sCom + 0, c);
+}
+
+void UART::WriteString(char const* string)
+{
+    for (size_t i = 0; i < strlen(string); ++i) WriteChar(string[i]);
 }
