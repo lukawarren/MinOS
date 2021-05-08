@@ -11,7 +11,7 @@
 #define PAGE_SIZE 0x1000
 
 #define NUM_DIRECTORIES 1024
-#define NUM_PAGES 1024
+#define NUM_TABLES 1024
 
 #define PD_PRESENT(x)           ((x & 0b1))
 #define PD_READWRITE(x)         ((x & 0b1) << 1)
@@ -27,7 +27,10 @@ namespace Memory
     uint32_t GetMaxMemory(const multiboot_info_t* pMultiboot);
 
     void DeallocatePageDirectory(const uint32_t virtualAddress, const uint32_t flags);
-    void AllocatePage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags);
+    void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags);
+    void ClearPage(const uint32_t address);
+
+    uint32_t AllocatePage(const uint32_t size);
 }
 
 #endif
