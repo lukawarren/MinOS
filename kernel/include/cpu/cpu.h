@@ -35,6 +35,10 @@ namespace CPU
     {
         extern void LoadGDT(const uint64_t* gdt, const size_t size);
         extern void LoadIDT(const IDTDescriptor* descriptor);
+
+        extern void FlushTLB();
+        extern void EnablePaging();
+        extern void LoadPageDirectories(const uint32_t pageDirectoryAddress);
     }
 }
 

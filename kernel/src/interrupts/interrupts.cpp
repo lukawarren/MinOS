@@ -9,9 +9,11 @@ namespace Interrupts
     {
         UART::WriteString("Interupt ");
         UART::WriteNumber(irq);
-        UART::WriteString(" received\n");
+        UART::WriteString(" received - esp ");
 
         if (irq == 1) CPU::inb(0x60);
+        UART::WriteNumber(registers.esp);
+        UART::WriteString("\n");
 
         PIC::EndInterrupt((uint8_t)irq);
     }

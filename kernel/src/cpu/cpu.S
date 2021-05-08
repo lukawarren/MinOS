@@ -40,3 +40,40 @@ LoadIDT:
     lidt [eax]
     pop eax
     ret
+
+global FlushTLB
+FlushTLB:
+    ; On i486 and newer, the "invlpg" instruction
+    ; makes much more sense, as what is below is
+    ; overkill for most uses. However completely
+    ; reloading cl3 does at least alleviate
+    ; my paranoia
+    push eax
+    mov eax, cr3
+    mov cr3, eax
+    pop eax
+    ret
+
+global EnablePaging
+EnablePaging:
+    ; Modify cr0 to enable paging
+    push ebp
+    mov ebp, esp
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+    mov esp, ebp
+    pop ebp
+    ret
+
+global LoadPageDirectories
+LoadPageDirectories:
+    ; Put the address of the page
+    ; directories into cr3
+    push ebp
+    mov ebp, esp
+    mov eax, [esp + 8]
+    mov cr3, eax
+    mov esp, ebp
+    pop ebp
+    ret
