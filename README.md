@@ -43,7 +43,7 @@ cmake .. && cmake --build .
 ```
 
 ## Adding GRUB
-After building the kernel binary file, run:
+After building the kernel binary file, run (in Docker if you must):
 ```
 mkdir -p build/isodir/boot/grub
 cp build/kernel/kernel.bin build/isodir/boot/MinOS.bin
