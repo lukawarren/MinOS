@@ -31,7 +31,8 @@ namespace Memory
     void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags);
     void ClearPage(const uint32_t address);
 
-    uint32_t AllocatePage(const uint32_t size);
+    void* AllocateMemory(const uint32_t size);
+    void FreeMemory(const void* address, const uint32_t size);
 }
 
 #endif

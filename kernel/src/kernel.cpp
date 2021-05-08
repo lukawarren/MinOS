@@ -5,6 +5,7 @@
 #include "cpu/cmos.h"
 #include "stdout/uart.h"
 #include "memory/memory.h"
+#include "multitask/multitask.h"
 
 extern uint32_t __tss_stack; // TSS stack from linker
 
@@ -39,6 +40,9 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     // Check multiboot then configure memory
     if ((pMultibootInfo->flags & 6) == false) UART::WriteString("Multiboot error!");
     Memory::Init(pMultibootInfo);
+
+    // Setup task
+    Multitask::CreateTask("Kernel", 0);
 
     // Enable interrupts
     CPU::EnableInterrupts();

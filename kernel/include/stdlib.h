@@ -6,6 +6,7 @@
 #include <stdout/uart.h>
 
 size_t strlen(const char* string);
+char* strncpy(char* dest, const char* src, size_t maxLength);
 size_t pow(const size_t number, const size_t power);
 void memset(void* b, int c, int len);
 void memcpy(void *dest, void *src, size_t n);

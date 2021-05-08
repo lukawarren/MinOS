@@ -130,11 +130,14 @@ namespace Memory
         return (remainder == 0) ? size : size + PAGE_SIZE - remainder;
     }
 
-    uint32_t AllocatePage(const uint32_t size)
+    void* AllocateMemory(const uint32_t size)
     {
         // Round size to nearest page
         const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
         const uint32_t pagesAsBinary = (1 << neededPages) - 1;
+
+        // Assert it's not time to rewrite the entire thing
+        assert(neededPages <= 32);
 
         // Search through each "group", limited to the confines of physical memory
         for (uint32_t group = 0; group < maxGroups; ++group)
@@ -154,7 +157,7 @@ namespace Memory
                         // We've found the memory, get the address
                         const uint32_t address = (group * 32 + bitCounter) * PAGE_SIZE;
                         SetPage(address, address, KERNEL_PAGE);
-                        return address;
+                        return (void*) address;
                     }
                     bitmap >>= 1;
                     bitCounter++;
@@ -163,7 +166,16 @@ namespace Memory
         }
 
         assert(false); // Panic!
-        return -1;
+        return (void*) -1;
+    }
+
+    void FreeMemory(const void* address, const uint32_t size)
+    {
+        const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
+        for (uint32_t page = 0; page < neededPages; ++page)
+        {
+            ClearPage((uint32_t)address + page*PAGE_SIZE);
+        }
     }
 
 }

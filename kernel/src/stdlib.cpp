@@ -7,6 +7,13 @@ size_t strlen(const char* string)
     return length;
 }
 
+char* strncpy(char* dest, const char* src, size_t maxLength)
+{
+    char *temp = dest;
+    while(maxLength-- && (*dest++ = *src++)); // or while((*strDest++=*strSrc++) != '\0');
+    return temp;
+}
+
 size_t pow(const size_t number, const size_t power)
 {
     if (power == 0) return 1;
