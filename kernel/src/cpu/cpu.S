@@ -29,3 +29,14 @@ ReloadCS:
     mov gs, ax
     mov ss, ax
     ret
+
+global LoadIDT
+LoadIDT:
+    ; Disable interrupts (just in case),
+    ; load the IDT, then return
+    cli
+    push eax
+    mov eax, [esp + 8]
+    lidt [eax]
+    pop eax
+    ret

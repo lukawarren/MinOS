@@ -1,6 +1,8 @@
 #ifndef UART_H
 #define UART_H
 
+#include <stdint.h>
+
 namespace UART
 {
     enum COM
@@ -14,6 +16,7 @@ namespace UART
     void Init(const COM com = COM1);
     void WriteChar(const char c);
     void WriteString(char const* string);
+    void WriteNumber(const uint32_t number);
 }
 
 #endif

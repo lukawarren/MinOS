@@ -6,6 +6,7 @@ minos_toolchain.tar.gz
 toolchain/
 bochs/
 .vscode
+bochs.sh
 
 build/
 kernel/build/
