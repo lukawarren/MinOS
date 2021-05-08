@@ -43,15 +43,5 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     // Enable interrupts
     CPU::EnableInterrupts();
 
-    uint32_t addr = Memory::AllocatePage(1);
-    UART::WriteNumber(addr);
-    UART::WriteChar('\n');
-    uint32_t addr2 = Memory::AllocatePage(1);
-    UART::WriteNumber(addr2);
-    UART::WriteChar('\n');
-    Memory::ClearPage(addr);
-    addr = Memory::AllocatePage(1);
-    UART::WriteNumber(addr);
-
     for (;;) asm("nop"); // Hang
 }

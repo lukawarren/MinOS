@@ -26,7 +26,8 @@ namespace Memory
     void Init(const multiboot_info_t* pMultiboot);
     uint32_t GetMaxMemory(const multiboot_info_t* pMultiboot);
 
-    void DeallocatePageDirectory(const uint32_t virtualAddress, const uint32_t flags);
+    void InitPageDirectory(const uint32_t virtualAddress);
+
     void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags);
     void ClearPage(const uint32_t address);
 

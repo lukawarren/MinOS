@@ -13,33 +13,34 @@ static uint32_t* pageDirectories;
 static uint32_t* pageTables;
 static uint32_t* pageBitmaps;
 
+// Memory bounds
+static uint32_t maxPages;
+static uint32_t maxGroups;
+
 namespace Memory
 {
     void Init(const multiboot_info_t* pMultiboot)
     {
-        // Get size of memory
+        // Get memory bounds
         const uint32_t upperBound = GetMaxMemory(pMultiboot);
-        uint32_t* pFreeMemory = &__kernel_end; // Linker has aligned to nearest 4k
-        UART::WriteString("Allocating memory of size ");
-        UART::WriteNumber(upperBound);
-        UART::WriteString("\n");
+        maxPages = upperBound / PAGE_SIZE;
+        maxGroups = maxPages / 32;
 
         // Allocate space for page tables, page directories and what-not
-        pageDirectories = pFreeMemory;
+        pageDirectories = &__kernel_end; // Linker has aligned to nearest 4k
         pageTables = pageDirectories + NUM_DIRECTORIES; // To get rid of warning
         pageBitmaps = pageTables + NUM_TABLES*NUM_DIRECTORIES;
 
         // Bitmap would be number of pages / 32 = 1024 * 1024 / 32 = 32,768 32-bit entries: 1mb
         const uint32_t userspaceBegin = (uint32_t)(pageBitmaps + 32768);
 
-        // Clear pages
-        for (uint32_t i = 0; i < NUM_DIRECTORIES; ++i) DeallocatePageDirectory(i * DIRECTORY_SIZE, USER_PAGE);
+        // Clear pages and setup page directories
+        for (uint32_t i = 0; i < NUM_DIRECTORIES; ++i)
+            InitPageDirectory(i * DIRECTORY_SIZE);
 
         // Identity-map kernel pages
         for (uint32_t i = 0; i < userspaceBegin / PAGE_SIZE; ++i)
-        {
             SetPage(i * PAGE_SIZE, i * PAGE_SIZE, KERNEL_PAGE);
-        }
 
         // Enable paging
         CPU::LoadPageDirectories((uint32_t)pageDirectories);
@@ -69,22 +70,27 @@ namespace Memory
         return 0;
     }
 
-    void DeallocatePageDirectory(const uint32_t virtualAddress, const uint32_t flags)
+    static inline uint32_t GetPageDirectoryIndex(const uint32_t virtualAddress)
     {
-        // Pages can be allocated easier if we leave the page directory
-        // allocated but deallocate all page tables
-        assert((flags & 0b1) == PD_PRESENT(1));
+        return (virtualAddress == 0) ? 0 : (virtualAddress / DIRECTORY_SIZE);
+    }
 
+    static inline uint32_t GetPageTableIndex(const uint32_t virtualAddress)
+    {
+        return (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
+    }
+
+    void InitPageDirectory(const uint32_t virtualAddress)
+    {
         // Find page directory to be changed - ignore divide by 0
-        unsigned int pageDirectoryIndex = (virtualAddress == 0) ? 0 : (virtualAddress / DIRECTORY_SIZE);
+        unsigned int pageDirectoryIndex = GetPageDirectoryIndex(virtualAddress);
 
-        // Set page tables
+        // Set page tables to not present
         uint32_t* pageTable = pageTables + NUM_TABLES*pageDirectoryIndex;
         for (int i = 0; i < NUM_TABLES; ++i) pageTable[i] = PD_PRESENT(0);
 
-        // Set page directory
-        pageDirectories[pageDirectoryIndex] = (uint32_t)pageTable | flags;
-
+        // Set page directory to be user space and present (which is overridden by the tables)
+        pageDirectories[pageDirectoryIndex] = (uint32_t)pageTable | USER_PAGE;
         CPU::FlushTLB();
 
         // Clear bitmap - 1024 pages makes 1024 / 32 = 32 groups
@@ -92,42 +98,30 @@ namespace Memory
         memset(pageBitmaps + bitmapNthPage, 0, sizeof(uint32_t)*32);
     }
 
-    void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags)
+    static void SetPageInBitmap(const uint32_t virtualAddress, const bool bAllocated)
     {
-        // Find page table - ignore divide by 0
-        unsigned int pageTableIndex = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
-        uint32_t* pageTable = pageTables + pageTableIndex;
-
-        // Fill table and flush TLB
-        *pageTable = physicalAddress | flags;
-        CPU::FlushTLB();
-
         // Find 32-bit "group" (nth page / 32), then get bit in that page (the remainder)
         unsigned int bitmapNthPage = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
         unsigned int bitmapIndex = (bitmapNthPage == 0) ? 0 : (bitmapNthPage / 32);
         unsigned int remainder = bitmapNthPage % 32;
+        
+        // Set or clear the nth bit
+        if  (bAllocated) pageBitmaps[bitmapIndex] |= 1UL << remainder;
+        else pageBitmaps[bitmapIndex] &= ~(1UL << remainder);
+    }
 
-        // Set the nth bit
-        pageBitmaps[bitmapIndex] |= 1UL << remainder;
+    void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags)
+    {
+        pageTables[GetPageTableIndex(virtualAddress)] = physicalAddress | flags;
+        SetPageInBitmap(virtualAddress, true);
+        CPU::FlushTLB();
     }
 
     void ClearPage(const uint32_t virtualAddress)
     {
-        // Find page table - ignore divide by 0
-        unsigned int pageTableIndex = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
-        uint32_t* pageTable = pageTables + pageTableIndex;
-
-        // Fill table and flush TLB
-        *pageTable = PD_PRESENT(0);
+        pageTables[GetPageTableIndex(virtualAddress)] = PD_PRESENT(0);
+        SetPageInBitmap(virtualAddress, false);
         CPU::FlushTLB();
-
-        // Find 32-bit "group" (nth page / 32), then get bit in that page (the remainder)
-        unsigned int bitmapNthPage = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
-        unsigned int bitmapIndex = (bitmapNthPage == 0) ? 0 : (bitmapNthPage / 32);
-        unsigned int remainder = bitmapNthPage % 32;
-
-        // Clear the nth bit
-        pageBitmaps[bitmapIndex] &= ~(1UL << remainder);
     }
 
     static uint32_t RoundToNextPageSize(const uint32_t size)
@@ -142,8 +136,8 @@ namespace Memory
         const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
         const uint32_t pagesAsBinary = (1 << neededPages) - 1;
 
-        // Search through each "group"
-        for (int group = 0; group < NUM_DIRECTORIES * NUM_TABLES; ++group)
+        // Search through each "group", limited to the confines of physical memory
+        for (uint32_t group = 0; group < maxGroups; ++group)
         {
             // If there remains any free bits (pages)
             if (pageBitmaps[group] + 1 != 0)
