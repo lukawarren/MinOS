@@ -2,6 +2,7 @@
 #include "cpu/cpu.h"
 #include "cpu/gdt.h"
 #include "cpu/pic.h"
+#include "cpu/cmos.h"
 #include "stdout/uart.h"
 #include "memory/memory.h"
 
@@ -12,6 +13,14 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     // Init UART
     UART::Init();
     UART::WriteString("MinOS initialising...\n");
+
+    // Print time
+    auto time = CMOS::GetTime();
+    UART::WriteString("Time is ");
+    UART::WriteNumber(time.hour);
+    UART::WriteString(":");
+    UART::WriteNumber(time.minute);
+    UART::WriteString("\n");
 
     // TSS
     CPU::TSS tss = CPU::CreateTSSEntry((uint32_t)&__tss_stack, 0x10);
