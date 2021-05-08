@@ -12,7 +12,10 @@ align 4
 	dd MAGIC
 	dd FLAGS
 	dd CHECKSUM
- 
+	dd 0, 0, 0, 0, 0
+	dd 0  ; set graphics mode
+	dd 1024, 768, 32 ; width, height, depth
+
 ; Stack
 section .bss
 align 16

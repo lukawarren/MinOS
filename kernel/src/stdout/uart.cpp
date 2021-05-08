@@ -1,13 +1,13 @@
 #include "stdout/uart.h"
+#include "cpu/cpu.h"
 #include "stdlib.h"
-#include "cpu.h"
 
 namespace UART
 {
     static COM sCom;
 }
 
-void UART::InitUART(const COM com)
+void UART::Init(const COM com)
 {
     sCom = com;
     CPU::outb((uint16_t)sCom + 1, 0x00); // Disable all interrupts

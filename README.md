@@ -42,6 +42,15 @@ mkdir -p build && cd build
 cmake .. && cmake --build .
 ```
 
+## Adding GRUB
+After building the kernel binary file, run:
+```
+mkdir -p build/isodir/boot/grub
+cp build/kernel/kernel.bin build/isodir/boot/MinOS.bin
+cp kernel/grub.cfg build/isodir/boot/grub/grub.cfg
+grub-mkrescue -o build/MinOS.iso build/isodir
+```
+
 ## Running
 Just build the project and either run the iso in the build directory as a virtual machine or burn to a disk with something like:
 ```

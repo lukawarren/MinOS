@@ -11,7 +11,7 @@ namespace UART
         COM4 = 0x2E8
     };
 
-    void InitUART(const COM com = COM1);
+    void Init(const COM com = COM1);
     void WriteChar(const char c);
     void WriteString(char const* string);
 }
