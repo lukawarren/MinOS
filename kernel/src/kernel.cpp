@@ -24,7 +24,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
         CPU::CreateGDTEntry((uint32_t)&tss, sizeof(tss), TSS_PL0)
     };
 
-    CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL);
+    CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), PIC_MASK_KEYBOARD, PIC_MASK_ALL);
 
     // Enable interrupts
     CPU::EnableInterrupts();
