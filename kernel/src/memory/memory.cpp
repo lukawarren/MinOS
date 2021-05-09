@@ -104,7 +104,7 @@ namespace Memory
         unsigned int bitmapNthPage = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
         unsigned int bitmapIndex = (bitmapNthPage == 0) ? 0 : (bitmapNthPage / 32);
         unsigned int remainder = bitmapNthPage % 32;
-        
+
         // Set or clear the nth bit
         if  (bAllocated) pageBitmaps[bitmapIndex] |= 1UL << remainder;
         else pageBitmaps[bitmapIndex] &= ~(1UL << remainder);
@@ -134,35 +134,70 @@ namespace Memory
     {
         // Round size to nearest page
         const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
-        const uint32_t pagesAsBinary = (1 << neededPages) - 1;
 
-        // Assert it's not time to rewrite the entire thing
+        // If the page group is double, we're in trouble! (well or anything more than 1 page group)
         assert(neededPages <= 32);
 
         // Search through each "group", limited to the confines of physical memory
         for (uint32_t group = 0; group < maxGroups; ++group)
         {
-            // If there remains any free bits (pages)
-            if (pageBitmaps[group] + 1 != 0)
-            {
-                uint32_t bitmap = pageBitmaps[group];
-                uint32_t bitCounter = 0;
+            // Skip if bitmap is full
+            uint32_t bitmap = pageBitmaps[group];
+            if (bitmap + 1 == 0) continue;
 
-                // Continuously shift to the right and check if all
-                // necessary bits (pages) are 0
-                while (bitCounter < 32)
+            // If we need more than 1 page, get fancy
+            if (neededPages > 1)
+            {
+                // Invert the bits
+                bitmap = ~bitmap;
+
+                // Find if N consecutive bits set: "bitmap & (bitmap >> 1)" for 2 pages, "bitmap & (bitmap >> 1) & (bitmap >> 2)" for 3, etc
+                for (uint32_t nConsecutivePages = 2; (nConsecutivePages <= neededPages && bitmap); ++nConsecutivePages)
+                    bitmap &= (bitmap >> (nConsecutivePages-1));
+
+                // If not, too bad!
+                if (bitmap == 0) continue;
+
+                // Now all we have to do is find the position of the least significant bit
+                uint32_t nthBit = 0;
+                if ((bitmap & 0xFFFF) == 0) { nthBit += 16; bitmap >>= 16; }
+                if ((bitmap & 0x00FF) == 0) { nthBit += 8;  bitmap >>= 8;  }
+                if ((bitmap & 0x000F) == 0) { nthBit += 4;  bitmap >>= 4;  }
+                if ((bitmap & 0x0003) == 0) { nthBit += 2;  bitmap >>= 2;  }
+                if ((bitmap & 0x0001) == 0) nthBit += 1;
+
+                // Because the nth bit starts from the right, we don't need to modify the nth bit to account for multiple
+                // pages, as memory goes this way: 32nd bit <--------------------- 0th bit
+
+                // Now just work out the address and set that number of pages
+                const uint32_t nthPage = group * 32 + nthBit;
+                for (uint32_t page = 0; page < neededPages; page++)
                 {
-                    if ((bitmap & pagesAsBinary) == 0)
-                    {
-                        // We've found the memory, get the address
-                        const uint32_t address = (group * 32 + bitCounter) * PAGE_SIZE;
-                        SetPage(address, address, KERNEL_PAGE);
-                        return (void*) address;
-                    }
-                    bitmap >>= 1;
-                    bitCounter++;
+                    const uint32_t address = (nthPage + page) * PAGE_SIZE;
+                    SetPage(address, address, KERNEL_PAGE);
                 }
+
+                return (void*)(PAGE_SIZE * nthPage);
             }
+            else
+            {
+                // Invert for code below (yes, it's a waste, but it does save a while loop)
+                bitmap = ~bitmap;
+
+                // Again, find the least significant bit
+                uint32_t nthBit = 0;
+                if ((bitmap & 0xFFFF) == 0) { nthBit += 16; bitmap >>= 16; }
+                if ((bitmap & 0x00FF) == 0) { nthBit += 8;  bitmap >>= 8;  }
+                if ((bitmap & 0x000F) == 0) { nthBit += 4;  bitmap >>= 4;  }
+                if ((bitmap & 0x0003) == 0) { nthBit += 2;  bitmap >>= 2;  }
+                if ((bitmap & 0x0001) == 0) nthBit += 1;
+
+                // Again, just work out the address
+                const uint32_t address = PAGE_SIZE * (group * 32 + nthBit);
+                SetPage(address, address, KERNEL_PAGE);
+                return (void*)address; 
+            }
+            
         }
 
         assert(false); // Panic!

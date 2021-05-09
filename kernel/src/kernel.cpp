@@ -6,6 +6,7 @@
 #include "stdout/uart.h"
 #include "memory/memory.h"
 #include "multitask/multitask.h"
+#include "stdlib.h"
 
 extern uint32_t __tss_stack; // TSS stack from linker
 
@@ -43,7 +44,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 
     // Setup task
     Multitask::CreateTask("Kernel", 0);
-
+    
     // Enable interrupts
     CPU::EnableInterrupts();
 

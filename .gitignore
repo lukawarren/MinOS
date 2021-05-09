@@ -2,6 +2,7 @@ build.sh
 buildToolchain.bat
 compile.bat
 compile.sh
+bochs.bat
 minos_toolchain.tar.gz
 toolchain/
 bochs/
