@@ -10,17 +10,20 @@ namespace Multitask
     static uint32_t nTasks;
     static Task* tasks;
 
-    Task::Task(char const* sName, uint32_t entrypoint, uint32_t* pStack)
+    Task::Task(char const* sName, uint32_t entrypoint)
     {
         // Set member variables
         strncpy(m_sName, sName, sizeof(m_sName));
         m_Entrypoint = entrypoint;
-        m_pStack = pStack;
+        
+        // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 16 to ensure alignment
+        m_pStack = (uint32_t*) ((uint32_t)(Memory::AllocateMemory(PAGE_SIZE * 32)) + PAGE_SIZE*32-1);
+        const uint32_t stackTop = (uint32_t) m_pStack;
 
         // Setup stack at point of iret
         *--m_pStack = 0x00;                 // stack alignment (if any)
         *--m_pStack = 0x23;                 // stack segment (ss)
-        *--m_pStack = (uint32_t) pStack;    // esp
+        *--m_pStack = stackTop;             // esp
         *--m_pStack = 0x202;                // eflags - default value with interrupts enabled
         *--m_pStack = 0x1B;                 // cs
         *--m_pStack = entrypoint;           // eip
@@ -30,7 +33,7 @@ namespace Multitask
         *--m_pStack = 0;                    // edx
         *--m_pStack = 0;                    // esi
         *--m_pStack = 0;                    // edi
-        *--m_pStack = (uint32_t) pStack;    // ebp
+        *--m_pStack = stackTop;             // ebp
     }
 
     void Init()
@@ -39,17 +42,13 @@ namespace Multitask
         tasks = (Task*) Memory::AllocateMemory(sizeof(Task) * maxTasks);
     }
 
-    int CreateTask(char const* sName, const uint32_t entrypoint)
+    int CreateTask(char const* sName, void (*entrypoint)())
     {
         // Check we have room
         if (nTasks >= maxTasks) return -1;
-        
-        // Create stack - 128kb, 32 pages - that grows downwards
-        uint32_t* stack = (uint32_t*) ((uint32_t)(Memory::AllocateMemory(PAGE_SIZE * 32)) + PAGE_SIZE*32-16); // Minus at least 1 to not go over 1 page, and 16 to ensure alignment
-        UART::WriteNumber((uint32_t)stack);
 
         // Create task and return index
-        tasks[nTasks] = Task(sName, entrypoint, stack);
+        tasks[nTasks] = Task(sName, (uint32_t)entrypoint);
 
         nTasks++;
         return nTasks-1;

@@ -10,7 +10,7 @@ namespace Multitask
     class Task
     {
         public:
-            Task(char const* sName, uint32_t entrypoint, uint32_t* pStack);
+            Task(char const* sName, uint32_t entrypoint);
         
         private:
             char m_sName[32];
@@ -19,7 +19,7 @@ namespace Multitask
     };
 
     void Init();
-    int CreateTask(char const* sName, const uint32_t entrypoint);
+    int CreateTask(char const* sName, void (*entrypoint)());
 }
 
 #endif

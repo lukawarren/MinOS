@@ -43,7 +43,11 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     Memory::Init(pMultibootInfo);
 
     // Setup task
-    Multitask::CreateTask("Kernel", 0);
+    Multitask::Init();
+    Multitask::CreateTask("Kernel", []
+    {
+        UART::WriteString("Hello world!");
+    });
     
     // Enable interrupts
     CPU::EnableInterrupts();
