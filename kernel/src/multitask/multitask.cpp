@@ -45,7 +45,7 @@ namespace Multitask
         if (nTasks >= maxTasks) return -1;
         
         // Create stack - 128kb, 32 pages - that grows downwards
-        uint32_t* stack = (uint32_t*) ((uint32_t)(Memory::AllocateMemory(PAGE_SIZE * 5)) + PAGE_SIZE*5-16); // Minus at least 1 to not go over 1 page, and 16 to ensure alignment
+        uint32_t* stack = (uint32_t*) ((uint32_t)(Memory::AllocateMemory(PAGE_SIZE * 32)) + PAGE_SIZE*32-16); // Minus at least 1 to not go over 1 page, and 16 to ensure alignment
         UART::WriteNumber((uint32_t)stack);
 
         // Create task and return index

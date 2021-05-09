@@ -130,6 +130,25 @@ namespace Memory
         return (remainder == 0) ? size : size + PAGE_SIZE - remainder;
     }
 
+    /*
+        https://graphics.stanford.edu/~seander/bithacks.html
+        "Count the consecutive zero bits (trailing) on the right with multiply and lookup"
+
+        The expression (v & -v) extracts the least significant 1 bit from v. The constant 0x077CB531UL is a de Bruijn sequence, 
+        which produces a unique pattern of bits into the high 5 bits for each possible bit position that it is multiplied against.
+        When there are no bits set, it returns 0.
+    */
+    static uint32_t GetPositionOfLeastSignificantBit(const uint32_t number)
+    {
+        static const int MultiplyDeBruijnBitPosition[32] = 
+        {
+            0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 
+            31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
+        };
+
+        return MultiplyDeBruijnBitPosition[((uint32_t)((number & -number) * 0x077CB531U)) >> 27];
+    }
+
     void* AllocateMemory(const uint32_t size)
     {
         // Round size to nearest page
@@ -151,20 +170,20 @@ namespace Memory
                 // Invert the bits
                 bitmap = ~bitmap;
 
-                // Find if N consecutive bits set: "bitmap & (bitmap >> 1)" for 2 pages, "bitmap & (bitmap >> 1) & (bitmap >> 2)" for 3, etc
-                for (uint32_t nConsecutivePages = 2; (nConsecutivePages <= neededPages && bitmap); ++nConsecutivePages)
-                    bitmap &= (bitmap >> (nConsecutivePages-1));
+                // An empty group (well it's full now cause we inverted it) will break the below code,
+                // but luckily it can be skipped, which is faster anyway
+                if (bitmap + 1 != 0)
+                {
+                    // Find if N consecutive bits set: "bitmap & (bitmap >> 1)" for 2 pages, "bitmap & (bitmap >> 1) & (bitmap >> 2)" for 3, etc
+                    for (uint32_t nConsecutivePages = 2; (nConsecutivePages <= neededPages && bitmap); ++nConsecutivePages)
+                        bitmap &= (bitmap >> (nConsecutivePages-1));
 
-                // If not, too bad!
-                if (bitmap == 0) continue;
+                    // If not, too bad!
+                    if (bitmap == 0) continue;
+                }
 
                 // Now all we have to do is find the position of the least significant bit
-                uint32_t nthBit = 0;
-                if ((bitmap & 0xFFFF) == 0) { nthBit += 16; bitmap >>= 16; }
-                if ((bitmap & 0x00FF) == 0) { nthBit += 8;  bitmap >>= 8;  }
-                if ((bitmap & 0x000F) == 0) { nthBit += 4;  bitmap >>= 4;  }
-                if ((bitmap & 0x0003) == 0) { nthBit += 2;  bitmap >>= 2;  }
-                if ((bitmap & 0x0001) == 0) nthBit += 1;
+                uint32_t nthBit = GetPositionOfLeastSignificantBit(bitmap);
 
                 // Because the nth bit starts from the right, we don't need to modify the nth bit to account for multiple
                 // pages, as memory goes this way: 32nd bit <--------------------- 0th bit
@@ -185,12 +204,7 @@ namespace Memory
                 bitmap = ~bitmap;
 
                 // Again, find the least significant bit
-                uint32_t nthBit = 0;
-                if ((bitmap & 0xFFFF) == 0) { nthBit += 16; bitmap >>= 16; }
-                if ((bitmap & 0x00FF) == 0) { nthBit += 8;  bitmap >>= 8;  }
-                if ((bitmap & 0x000F) == 0) { nthBit += 4;  bitmap >>= 4;  }
-                if ((bitmap & 0x0003) == 0) { nthBit += 2;  bitmap >>= 2;  }
-                if ((bitmap & 0x0001) == 0) nthBit += 1;
+                uint32_t nthBit = GetPositionOfLeastSignificantBit(bitmap);
 
                 // Again, just work out the address
                 const uint32_t address = PAGE_SIZE * (group * 32 + nthBit);
@@ -201,7 +215,7 @@ namespace Memory
         }
 
         assert(false); // Panic!
-        return (void*) -1;
+        return (void*) 0;
     }
 
     void FreeMemory(const void* address, const uint32_t size)
