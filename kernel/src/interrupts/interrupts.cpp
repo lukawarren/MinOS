@@ -2,6 +2,7 @@
 #include "stdout/uart.h"
 #include "cpu/pic.h"
 #include "cpu/cpu.h"
+#include "cpu/pit.h"
 
 namespace Interrupts
 {
@@ -67,9 +68,21 @@ namespace Interrupts
     
     void OnInterrupt(const uint32_t irq, const StackFrameRegisters registers)
     {
-        UART::WriteString("Interupt ");
-        UART::WriteNumber(irq);
-        UART::WriteString(" received\n");
+        switch (irq)
+        {
+            case 0x0: // IRQ
+                PIT::Reset();
+            break;
+
+            default:
+                UART::WriteString("[Error] Unrecognised IRQ ");
+                UART::WriteNumber(irq);
+                UART::WriteString(" ----- esp ");
+                UART::WriteNumber(registers.esp);
+                UART::WriteString("\n");
+            break;
+        }
+
         PIC::EndInterrupt((uint8_t)irq);
     }
 

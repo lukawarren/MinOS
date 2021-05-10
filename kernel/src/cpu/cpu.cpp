@@ -1,5 +1,6 @@
 #include "cpu/cpu.h"
 #include "cpu/pic.h"
+#include "cpu/pit.h"
 #include "interrupts/interrupts.h"
 
 namespace CPU
@@ -20,6 +21,9 @@ namespace CPU
         // Load IDT
         IDTDescriptor descriptor(idt);
         LoadIDT(&descriptor);
+
+        // Setup PIT
+        PIT::Init();
     }
 
     uint64_t CreateGDTEntry(const uint32_t base, const uint32_t limit, const uint16_t flag)
