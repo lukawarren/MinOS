@@ -5,10 +5,16 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "cpu/idt.h"
+
 namespace Interrupts
 {
     struct StackFrameRegisters
     {
+        uint16_t gs;
+        uint16_t fs;
+        uint16_t es;
+        uint16_t ds;
         uint32_t edi;
         uint32_t esi;
         uint32_t ebp;
@@ -19,9 +25,12 @@ namespace Interrupts
         uint32_t eax;
     };
 
+    void Init(CPU::IDT* idt);
+
     extern "C"
     {
         void OnInterrupt(const uint32_t irq, const StackFrameRegisters registers);
+        void OnException(const uint32_t irq, const StackFrameRegisters registers);
 
         extern void BlankIRQ();
 

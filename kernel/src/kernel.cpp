@@ -36,7 +36,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
         CPU::CreateGDTEntry((uint32_t)&tss, sizeof(tss), TSS_PL0)
     };
 
-    CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), PIC_MASK_KEYBOARD, PIC_MASK_ALL);
+    CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), PIC_MASK_PIT, PIC_MASK_ALL);
 
     // Check multiboot then configure memory
     if ((pMultibootInfo->flags & 6) == false) UART::WriteString("Multiboot error!");

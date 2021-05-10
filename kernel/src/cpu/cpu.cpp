@@ -14,28 +14,8 @@ namespace CPU
         // Init PIC with masks
         PIC::Init(mask1, mask2);
 
-        // Build empty IDT
-        using namespace Interrupts;
-        constexpr int offset = 0x20; // PIC has an offset that must be accounted for
-        for (size_t i = 0; i < 256; ++i) idt[i] = CreateIDTEntry((uint32_t) &BlankIRQ, 0x8, ENABLED_R0_INTERRUPT);
-        
-        // Standard interrupts
-        idt[offset+0]  = CreateIDTEntry((uint32_t) IRQ0,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+1]  = CreateIDTEntry((uint32_t) IRQ1,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+2]  = CreateIDTEntry((uint32_t) IRQ2,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+3]  = CreateIDTEntry((uint32_t) IRQ3,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+4]  = CreateIDTEntry((uint32_t) IRQ4,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+5]  = CreateIDTEntry((uint32_t) IRQ5,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+6]  = CreateIDTEntry((uint32_t) IRQ6,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+7]  = CreateIDTEntry((uint32_t) IRQ7,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+8]  = CreateIDTEntry((uint32_t) IRQ8,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+9]  = CreateIDTEntry((uint32_t) IRQ9,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+10] = CreateIDTEntry((uint32_t) IRQ10, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+11] = CreateIDTEntry((uint32_t) IRQ11, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+12] = CreateIDTEntry((uint32_t) IRQ12, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+13] = CreateIDTEntry((uint32_t) IRQ13, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+14] = CreateIDTEntry((uint32_t) IRQ14, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+15] = CreateIDTEntry((uint32_t) IRQ15, 0x8, ENABLED_R0_INTERRUPT);
+        // Init interrupts and build IDT
+        Interrupts::Init(idt);
 
         // Load IDT
         IDTDescriptor descriptor(idt);
