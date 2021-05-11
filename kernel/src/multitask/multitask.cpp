@@ -8,8 +8,12 @@ namespace Multitask
 {
     // Task malloc "slab" that neatly fills two pages
     constexpr uint32_t maxTasks = PAGE_SIZE * 2 / sizeof(Task);
-    static uint32_t nTasks = 0;
     static Task* tasks;
+
+    // House keepipng
+    static uint32_t nTasks = 0;
+    static uint32_t nCurrentTask = 0;
+    static uint32_t nPreviousTask = 0;
 
     // If we've coming from the kernel, there is no need to save our state
     static bool bCameFromKernel = true;
@@ -78,31 +82,26 @@ namespace Multitask
         return nTasks-1;
     }
 
-    static bool bob = true;
     void OnPIT()
     {
-        // If we came from kernel, no need to save
+        assert(nTasks > 0);
+
+        // If we came from kernel, no need to save previous "task"
         if (bCameFromKernel)
         {
             bCameFromKernel = false;
-            tasks[0].SwitchToTask();
+            tasks[nCurrentTask].SwitchToTask();
         }
         else
         {
-            if (bob)
-            {
-                bob = false;
-                tasks[0].SwitchFromTask();
-                tasks[1].SwitchToTask();
-            }
-            else
-            {
-                bob = true;
-                tasks[1].SwitchFromTask();
-                tasks[0].SwitchToTask();
-            }
-            
+            tasks[nPreviousTask].SwitchFromTask();
+            tasks[nCurrentTask].SwitchToTask();
         }
+
+        // Save previous task then advance current taks by 1 (or loop back around)
+        nPreviousTask = nCurrentTask;
+        nCurrentTask++;
+        if (nCurrentTask >= nTasks) nCurrentTask = 0;
 
         PIT::Reset(); // Must be reset every interrupt so as to fire again
         PIC::EndInterrupt(0x20); // Offset is 20, and it's IRQ 0

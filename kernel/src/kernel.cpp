@@ -45,15 +45,13 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     // Setup tasks
     Multitask::Init();
 
-    Multitask::CreateTask("Kernel", []
+    for (int i = 0; i < 100; ++i)
     {
-        while(1) UART::WriteString("Hello\n");
-    });
-    
-    Multitask::CreateTask("Kernel 2", []
-    {
-        while(1) UART::WriteString("Goodbye\n");
-    });
+        Multitask::CreateTask("Kernel", []
+        {
+            while(1) UART::WriteNumber(0);
+        });
+    }
     
     // Enable interrupts
     CPU::EnableInterrupts();
