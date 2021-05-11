@@ -33,8 +33,7 @@ namespace Interrupts
         void OnException(const uint32_t irq, const StackFrameRegisters registers);
 
         extern void BlankIRQ();
-
-        extern void IRQ0();
+        
         extern void IRQ1(); 
         extern void IRQ2();
         extern void IRQ3();

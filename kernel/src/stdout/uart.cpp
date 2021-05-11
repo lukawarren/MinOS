@@ -23,7 +23,7 @@ namespace UART
         // Wait for transit to be empty first
         auto IsTransitEmpty = [&]() { return CPU::inb((uint16_t)sCom + 5) & 0x20; };
         while (!IsTransitEmpty()) {}
-        CPU::outb((uint16_t)sCom + 0, c);
+        CPU::outb((uint16_t)sCom, c);
     }
 
     void WriteString(char const* string)

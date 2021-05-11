@@ -42,11 +42,17 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     if ((pMultibootInfo->flags & 6) == false) UART::WriteString("Multiboot error!");
     Memory::Init(pMultibootInfo);
 
-    // Setup task
+    // Setup tasks
     Multitask::Init();
+
     Multitask::CreateTask("Kernel", []
     {
-        UART::WriteString("Hello world!");
+        while(1) UART::WriteString("Hello\n");
+    });
+    
+    Multitask::CreateTask("Kernel 2", []
+    {
+        while(1) UART::WriteString("Goodbye\n");
     });
     
     // Enable interrupts

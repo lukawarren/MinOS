@@ -1,8 +1,10 @@
 #include "interrupts/interrupts.h"
+#include "multitask/multitask.h"
 #include "stdout/uart.h"
 #include "cpu/pic.h"
 #include "cpu/cpu.h"
 #include "cpu/pit.h"
+#include "stdlib.h"
 
 namespace Interrupts
 {
@@ -14,8 +16,7 @@ namespace Interrupts
         constexpr int offset = 0x20; // PIC has an offset that must be accounted for
         for (size_t i = 0; i < 256; ++i) idt[i] = CreateIDTEntry((uint32_t) &BlankIRQ, 0x8, ENABLED_R0_INTERRUPT);
         
-        // Standard interrupts
-        idt[offset+0]  = CreateIDTEntry((uint32_t) IRQ0,  0x8, ENABLED_R0_INTERRUPT);
+        // Standard interrupts (except PIT)
         idt[offset+1]  = CreateIDTEntry((uint32_t) IRQ1,  0x8, ENABLED_R0_INTERRUPT);
         idt[offset+2]  = CreateIDTEntry((uint32_t) IRQ2,  0x8, ENABLED_R0_INTERRUPT);
         idt[offset+3]  = CreateIDTEntry((uint32_t) IRQ3,  0x8, ENABLED_R0_INTERRUPT);
@@ -64,6 +65,9 @@ namespace Interrupts
         idt[28]  = CreateIDTEntry((uint32_t) IRQException28,  0x8, ENABLED_R0_INTERRUPT);
         idt[29]  = CreateIDTEntry((uint32_t) IRQException29,  0x8, ENABLED_R0_INTERRUPT);
         idt[30]  = CreateIDTEntry((uint32_t) IRQException30,  0x8, ENABLED_R0_INTERRUPT);
+
+        // PIT
+        idt[offset+0]  = CreateIDTEntry((uint32_t) Multitask::IRQ0,  0x8, ENABLED_R0_INTERRUPT);
     }
     
     void OnInterrupt(const uint32_t irq, const StackFrameRegisters registers)
@@ -71,7 +75,7 @@ namespace Interrupts
         switch (irq)
         {
             case 0x0: // IRQ
-                PIT::Reset();
+                assert(false); // Shouldn't be using the generic interrupt handler!
             break;
 
             default:

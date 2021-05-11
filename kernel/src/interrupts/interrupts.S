@@ -103,8 +103,7 @@ returnFromException%1:
     iret
 %endmacro
 
-; IRQs
-IRQHandler 0
+; IRQs - 0 (PIT) is handled separately
 IRQHandler 1
 IRQHandler 2
 IRQHandler 3
