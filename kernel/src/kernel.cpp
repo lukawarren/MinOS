@@ -19,7 +19,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 
     // Print time
     auto time = CMOS::GetTime();
-    UART::WriteString("Time is ");
+    UART::WriteString("[CMOS] Time is ");
     UART::WriteNumber(time.hour);
     UART::WriteString(":");
     UART::WriteNumber(time.minute);
@@ -51,7 +51,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     
     Multitask::CreateTask("Kernel", []
     {
-        UART::WriteString("Hello from userland!\n");
+        UART::WriteString("[Userland] Hello from userland!\n");
         while(1) asm("nop");
     });
     

@@ -79,7 +79,7 @@ namespace Interrupts
             break;
 
             default:
-                UART::WriteString("[Error] Unrecognised IRQ ");
+                UART::WriteString("[IRQ] Unrecognised IRQ ");
                 UART::WriteNumber(irq);
                 UART::WriteString(" ----- esp ");
                 UART::WriteNumber(registers.esp);
