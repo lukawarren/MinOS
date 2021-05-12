@@ -1,0 +1,14 @@
+# Linker
+set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${LINKER_SCRIPT}")
+set_target_properties(${TARGET_NAME} PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
+
+# Includes
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# Add source files
+FILE(GLOB_RECURSE C_SRCS src/*.c)
+FILE(GLOB_RECURSE CPP_SRCS src/*.cpp)
+FILE(GLOB_RECURSE ASM_SRCS src/*.S)
+
+ADD_EXECUTABLE(hello-world.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})

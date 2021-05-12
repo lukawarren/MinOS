@@ -28,7 +28,7 @@ namespace Multitask
     {
         // Variables for assembly
         extern uint32_t* pSavedTaskStack;
-        extern uint32_t newTaskStack;
+        extern uint32_t* pNewTaskStack;
 
         void OnPIT();
         void IRQ0();

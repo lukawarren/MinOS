@@ -5,6 +5,7 @@
 #include "cpu/cmos.h"
 #include "stdout/uart.h"
 #include "memory/memory.h"
+#include "memory/modules.h"
 #include "multitask/multitask.h"
 #include "stdlib.h"
 
@@ -42,16 +43,17 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     if ((pMultibootInfo->flags & 6) == false) UART::WriteString("Multiboot error!");
     Memory::Init(pMultibootInfo);
 
+    // Grab GRUB modules quick!
+    Modules::Init(pMultibootInfo);
+
     // Setup tasks
     Multitask::Init();
-
-    for (int i = 0; i < 100; ++i)
+    
+    Multitask::CreateTask("Kernel", []
     {
-        Multitask::CreateTask("Kernel", []
-        {
-            while(1) UART::WriteNumber(0);
-        });
-    }
+        UART::WriteString("Hello from userland!\n");
+        while(1) asm("nop");
+    });
     
     // Enable interrupts
     CPU::EnableInterrupts();

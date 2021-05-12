@@ -46,7 +46,9 @@ cmake .. && cmake --build .
 After building the kernel binary file, run (in Docker if you must):
 ```
 mkdir -p build/isodir/boot/grub
+mkdir -p build/isodir/boot/userland
 cp build/kernel/kernel.bin build/isodir/boot/MinOS.bin
+cp build/userland/*/*.bin build/isodir/boot/userland/
 cp kernel/grub.cfg build/isodir/boot/grub/grub.cfg
 grub-mkrescue -o build/MinOS.iso build/isodir
 ```

@@ -55,7 +55,7 @@ namespace Multitask
 
     void Task::SwitchToTask()
     {
-        newTaskStack = (uint32_t) m_pStack;
+        pNewTaskStack = (uint32_t*) &(m_pStack);
     }
 
     void Task::SwitchFromTask()

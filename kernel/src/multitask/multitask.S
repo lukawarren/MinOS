@@ -12,9 +12,13 @@ pSavedTaskStack:
     dd 0
 
 ; We then switch to the new task
-; and restore its registers
-global newTaskStack
-newTaskStack:
+; and restore its registers -
+; this is a pointer too incase
+; we're switching back to the same
+; task, as we want to use the
+; newly-soiled stack pointer
+global pNewTaskStack
+pNewTaskStack:
     dd 0
 
 ; When switching rings, our stack
@@ -106,6 +110,7 @@ IRQ0:
 
     cmp dword [pSavedTaskStack], 0
     je switchToNewTask
+    xchg bx, bx
     
     ; Move to old task's stack to
     ; reconstruct iret frame and
@@ -141,7 +146,8 @@ IRQ0:
 
 switchToNewTask:
     ; Switch to new stack
-    mov esp, [newTaskStack]
+    mov eax, [pNewTaskStack]
+    mov esp, [eax]
 
     ; Restore segment registers
     pop eax

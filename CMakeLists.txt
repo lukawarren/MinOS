@@ -23,3 +23,18 @@ set (CMAKE_C_FLAGS "-std=gnu99 ${WARNINGS} -ffreestanding -O2 -nostdlib -lgcc")
 # Add stuff
 ADD_SUBDIRECTORY(kernel)
 
+# Userland
+MACRO(SUBDIRLIST result curdir)
+  FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
+  SET(dirlist "")
+  FOREACH(child ${children})
+    IF(IS_DIRECTORY ${curdir}/${child})
+      LIST(APPEND dirlist ${child})
+    ENDIF()
+  ENDFOREACH()
+  SET(${result} ${dirlist})
+ENDMACRO()
+SUBDIRLIST(SUBDIRS ${PROJECT_SOURCE_DIR}/userland)
+FOREACH(subdir ${SUBDIRS})
+  ADD_SUBDIRECTORY(userland/${subdir})
+ENDFOREACH()
