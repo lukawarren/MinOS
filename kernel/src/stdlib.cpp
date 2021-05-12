@@ -14,6 +14,15 @@ char* strncpy(char* dest, const char* src, size_t maxLength)
     return temp;
 }
 
+void strcpy(char* dest, const char* source) 
+{
+    int i = 0;
+    while ((dest[i] = source[i]) != '\0')
+    {
+        i++;
+    } 
+}
+
 size_t pow(const size_t number, const size_t power)
 {
     if (power == 0) return 1;

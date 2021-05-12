@@ -45,7 +45,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     Memory::Init(pMultibootInfo);
 
     // Sanity check it all and reserve memory before it's snatched again!
-    Modules::PostInit();
+    Modules::PostInit(pMultibootInfo);
 
     // Setup tasks
     Multitask::Init();
