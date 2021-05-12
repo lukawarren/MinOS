@@ -26,16 +26,16 @@ namespace Memory
     void Init(const multiboot_info_t* pMultiboot);
     uint32_t GetMaxMemory(const multiboot_info_t* pMultiboot);
 
-    void InitPageDirectory(const uint32_t virtualAddress);
+    void InitPageDirectory(const uint32_t physicalAddress);
 
     void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags);
-    void ClearPage(const uint32_t virtualAddress);
-    bool IsPageSet(const uint32_t virtualAddress);
+    void ClearPage(const uint32_t physicalAddress);
+    bool IsPageSet(const uint32_t physicalAddress);
 
     uint32_t RoundToNextPageSize(const uint32_t size);
 
     void* AllocateMemory(const uint32_t size);
-    void FreeMemory(const void* address, const uint32_t size);
+    void FreeMemory(const void* physicalAddress, const uint32_t size);
 
     extern "C"
     {

@@ -68,20 +68,20 @@ namespace Memory
         return 0;
     }
 
-    static inline uint32_t GetPageDirectoryIndex(const uint32_t virtualAddress)
+    static inline uint32_t GetPageDirectoryIndex(const uint32_t physicalAddress)
     {
-        return (virtualAddress == 0) ? 0 : (virtualAddress / DIRECTORY_SIZE);
+        return (physicalAddress == 0) ? 0 : (physicalAddress / DIRECTORY_SIZE);
     }
 
-    static inline uint32_t GetPageTableIndex(const uint32_t virtualAddress)
+    static inline uint32_t GetPageTableIndex(const uint32_t physicalAddress)
     {
-        return (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
+        return (physicalAddress == 0) ? 0 : (physicalAddress / PAGE_SIZE);
     }
 
-    void InitPageDirectory(const uint32_t virtualAddress)
+    void InitPageDirectory(const uint32_t physicalAddress)
     {
         // Find page directory to be changed - ignore divide by 0
-        unsigned int pageDirectoryIndex = GetPageDirectoryIndex(virtualAddress);
+        unsigned int pageDirectoryIndex = GetPageDirectoryIndex(physicalAddress);
 
         // Set page tables to not present
         uint32_t* pageTable = pageTables + NUM_TABLES*pageDirectoryIndex;
@@ -92,14 +92,14 @@ namespace Memory
         CPU::FlushTLB();
 
         // Clear bitmap - 1024 pages makes 1024 / 32 = 32 groups
-        unsigned int bitmapNthPage = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
+        unsigned int bitmapNthPage = (physicalAddress == 0) ? 0 : (physicalAddress / PAGE_SIZE);
         memset(pageBitmaps + bitmapNthPage, 0, sizeof(uint32_t)*32);
     }
 
-    static void SetPageInBitmap(const uint32_t virtualAddress, const bool bAllocated)
+    static void SetPageInBitmap(const uint32_t physicalAddress, const bool bAllocated)
     {
         // Find 32-bit "group" (nth page / 32), then get bit in that page (the remainder)
-        unsigned int bitmapNthPage = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
+        unsigned int bitmapNthPage = (physicalAddress == 0) ? 0 : (physicalAddress / PAGE_SIZE);
         unsigned int bitmapIndex = (bitmapNthPage == 0) ? 0 : (bitmapNthPage / 32);
         unsigned int remainder = bitmapNthPage % 32;
 
@@ -112,20 +112,20 @@ namespace Memory
     {
         // Set page table and bitmap
         pageTables[GetPageTableIndex(virtualAddress)] = physicalAddress | flags;
-        SetPageInBitmap(virtualAddress, true);
+        SetPageInBitmap(physicalAddress, true);
         CPU::FlushTLB();
     }
 
-    void ClearPage(const uint32_t virtualAddress)
+    void ClearPage(const uint32_t physicalAddress)
     {
-        pageTables[GetPageTableIndex(virtualAddress)] = PD_PRESENT(0);
-        SetPageInBitmap(virtualAddress, false);
+        pageTables[GetPageTableIndex(physicalAddress)] = PD_PRESENT(0);
+        SetPageInBitmap(physicalAddress, false);
         CPU::FlushTLB();
     }
 
-    bool IsPageSet(const uint32_t virtualAddress)
+    bool IsPageSet(const uint32_t physicalAddress)
     {
-        unsigned int bitmapNthPage = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
+        unsigned int bitmapNthPage = (physicalAddress == 0) ? 0 : (physicalAddress / PAGE_SIZE);
         unsigned int bitmapIndex = (bitmapNthPage == 0) ? 0 : (bitmapNthPage / 32);
         unsigned int remainder = bitmapNthPage % 32;
 
@@ -237,12 +237,12 @@ namespace Memory
         return (void*) 0;
     }
 
-    void FreeMemory(const void* address, const uint32_t size)
+    void FreeMemory(const void* physicalAddress, const uint32_t size)
     {
         const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
         for (uint32_t page = 0; page < neededPages; ++page)
         {
-            ClearPage((uint32_t)address + page*PAGE_SIZE);
+            ClearPage((uint32_t)physicalAddress + page*PAGE_SIZE);
         }
     }
 
