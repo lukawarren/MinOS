@@ -29,10 +29,18 @@ namespace Memory
     void InitPageDirectory(const uint32_t virtualAddress);
 
     void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags);
-    void ClearPage(const uint32_t address);
+    void ClearPage(const uint32_t virtualAddress);
+    bool IsPageSet(const uint32_t virtualAddress);
+
+    uint32_t RoundToNextPageSize(const uint32_t size);
 
     void* AllocateMemory(const uint32_t size);
     void FreeMemory(const void* address, const uint32_t size);
+
+    extern "C"
+    {
+        extern uint32_t __kernel_end;
+    }
 }
 
 #endif

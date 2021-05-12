@@ -39,12 +39,13 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 
     CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), PIC_MASK_PIT, PIC_MASK_ALL);
 
-    // Check multiboot then configure memory
+    // Check multiboot, quickly grab GRUB modules, then configure memory
     if ((pMultibootInfo->flags & 6) == false) UART::WriteString("Multiboot error!");
+    Modules::Init(pMultibootInfo);
     Memory::Init(pMultibootInfo);
 
-    // Grab GRUB modules quick!
-    Modules::Init(pMultibootInfo);
+    // Sanity check it all and reserve memory before it's snatched again!
+    Modules::PostInit();
 
     // Setup tasks
     Multitask::Init();

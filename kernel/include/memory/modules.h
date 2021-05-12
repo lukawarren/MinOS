@@ -10,6 +10,7 @@
 namespace Modules
 {
     void Init(const multiboot_info_t* pMultiboot);
+    void PostInit();
 }
 
 #endif

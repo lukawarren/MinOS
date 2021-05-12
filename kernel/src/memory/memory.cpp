@@ -6,8 +6,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 
-extern uint32_t __kernel_end;
-
 // Page directories, tables and what-not
 static uint32_t* pageDirectories;
 static uint32_t* pageTables;
@@ -112,6 +110,7 @@ namespace Memory
 
     void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags)
     {
+        // Set page table and bitmap
         pageTables[GetPageTableIndex(virtualAddress)] = physicalAddress | flags;
         SetPageInBitmap(virtualAddress, true);
         CPU::FlushTLB();
@@ -124,7 +123,16 @@ namespace Memory
         CPU::FlushTLB();
     }
 
-    static uint32_t RoundToNextPageSize(const uint32_t size)
+    bool IsPageSet(const uint32_t virtualAddress)
+    {
+        unsigned int bitmapNthPage = (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
+        unsigned int bitmapIndex = (bitmapNthPage == 0) ? 0 : (bitmapNthPage / 32);
+        unsigned int remainder = bitmapNthPage % 32;
+
+        return (pageBitmaps[bitmapIndex] & (1UL << remainder));
+    }
+
+    uint32_t RoundToNextPageSize(const uint32_t size)
     {
         const uint32_t remainder = size % PAGE_SIZE;
         return (remainder == 0) ? size : size + PAGE_SIZE - remainder;
@@ -194,6 +202,11 @@ namespace Memory
                 {
                     const uint32_t address = (nthPage + page) * PAGE_SIZE;
                     SetPage(address, address, KERNEL_PAGE);
+
+                    // Zero-out page for security
+                    uint32_t* pData = (uint32_t*)address;
+                    for (uint32_t i = 0; i < PAGE_SIZE/sizeof(uint32_t); ++i)
+                        *(pData + i) = 0;
                 }
 
                 return (void*)(PAGE_SIZE * nthPage);
@@ -209,6 +222,12 @@ namespace Memory
                 // Again, just work out the address
                 const uint32_t address = PAGE_SIZE * (group * 32 + nthBit);
                 SetPage(address, address, KERNEL_PAGE);
+
+                // Zero-out page for security
+                uint32_t* pData = (uint32_t*)address;
+                for (uint32_t i = 0; i < PAGE_SIZE/sizeof(uint32_t); ++i)
+                    *(pData + i) = 0;
+
                 return (void*)address; 
             }
             
