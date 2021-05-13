@@ -26,7 +26,7 @@ namespace Multitask
         m_Type = type;
         
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 16 to ensure alignment
-        m_pStack = (uint32_t*) ((uint32_t)(Memory::AllocateMemory(PAGE_SIZE * 32)) + PAGE_SIZE*32-1);
+        m_pStack = (uint32_t*) ((uint32_t)(Memory::kPageFrame.AllocateMemory(PAGE_SIZE * 32)) + PAGE_SIZE*32-1);
         const uint32_t stackTop = (uint32_t) m_pStack;
 
         // Chose our segment registers *carefully* depending on privilege level
@@ -71,7 +71,7 @@ namespace Multitask
     void Init()
     {
         // Create malloc "slab"
-        tasks = (Task*) Memory::AllocateMemory(sizeof(Task) * maxTasks);
+        tasks = (Task*) Memory::kPageFrame.AllocateMemory(sizeof(Task) * maxTasks);
     }
 
     int CreateTask(char const* sName, const TaskType type, void (*entrypoint)())

@@ -6,6 +6,7 @@
 #include <stddef.h>
 
 #include "multiboot.h"
+#include "memory/pageFrame.h"
 
 #define DIRECTORY_SIZE 0x400000
 #define PAGE_SIZE 0x1000
@@ -24,18 +25,11 @@
 namespace Memory
 {
     void Init(const multiboot_info_t* pMultiboot);
+
     uint32_t GetMaxMemory(const multiboot_info_t* pMultiboot);
-
-    void InitPageDirectory(const uint32_t physicalAddress);
-
-    void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags);
-    void ClearPage(const uint32_t physicalAddress);
-    bool IsPageSet(const uint32_t physicalAddress);
-
     uint32_t RoundToNextPageSize(const uint32_t size);
 
-    void* AllocateMemory(const uint32_t size);
-    void FreeMemory(const void* physicalAddress, const uint32_t size);
+    extern PageFrame kPageFrame;
 
     extern "C"
     {

@@ -68,8 +68,8 @@ namespace Modules
         for (uint32_t i = 0; i < nModulePages; ++i)
         {
             const uint32_t address = pGrubModules + i*PAGE_SIZE;
-            assert(Memory::IsPageSet(address) == false);
-            Memory::SetPage(address, address, KERNEL_PAGE);
+            assert(Memory::kPageFrame.IsPageSet(address) == false);
+            Memory::kPageFrame.SetPage(address, address, KERNEL_PAGE);
         }
 
         // Do the same for commandlines
@@ -77,8 +77,8 @@ namespace Modules
         for (uint32_t i = 0; i < nCommandlinePages; ++i)
         {
             const uint32_t address = pGrubCommandlines + i*PAGE_SIZE;
-            assert(Memory::IsPageSet(address) == false);
-            Memory::SetPage(address, address, KERNEL_PAGE);
+            assert(Memory::kPageFrame.IsPageSet(address) == false);
+            Memory::kPageFrame.SetPage(address, address, KERNEL_PAGE);
         }
 
         // Enumerate modules
