@@ -18,7 +18,7 @@ namespace Multitask
     // If we've coming from the kernel, there is no need to save our state
     static bool bCameFromKernel = true;
 
-    Task::Task(char const* sName, const TaskType type, uint32_t entrypoint)
+    Task::Task(char const* sName, const TaskType type, uint32_t entrypoint, uint32_t codeSize)
     {
         // Set member variables
         strncpy(m_sName, sName, sizeof(m_sName));
@@ -56,6 +56,10 @@ namespace Multitask
         *--m_pStack = dataSegment; // fs
         *--m_pStack = dataSegment; // es
         *--m_pStack = dataSegment; // gs
+        
+        // Setup page frame allocator for userspace processes
+        if (type == TaskType::USER)
+            m_PageFrame = Memory::PageFrame(entrypoint, codeSize);
     }
 
     void Task::SwitchToTask()
@@ -74,17 +78,22 @@ namespace Multitask
         tasks = (Task*) Memory::kPageFrame.AllocateMemory(sizeof(Task) * maxTasks);
     }
 
-    int CreateTask(char const* sName, const TaskType type, void (*entrypoint)())
+    int CreateTask(char const* sName, const TaskType type, uint32_t entrypoint, uint32_t codeSize)
     {
         // Check we have room
         assert(nTasks < maxTasks);
         if (nTasks >= maxTasks) return -1;
 
         // Create task and return index
-        tasks[nTasks] = Task(sName, type, (uint32_t)entrypoint);
+        tasks[nTasks] = Task(sName, type, entrypoint, codeSize);
 
         nTasks++;
         return nTasks-1;
+    }
+
+    int CreateTask(char const* sName, const TaskType type, void (*entrypoint)())
+    {
+        return CreateTask(sName, type, (uint32_t)entrypoint, 0);
     }
 
     void OnPIT()

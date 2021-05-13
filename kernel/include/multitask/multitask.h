@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "memory/pageFrame.h"
+
 namespace Multitask
 {
     enum class TaskType
@@ -16,7 +18,7 @@ namespace Multitask
     class Task
     {
         public:
-            Task(char const* sName, const TaskType type, uint32_t entrypoint);
+            Task(char const* sName, const TaskType type, uint32_t entrypoint, uint32_t codeSize = 0);
 
             void SwitchToTask();
             void SwitchFromTask();
@@ -26,9 +28,11 @@ namespace Multitask
             uint32_t* m_pStack;
             uint32_t m_Entrypoint;
             TaskType m_Type;
+            Memory::PageFrame m_PageFrame; // Technically kernel tasks don't need one but hey-ho
     };
 
     void Init();
+    int CreateTask(char const* sName, const TaskType type, uint32_t entrypoint, uint32_t codeSize);
     int CreateTask(char const* sName, const TaskType type, void (*entrypoint)());
 
     extern "C"

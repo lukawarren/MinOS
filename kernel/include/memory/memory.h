@@ -29,7 +29,8 @@ namespace Memory
     uint32_t GetMaxMemory(const multiboot_info_t* pMultiboot);
     uint32_t RoundToNextPageSize(const uint32_t size);
 
-    extern PageFrame kPageFrame;
+    extern uint32_t userspaceBegin;
+    extern uint32_t maxGroups;
 
     extern "C"
     {

@@ -61,11 +61,12 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
         while(1) asm("nop");
     });
 
-    Multitask::CreateTask("Kernel", Multitask::TaskType::USER, []
+    auto userCode = []
     {
         asm("mov $0xdeadbeef, %eax");
         while(1) asm("nop");
-    });
+    };
+    Multitask::CreateTask("Userland", Multitask::TaskType::USER, (uint32_t)&userCode, PAGE_SIZE);
     
     // Enable interrupts
     CPU::EnableInterrupts();

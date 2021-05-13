@@ -8,14 +8,15 @@
 
 namespace Memory
 {
-    PageFrame kPageFrame;
+    uint32_t userspaceBegin;
+    uint32_t maxGroups;
 
     void Init(const multiboot_info_t* pMultiboot)
     {
         // Get memory bounds
         uint32_t upperBound = GetMaxMemory(pMultiboot);
         uint32_t maxPages = upperBound / PAGE_SIZE;
-        uint32_t maxGroups = maxPages / 32;
+        maxGroups = maxPages / 32;
 
         // Allocate space for page tables, page directories and what-not
         uint32_t* pageDirectories = &__kernel_end; // Linker has aligned to nearest 4k
@@ -23,10 +24,10 @@ namespace Memory
         uint32_t* pageBitmaps = pageTables + NUM_TABLES*NUM_DIRECTORIES;
 
         // Create page frame
-        kPageFrame = PageFrame(pageDirectories, pageTables, pageBitmaps, maxPages, maxGroups);
+        kPageFrame = PageFrame(pageDirectories, pageTables, pageBitmaps);
 
         // Bitmap would be number of pages / 32 = 1024 * 1024 / 32 = 32,768 32-bit entries: 1mb
-        const uint32_t userspaceBegin = (uint32_t)(pageBitmaps + 32768);
+        userspaceBegin = (uint32_t)(pageBitmaps + NUM_DIRECTORIES*NUM_TABLES/32);
 
         // Clear pages and setup page directories
         for (uint32_t i = 0; i < NUM_DIRECTORIES; ++i)

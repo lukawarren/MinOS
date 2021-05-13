@@ -31,7 +31,8 @@ namespace Memory
             };
 
             inline PageFrame() {}
-            PageFrame(uint32_t* pPageDirectories, uint32_t* pPageTables, uint32_t* pPageBitmaps, uint32_t nMaxPages, uint32_t nMaxGroups);
+            PageFrame(uint32_t* pPageDirectories, uint32_t* pPageTables, uint32_t* pPageBitmaps);
+            PageFrame(const uint32_t entrypoint, uint32_t codeSize);
 
             void InitPageDirectory(const uint32_t physicalAddress);
 
@@ -51,14 +52,12 @@ namespace Memory
             uint32_t* m_PageTables;
             uint32_t* m_PageBitmaps;
 
-            // Memory bounds
-            uint32_t m_nMaxPages;
-            uint32_t m_nMaxGroups;
-
             Type m_Type;
 
             void SetPageInBitmap(const uint32_t physicalAddress, const bool bAllocated);
     };
+
+    extern PageFrame kPageFrame;
 }
 
 #endif

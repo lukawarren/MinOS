@@ -5,17 +5,53 @@
 
 namespace Memory
 {
-    PageFrame::PageFrame(uint32_t* pPageDirectories, uint32_t* pPageTables, uint32_t* pPageBitmaps, 
-                            uint32_t nMaxPages, uint32_t nMaxGroups)
+    PageFrame kPageFrame;
+
+    PageFrame::PageFrame(uint32_t* pPageDirectories, uint32_t* pPageTables, uint32_t* pPageBitmaps)
     {
         m_Type = Type::KERNEL;
 
         m_PageDirectories = pPageDirectories;
         m_PageTables = pPageTables;
         m_PageBitmaps = pPageBitmaps;
+    }
 
-        m_nMaxPages = nMaxPages;
-        m_nMaxGroups = nMaxGroups;
+    PageFrame::PageFrame(const uint32_t entrypoint, uint32_t codeSize)
+    {
+        /*
+            User page frames need to map kernel code, albeit as a kernel page,
+            as in our task-switching code, before the iret, we want to use
+            the new cr3 value, but thankfully are still in ring 0 (so we've
+            no need to make the interrupt a user-page).
+
+            In an ideal world, page tables in a user-space page frame allocator
+            would only be present for page directories actually present, but
+            this complicates the code and it could be argued that a flatter
+            memory model leads to faster "de-allocation" of this page frame
+            upon a task exiting (well, that's my story and I'm sticking to it),
+            and as memory is usually in abundance, I see no reason (as of now) 
+            to waste hours debugging a crude "JIT" implementation that walks on
+            plastic stilts and occasionally spits out the odd paging exception.
+        */
+       
+        // Set type then malloc space for all our stuff
+        m_Type = Type::USERSPACE;
+        m_PageDirectories = (uint32_t*) kPageFrame.AllocateMemory(sizeof(uint32_t) * NUM_DIRECTORIES);
+        m_PageTables = (uint32_t*)kPageFrame.AllocateMemory(sizeof(uint32_t)*NUM_TABLES*NUM_DIRECTORIES);
+        m_PageBitmaps = (uint32_t*)kPageFrame.AllocateMemory(NUM_DIRECTORIES*NUM_TABLES/32);
+
+        // Clear pages and setup page directories
+        for (uint32_t i = 0; i < NUM_DIRECTORIES; ++i)
+            InitPageDirectory(i * DIRECTORY_SIZE);
+            
+        // Identity-map kernel pages
+        for (uint32_t i = 0; i < userspaceBegin / PAGE_SIZE; ++i)
+            SetPage(i * PAGE_SIZE, i * PAGE_SIZE, KERNEL_PAGE);
+
+        // Map user-space code pages, starting at 0x40000000 (1GB)
+        codeSize = Memory::RoundToNextPageSize(codeSize);
+        for (uint32_t i = 0; i < codeSize / PAGE_SIZE; ++i)
+            SetPage(entrypoint + i * PAGE_SIZE, 0x40000000, USER_PAGE);
     }
 
     static inline uint32_t GetPageDirectoryIndex(const uint32_t physicalAddress)
@@ -56,6 +92,9 @@ namespace Memory
         // Set or clear the nth bit
         if  (bAllocated) m_PageBitmaps[bitmapIndex] |= 1UL << remainder;
         else m_PageBitmaps[bitmapIndex] &= ~(1UL << remainder);
+
+        // If user-mode, reflect this change in the kernel page frame too
+        if (m_Type == Type::USERSPACE) kPageFrame.SetPageInBitmap(physicalAddress, bAllocated);
     }
 
     void PageFrame::SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags)
@@ -110,10 +149,10 @@ namespace Memory
         assert(neededPages <= 32);
 
         // Search through each "group", limited to the confines of physical memory
-        for (uint32_t group = 0; group < m_nMaxGroups; ++group)
+        for (uint32_t group = 0; group < maxGroups; ++group)
         {
             // Skip if bitmap is full
-            uint32_t bitmap = m_PageBitmaps[group];
+            uint32_t bitmap = kPageFrame.m_PageBitmaps[group]; // Changes are always reflected in the kernel's bitmap, regardless of if the alloaction belongs to us
             if (bitmap + 1 == 0) continue;
 
             // If we need more than 1 page, get fancy
