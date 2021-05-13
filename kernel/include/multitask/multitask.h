@@ -7,10 +7,16 @@
 
 namespace Multitask
 {
+    enum class TaskType
+    {
+        KERNEL,
+        USER
+    };
+
     class Task
     {
         public:
-            Task(char const* sName, uint32_t entrypoint);
+            Task(char const* sName, const TaskType type, uint32_t entrypoint);
 
             void SwitchToTask();
             void SwitchFromTask();
@@ -19,10 +25,11 @@ namespace Multitask
             char m_sName[32];
             uint32_t* m_pStack;
             uint32_t m_Entrypoint;
+            TaskType m_Type;
     };
 
     void Init();
-    int CreateTask(char const* sName, void (*entrypoint)());
+    int CreateTask(char const* sName, const TaskType type, void (*entrypoint)());
 
     extern "C"
     {

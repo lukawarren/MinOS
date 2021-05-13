@@ -10,7 +10,7 @@
 
 namespace CPU
 {
-    void Init(const uint64_t* gdt, const uint32_t nEntries, const uint8_t mask1, const uint8_t mask2);
+    void Init(const uint64_t* gdt, const uint32_t nEntries, const uint16_t tssDescriptor, const uint8_t mask1, const uint8_t mask2);
     void EnableInterrupts();
 
     uint64_t CreateGDTEntry(const uint32_t base, const uint32_t limit, const uint16_t flag); // Could really be made constexpr
@@ -35,6 +35,7 @@ namespace CPU
     {
         extern void LoadGDT(const uint64_t* gdt, const size_t size);
         extern void LoadIDT(const IDTDescriptor* descriptor);
+        extern void LoadTSS(const uint16_t descriptor);
 
         extern void FlushTLB();
         extern void EnablePaging();

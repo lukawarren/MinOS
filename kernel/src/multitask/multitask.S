@@ -51,6 +51,7 @@ extern OnPIT
 ; PIT interrupt handler
 global IRQ0
 IRQ0:
+    
     ; First things first, "extract"
     ; iret stack (see above)
     pop dword [iretStack+0]
@@ -110,7 +111,6 @@ IRQ0:
 
     cmp dword [pSavedTaskStack], 0
     je switchToNewTask
-    xchg bx, bx
     
     ; Move to old task's stack to
     ; reconstruct iret frame and

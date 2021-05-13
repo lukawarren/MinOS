@@ -7,10 +7,13 @@ namespace CPU
 {
     static IDT idt[256];
 
-    void Init(const uint64_t* gdt, const uint32_t nEntries, const uint8_t mask1, const uint8_t mask2)
+    void Init(const uint64_t* gdt, const uint32_t nEntries, const uint16_t tssDescriptor, const uint8_t mask1, const uint8_t mask2)
     {
         // Load GDT
         LoadGDT(gdt, sizeof(uint64_t)*nEntries);
+
+        // Load TSS
+        LoadTSS(tssDescriptor);
 
         // Init PIC with masks
         PIC::Init(mask1, mask2);
@@ -19,8 +22,8 @@ namespace CPU
         Interrupts::Init(idt);
 
         // Load IDT
-        IDTDescriptor descriptor(idt);
-        LoadIDT(&descriptor);
+        IDTDescriptor idtDescriptor(idt);
+        LoadIDT(&idtDescriptor);
 
         // Setup PIT
         PIT::Init();

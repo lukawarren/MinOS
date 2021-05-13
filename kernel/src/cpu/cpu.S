@@ -6,10 +6,12 @@ gdtr DW 0 ; Store limit
 global LoadGDT
 LoadGDT:
 
+    push eax
+
     ; Load GDT
-    mov eax, [esp+4]
+    mov eax, [esp+8]
     mov [gdtr+2], eax
-    mov ax, [esp+8]
+    mov ax, [esp+12]
     mov [gdtr], ax
     lgdt [gdtr]
 
@@ -28,6 +30,8 @@ ReloadCS:
     mov fs, ax
     mov gs, ax
     mov ss, ax
+
+    pop eax
     ret
 
 global LoadIDT
@@ -39,6 +43,17 @@ LoadIDT:
     mov eax, [esp + 8]
     lidt [eax]
     pop eax
+    ret
+
+global LoadTSS
+LoadTSS:
+    push ax
+    mov ax, [esp + 6] ; Get descriptor
+
+    ; Load it
+    ltr ax
+
+    pop ax
     ret
 
 global FlushTLB
