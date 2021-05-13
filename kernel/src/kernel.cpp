@@ -57,7 +57,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     
     Multitask::CreateTask("Kernel", Multitask::TaskType::KERNEL, []
     {
-        UART::WriteString("[Userland] Hello from userland!\n");
+        UART::WriteString("[Userland] Hello from kernel-land!\n");
         while(1) asm("nop");
     });
 

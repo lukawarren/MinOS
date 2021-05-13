@@ -43,6 +43,9 @@ namespace Memory
             void* AllocateMemory(const uint32_t size);
             void FreeMemory(const void* physicalAddress, const uint32_t size);
 
+            void* AllocateSwathe(const uint32_t size);
+            void FreeSwathe(const void* physicalAddress, const uint32_t size);
+
             void UsePaging();
 
         private:

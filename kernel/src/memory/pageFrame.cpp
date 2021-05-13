@@ -37,13 +37,13 @@ namespace Memory
         // Set type then malloc space for all our stuff
         m_Type = Type::USERSPACE;
         m_PageDirectories = (uint32_t*) kPageFrame.AllocateMemory(sizeof(uint32_t) * NUM_DIRECTORIES);
-        m_PageTables = (uint32_t*)kPageFrame.AllocateMemory(sizeof(uint32_t)*NUM_TABLES*NUM_DIRECTORIES);
-        m_PageBitmaps = (uint32_t*)kPageFrame.AllocateMemory(NUM_DIRECTORIES*NUM_TABLES/32);
-
+        m_PageTables = (uint32_t*)kPageFrame.AllocateSwathe(sizeof(uint32_t)*NUM_TABLES*NUM_DIRECTORIES);
+        m_PageBitmaps = (uint32_t*)kPageFrame.AllocateMemory(sizeof(uint32_t)*NUM_DIRECTORIES*NUM_TABLES/32);
+        
         // Clear pages and setup page directories
         for (uint32_t i = 0; i < NUM_DIRECTORIES; ++i)
             InitPageDirectory(i * DIRECTORY_SIZE);
-            
+        
         // Identity-map kernel pages
         for (uint32_t i = 0; i < userspaceBegin / PAGE_SIZE; ++i)
             SetPage(i * PAGE_SIZE, i * PAGE_SIZE, KERNEL_PAGE);
@@ -72,14 +72,14 @@ namespace Memory
         // Set page tables to not present
         uint32_t* pageTable = m_PageTables + NUM_TABLES*pageDirectoryIndex;
         for (int i = 0; i < NUM_TABLES; ++i) pageTable[i] = PD_PRESENT(0);
-
+        
         // Set page directory to be user space and present (which is overridden by the tables)
         m_PageDirectories[pageDirectoryIndex] = (uint32_t)pageTable | USER_PAGE;
         CPU::FlushTLB();
 
         // Clear bitmap - 1024 pages makes 1024 / 32 = 32 groups
         unsigned int bitmapNthPage = (physicalAddress == 0) ? 0 : (physicalAddress / PAGE_SIZE);
-        memset(m_PageBitmaps + bitmapNthPage, 0, sizeof(uint32_t)*32);
+        memset(m_PageBitmaps + bitmapNthPage/32, 0, sizeof(uint32_t)*32);
     }
 
     void PageFrame::SetPageInBitmap(const uint32_t physicalAddress, const bool bAllocated)
@@ -145,7 +145,9 @@ namespace Memory
         // Round size to nearest page
         const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
 
-        // If the page group is double, we're in trouble! (well or anything more than 1 page group)
+        // If the page group is double, we're in trouble! (well or anything more than 1 page group).
+        // I don't want to spoil such nice code by complicating things, so that belongs to
+        // a separate function
         assert(neededPages <= 32);
 
         // Search through each "group", limited to the confines of physical memory
@@ -229,6 +231,73 @@ namespace Memory
         }
     }
 
+    void* PageFrame::AllocateSwathe(const uint32_t size)
+    {
+        // Round size to nearest page and group
+        const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
+        
+        // Running total of pages found - if a new group doesn't have enough room and lets down
+        // its precursors there's no need looking back so to that end a simple, fast for loop suffices
+        uint32_t remainingPages = neededPages;
+        uint32_t startingGroup = 0;
+
+        // Search through each "group", limited to the confines of physical memory
+        for (uint32_t group = 0; group < maxGroups; ++group)
+        {
+            uint32_t bitmap = kPageFrame.m_PageBitmaps[group]; // See AllocateMemory(...) for why it's kPageFrame
+
+            // If we're not the last group
+            if (remainingPages > 32)
+            {
+                // If our group isn't empty, give up our current groups
+                if (bitmap + 1 == 0)
+                {
+                    remainingPages = neededPages;
+                    startingGroup = group+1;
+                }
+
+                // Otherwise soldier on
+                else remainingPages -= 32;
+            }
+
+            else
+            {
+                // If we are in the last group, our remaining pages need to be *at the start* of the group
+                const uint32_t mask = (1 << remainingPages) - 1;
+                if ((bitmap & mask) == mask)
+                {
+                    // Now just work out the address and set that number of pages
+                    const uint32_t nthPage = startingGroup * 32;
+                    for (uint32_t page = 0; page < neededPages; page++)
+                    {
+                        const uint32_t address = (nthPage + page) * PAGE_SIZE;
+                        SetPage(address, address, KERNEL_PAGE);
+
+                        // Zero-out page for security
+                        uint32_t* pData = (uint32_t*)address;
+                        for (uint32_t i = 0; i < PAGE_SIZE/sizeof(uint32_t); ++i)
+                            *(pData + i) = 0;
+                    }
+                    
+                    return (void*)(PAGE_SIZE * nthPage);
+                }
+                else // Once again, give up otherwise
+                {
+                    remainingPages = neededPages;
+                    startingGroup = group+1;
+                }
+            }
+        }
+
+        assert(false); // Panic!
+        return (void*) 0;
+    }
+    
+    void PageFrame::FreeSwathe(const void* physicalAddress, const uint32_t size)
+    {
+
+    }
+    
     void PageFrame::UsePaging()
     {
         CPU::LoadPageDirectories((uint32_t)m_PageDirectories);
