@@ -23,6 +23,18 @@ void strcpy(char* dest, const char* source)
     } 
 }
 
+size_t strcmp(const char *x, const char *y)
+{
+	while(*x)
+	{
+		if (*x != *y)
+			break;
+
+		x++; y++;
+	}
+	return (*(const unsigned char*)x - *(const unsigned char*)y) == 0;
+}
+
 size_t pow(const size_t number, const size_t power)
 {
     if (power == 0) return 1;

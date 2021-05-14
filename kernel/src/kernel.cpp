@@ -7,6 +7,7 @@
 #include "memory/memory.h"
 #include "memory/modules.h"
 #include "multitask/multitask.h"
+#include "multitask/elf.h"
 #include "stdlib.h"
 
 extern uint32_t __tss_stack; // TSS stack from linker
@@ -50,7 +51,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     Memory::Init(pMultibootInfo);
 
     // Sanity check it all and reserve memory before it's snatched again!
-    Modules::PostInit(pMultibootInfo);
+    Modules::PostInit();
 
     // Setup tasks
     Multitask::Init();
@@ -60,14 +61,9 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
         UART::WriteString("[Userland] Hello from kernel-land!\n");
         while(1) asm("nop");
     });
-
-    auto userCode = []
-    {
-        asm("mov $0xdeadbeef, %eax");
-        while(1) asm("nop");
-    };
-    Multitask::CreateTask("Userland", Multitask::TaskType::USER, (uint32_t)&userCode, PAGE_SIZE);
     
+    Multitask::CreateTask("Userland");
+
     // Enable interrupts
     CPU::EnableInterrupts();
 

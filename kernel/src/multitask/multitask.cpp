@@ -1,5 +1,7 @@
 #include "multitask/multitask.h"
+#include "multitask/elf.h"
 #include "memory/memory.h"
+#include "memory/modules.h"
 #include "cpu/pit.h"
 #include "cpu/pic.h"
 #include "stdlib.h"
@@ -18,7 +20,7 @@ namespace Multitask
     // If we've coming from the kernel, there is no need to save our state
     static bool bCameFromKernel = true;
 
-    Task::Task(char const* sName, const TaskType type, uint32_t entrypoint, uint32_t codeSize)
+    Task::Task(char const* sName, const TaskType type, uint32_t entrypoint)
     {
         // Set member variables
         strncpy(m_sName, sName, sizeof(m_sName));
@@ -26,7 +28,9 @@ namespace Multitask
         m_Type = type;
         
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 16 to ensure alignment
-        m_pStack = (uint32_t*) ((uint32_t)(Memory::kPageFrame.AllocateMemory(PAGE_SIZE * 32)) + PAGE_SIZE*32-1);
+        const uint32_t stackSize = PAGE_SIZE * 32;
+        const uint32_t stackBeginInMemory = (uint32_t)(Memory::kPageFrame.AllocateMemory(stackSize, KERNEL_PAGE));
+        m_pStack = (uint32_t*) (stackBeginInMemory + stackSize-16);
         const uint32_t stackTop = (uint32_t) m_pStack;
 
         // Chose our segment registers *carefully* depending on privilege level
@@ -39,7 +43,7 @@ namespace Multitask
         *--m_pStack = stackTop;             // esp
         *--m_pStack = 0x202;                // eflags - default value with interrupts enabled
         *--m_pStack = codeSegment;          // cs
-        *--m_pStack = entrypoint;           // eip
+        *--m_pStack =  entrypoint;          // eip
 
         // Rest of stack, for restoring registers
         *--m_pStack = 0;                    // eax
@@ -59,7 +63,13 @@ namespace Multitask
         
         // Setup page frame allocator for userspace processes
         if (type == TaskType::USER)
-            m_PageFrame = Memory::PageFrame(entrypoint, codeSize);
+            m_PageFrame = Memory::PageFrame(stackBeginInMemory, stackSize);
+
+        // CR3 on stack as if we swtitched to it in C code,
+        // whilst using another task's stack, things'd get funky
+        if (type == TaskType::USER) *--m_pStack = m_PageFrame.GetCR3();
+        else  *--m_pStack = Memory::kPageFrame.GetCR3();
+
     }
 
     void Task::SwitchToTask()
@@ -75,17 +85,21 @@ namespace Multitask
     void Init()
     {
         // Create malloc "slab"
-        tasks = (Task*) Memory::kPageFrame.AllocateMemory(sizeof(Task) * maxTasks);
+        tasks = (Task*) Memory::kPageFrame.AllocateMemory(sizeof(Task) * maxTasks, KERNEL_PAGE);
     }
 
-    int CreateTask(char const* sName, const TaskType type, uint32_t entrypoint, uint32_t codeSize)
+    int CreateTask(char const* sName)
     {
         // Check we have room
         assert(nTasks < maxTasks);
         if (nTasks >= maxTasks) return -1;
 
-        // Create task and return index
-        tasks[nTasks] = Task(sName, type, entrypoint, codeSize);
+        // Create task
+        tasks[nTasks] = Task(sName, TaskType::USER, USER_PAGING_OFFSET);
+
+        // Load ELF module into memory
+        uint32_t pModule = Modules::GetModule();
+        Multitask::LoadElfProgram(pModule, tasks[nTasks].m_PageFrame);
 
         nTasks++;
         return nTasks-1;
@@ -93,7 +107,15 @@ namespace Multitask
 
     int CreateTask(char const* sName, const TaskType type, void (*entrypoint)())
     {
-        return CreateTask(sName, type, (uint32_t)entrypoint, 0);
+        // Check we have room
+        assert(nTasks < maxTasks);
+        if (nTasks >= maxTasks) return -1;
+
+        // Create task and return index
+        tasks[nTasks] = Task(sName, type, (uint32_t) entrypoint);
+
+        nTasks++;
+        return nTasks-1;
     }
 
     void OnPIT()

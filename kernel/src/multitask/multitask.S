@@ -51,7 +51,7 @@ extern OnPIT
 ; PIT interrupt handler
 global IRQ0
 IRQ0:
-    
+
     ; First things first, "extract"
     ; iret stack (see above)
     pop dword [iretStack+0]
@@ -139,6 +139,10 @@ IRQ0:
     mov eax, gs
     push eax
 
+    ; CR3
+    mov eax, cr3
+    push eax
+
     ; Update the stack pointer,
     ; which we have a pointer to
     mov eax, [pSavedTaskStack]
@@ -148,6 +152,10 @@ switchToNewTask:
     ; Switch to new stack
     mov eax, [pNewTaskStack]
     mov esp, [eax]
+
+    ; Restore cr3
+    pop eax
+    mov cr3, eax
 
     ; Restore segment registers
     pop eax

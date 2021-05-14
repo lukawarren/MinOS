@@ -32,7 +32,7 @@ namespace Memory
 
             inline PageFrame() {}
             PageFrame(uint32_t* pPageDirectories, uint32_t* pPageTables, uint32_t* pPageBitmaps);
-            PageFrame(const uint32_t entrypoint, uint32_t codeSize);
+            PageFrame(const uint32_t stack, uint32_t stackSize);
 
             void InitPageDirectory(const uint32_t physicalAddress);
 
@@ -40,13 +40,11 @@ namespace Memory
             void ClearPage(const uint32_t physicalAddress);
             bool IsPageSet(const uint32_t physicalAddress);
 
-            void* AllocateMemory(const uint32_t size);
+            void* AllocateMemory(const uint32_t size, const uint32_t flags, const uint32_t offset = 0);
             void FreeMemory(const void* physicalAddress, const uint32_t size);
 
-            void* AllocateSwathe(const uint32_t size);
-            void FreeSwathe(const void* physicalAddress, const uint32_t size);
-
             void UsePaging();
+            uint32_t GetCR3();
 
         private:
 

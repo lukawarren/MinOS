@@ -18,7 +18,7 @@ namespace Multitask
     class Task
     {
         public:
-            Task(char const* sName, const TaskType type, uint32_t entrypoint, uint32_t codeSize = 0);
+            Task(char const* sName, const TaskType type, uint32_t entrypoint);
 
             void SwitchToTask();
             void SwitchFromTask();
@@ -28,11 +28,13 @@ namespace Multitask
             uint32_t* m_pStack;
             uint32_t m_Entrypoint;
             TaskType m_Type;
+
+        public:
             Memory::PageFrame m_PageFrame; // Technically kernel tasks don't need one but hey-ho
     };
 
     void Init();
-    int CreateTask(char const* sName, const TaskType type, uint32_t entrypoint, uint32_t codeSize);
+    int CreateTask(char const* sName);
     int CreateTask(char const* sName, const TaskType type, void (*entrypoint)());
 
     extern "C"
