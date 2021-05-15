@@ -17,11 +17,11 @@ namespace Multitask
         assert(pHeader->e_ident[EI_MAG3] == ELFMAG3);
 
         // Check header values
-        assert(pHeader->e_ident[EI_CLASS]    == ELFCLASS32);
-        assert(pHeader->e_ident[EI_DATA]     == ELFCLASS32);
-        assert(pHeader->e_ident[EI_VERSION]  == EV_CURRENT);
-        assert(pHeader->e_ident[EI_CLASS]    == EM_386);
-        assert(pHeader->e_type               == ET_EXEC);
+        assert(pHeader->e_ident[EI_CLASS]   == ELFCLASS32);
+        assert(pHeader->e_ident[EI_DATA]    == ELFDATA2LSB);
+        assert(pHeader->e_ident[EI_VERSION] == EV_CURRENT);
+        assert(pHeader->e_machine           == EM_386);
+        assert(pHeader->e_type              == ET_EXEC);
 
         // Get program header
         const ElfProgramHeader* pProgramHeader = (const ElfProgramHeader*)(pFile + pHeader->e_phoff);
