@@ -27,9 +27,9 @@ namespace Multitask
             char m_sName[32];
             uint32_t* m_pStack;
             uint32_t m_Entrypoint;
-            TaskType m_Type;
-
+            
         public:
+            TaskType m_Type;
             Memory::PageFrame m_PageFrame; // Technically kernel tasks don't need one but hey-ho
     };
 
@@ -42,6 +42,8 @@ namespace Multitask
         // Variables for assembly
         extern uint32_t* pSavedTaskStack;
         extern uint32_t* pNewTaskStack;
+        extern uint32_t kernelCR3;
+        extern bool bPrivilegeChange;
 
         void OnPIT();
         void IRQ0();

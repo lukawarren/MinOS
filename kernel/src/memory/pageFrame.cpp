@@ -145,7 +145,7 @@ namespace Memory
         return MultiplyDeBruijnBitPosition[((uint32_t)((number & -number) * 0x077CB531U)) >> 27];
     }
 
-    void* PageFrame::AllocateMemory(const uint32_t size, const uint32_t flags, const uint32_t offset)
+    void* PageFrame::AllocateMemory(const uint32_t size, const uint32_t flags, const uint32_t virtualAddress)
     {
         // Round size to nearest page
         const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
@@ -191,7 +191,14 @@ namespace Memory
                     for (uint32_t page = 0; page < neededPages; page++)
                     {
                         const uint32_t address = (nthPage + page) * PAGE_SIZE;
-                        SetPage(address, address + offset, flags);
+                        if (virtualAddress == 0) SetPage(address, address, flags); // Identity mapping
+                        
+                        // Non-identy mapping
+                        else
+                        {
+                            const uint32_t mappedAddress = virtualAddress + page*PAGE_SIZE;
+                            SetPage(address, mappedAddress, flags);
+                        }
                     }
 
                     return (void*)(PAGE_SIZE * nthPage);
@@ -206,7 +213,9 @@ namespace Memory
 
                     // Again, just work out the address
                     const uint32_t address = PAGE_SIZE * (group * 32 + nthBit);
-                    SetPage(address, address + offset, flags);
+                    if (virtualAddress == 0) SetPage(address, address, flags); // Identity maping
+                    else SetPage(address, virtualAddress, flags); // Non-identity mapping
+
                     return (void*)address; 
                 }
                 
@@ -252,7 +261,15 @@ namespace Memory
                         for (uint32_t page = 0; page < neededPages; page++)
                         {
                             const uint32_t address = (nthPage + page) * PAGE_SIZE;
-                            SetPage(address, address + offset, flags);
+
+                            if (virtualAddress == 0) SetPage(address, address, flags); // Identity mapping
+                            
+                            // Non-identy mapping
+                            else
+                            {
+                                const uint32_t mappedAddress = virtualAddress + page*PAGE_SIZE;
+                                SetPage(address, mappedAddress, flags);
+                            }
 
                             // Zero-out page for security
                             uint32_t* pData = (uint32_t*)address;

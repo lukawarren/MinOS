@@ -35,5 +35,7 @@ namespace Multitask
             void* data = pageFrame.AllocateMemory(pProgramHeader[i].p_memsz, USER_PAGE_READ_ONLY, pProgramHeader[i].p_vaddr);
             memcpy(data, (void*)(pFile + pProgramHeader[i].p_offset), pProgramHeader[i].p_memsz);
         }
+
+        assert(pHeader->e_entry == USER_PAGING_OFFSET);
     }
 }

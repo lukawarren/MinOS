@@ -40,7 +40,7 @@ namespace Memory
             void ClearPage(const uint32_t physicalAddress);
             bool IsPageSet(const uint32_t physicalAddress);
 
-            void* AllocateMemory(const uint32_t size, const uint32_t flags, const uint32_t offset = 0);
+            void* AllocateMemory(const uint32_t size, const uint32_t flags, const uint32_t virtualAddress = 0);
             void FreeMemory(const void* physicalAddress, const uint32_t size);
 
             void UsePaging();

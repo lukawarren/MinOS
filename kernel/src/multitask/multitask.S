@@ -21,8 +21,32 @@ global pNewTaskStack
 pNewTaskStack:
     dd 0
 
+; We can't manipulate another
+; task's stack if we're using
+; a user task's cr3 register,
+; so we need a global, kernel
+; one
+global kernelCR3
+kernelCR3:
+    dd 0
+
+; If the privilege (ring) changes,
+; the old esp is pushed onto the
+; stack, else the TSS stack is
+; not used, and the old stack
+; is just the current stack
+; minus all the iret stuff.
+; This makes knowing what our
+; esp was a bit of a pain!
+global bPrivilegeChange
+bPrivilegeChange:
+    db 0
+
+oldStack:
+    dd 0
+
 ; When switching rings, our stack
-; pointer is not preserved, and
+; pointer is preserved, and
 ; we end up using the kernel one
 ; instead. If we're not careful
 ; this will mess up our stack frame
@@ -40,8 +64,8 @@ iretStack:
     dd 0
     dd 0
 
-; See below for reasoning
-originalStack:
+; We also need to preserve cr3
+oldCR3:
     dd 0
 
 section text
@@ -51,7 +75,6 @@ extern OnPIT
 ; PIT interrupt handler
 global IRQ0
 IRQ0:
-
     ; First things first, "extract"
     ; iret stack (see above)
     pop dword [iretStack+0]
@@ -61,16 +84,32 @@ IRQ0:
     pop dword [iretStack+16]
     pop dword [iretStack+20]
 
-    ; Now our stack pointer is
-    ; the initial stack pointer
-    ; before the interrupt is called,
-    ; which we'll save for later
-    ; (technically it's already in
-    ; iretStack but things get funky
-    ; if I do it that way, and I've
-    ; no idea why)
-    mov [originalStack], esp
+    ; We need to use the kernel's cr3
+    ; so we can fully modify everyone's
+    ; stacks without fear of a page fault!
+    push eax
+    mov eax, cr3
+    mov [oldCR3], eax
+    mov eax, [kernelCR3]
+    mov cr3, eax
+    pop eax
 
+    ; If no privilege transition occured,
+    ; we're in luck, as we can just use
+    ; the stack present here :)
+    cmp byte [bPrivilegeChange], 0
+    jne getStackFromIRET
+    mov [oldStack], esp
+    je callCPPCode
+
+getStackFromIRET:
+    ; Otherwise, get it from iret
+    push eax
+    mov eax, [iretStack+12]
+    mov [oldStack], eax
+    pop eax
+
+callCPPCode:
     ; Preserve registers
     pushad
 
@@ -111,12 +150,13 @@ IRQ0:
 
     cmp dword [pSavedTaskStack], 0
     je switchToNewTask
-    
-    ; Move to old task's stack to
-    ; reconstruct iret frame and
-    ; preserve 
-    mov esp, [originalStack]
-    
+
+preserveOldTask:
+    ; Move to old task's stack (which
+    ; we may or may not be in, depending
+    ; on if we changed rings!)
+    mov esp, [oldStack]
+
     ; Iret stack frame
     push dword [iretStack+20]
     push dword [iretStack+16]
@@ -140,7 +180,7 @@ IRQ0:
     push eax
 
     ; CR3
-    mov eax, cr3
+    mov eax, [oldCR3]
     push eax
 
     ; Update the stack pointer,

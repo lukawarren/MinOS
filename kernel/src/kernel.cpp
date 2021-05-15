@@ -56,13 +56,19 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     // Setup tasks
     Multitask::Init();
     
-    Multitask::CreateTask("Kernel", Multitask::TaskType::KERNEL, []
+    Multitask::CreateTask("Colonel", Multitask::TaskType::KERNEL, []
     {
-        UART::WriteString("[Userland] Hello from kernel-land!\n");
+        UART::WriteString("[Colonel] Hello!\n");
         while(1) asm("nop");
     });
-    
+
     Multitask::CreateTask("Userland");
+
+    Multitask::CreateTask("Colonel 2", Multitask::TaskType::KERNEL, []
+    {
+        UART::WriteString("[Colonel 2] I'm not even page faulting!\n");
+        while(1) asm("nop");
+    });
 
     // Enable interrupts
     CPU::EnableInterrupts();

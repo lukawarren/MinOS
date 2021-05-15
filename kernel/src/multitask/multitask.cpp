@@ -86,6 +86,9 @@ namespace Multitask
     {
         // Create malloc "slab"
         tasks = (Task*) Memory::kPageFrame.AllocateMemory(sizeof(Task) * maxTasks, KERNEL_PAGE);
+
+        // We need to use the kernel's cr3 when switching tasks
+        kernelCR3 = Memory::kPageFrame.GetCR3();
     }
 
     int CreateTask(char const* sName)
@@ -127,11 +130,19 @@ namespace Multitask
         {
             bCameFromKernel = false;
             tasks[nCurrentTask].SwitchToTask();
+
+            // Set the privilege change level for next time
+            if (tasks[nCurrentTask].m_Type == TaskType::KERNEL) bPrivilegeChange = false;
+            else bPrivilegeChange = true;
         }
         else
         {
             tasks[nPreviousTask].SwitchFromTask();
             tasks[nCurrentTask].SwitchToTask();
+
+            // Set the privilege change level for next time
+            if (tasks[nCurrentTask].m_Type == TaskType::KERNEL) bPrivilegeChange = false;
+            else bPrivilegeChange = true;
         }
 
         // Save previous task then advance current taks by 1 (or loop back around)
