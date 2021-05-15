@@ -10,6 +10,8 @@ namespace Memory
 {
     uint32_t userspaceBegin;
     uint32_t maxGroups;
+    uint32_t nFramebufferPages;
+    uint32_t framebufferAddress;
 
     void Init(const multiboot_info_t* pMultiboot)
     {
@@ -36,6 +38,13 @@ namespace Memory
         // Identity-map kernel pages
         for (uint32_t i = 0; i < userspaceBegin / PAGE_SIZE; ++i)
             kPageFrame.SetPage(i * PAGE_SIZE, i * PAGE_SIZE, KERNEL_PAGE);
+
+        // Map framebuffer to known address
+        assert(pMultiboot->framebuffer_addr % PAGE_SIZE == 0); // Check we're page aligned
+        framebufferAddress = (uint32_t)pMultiboot->framebuffer_addr;
+        nFramebufferPages = (pMultiboot->framebuffer_pitch * pMultiboot->framebuffer_height * sizeof(uint32_t)) / PAGE_SIZE;
+        for (uint32_t i = 0; i < nFramebufferPages; ++i)
+            kPageFrame.SetPage(framebufferAddress + i*PAGE_SIZE, FRAMEBUFFER_OFFSET + i*PAGE_SIZE, KERNEL_PAGE);
 
         // Enable paging
         kPageFrame.UsePaging();

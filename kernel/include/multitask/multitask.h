@@ -18,10 +18,11 @@ namespace Multitask
     class Task
     {
         public:
-            Task(char const* sName, const TaskType type, uint32_t entrypoint);
+            Task(char const* sName, const TaskType type, const uint32_t entrypoint);
 
             void SwitchToTask();
             void SwitchFromTask();
+            void SetEntrypoint(const uint32_t entrypoint);
 
         private:
             char m_sName[32];

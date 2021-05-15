@@ -9,6 +9,7 @@
 #include "memory/pageFrame.h"
 
 #define USER_PAGING_OFFSET 0x40000000
+#define FRAMEBUFFER_OFFSET 0x30000000
 
 namespace Memory
 {
@@ -19,6 +20,8 @@ namespace Memory
 
     extern uint32_t userspaceBegin;
     extern uint32_t maxGroups;
+    extern uint32_t nFramebufferPages;
+    extern uint32_t framebufferAddress;
 
     extern "C"
     {

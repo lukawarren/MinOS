@@ -5,6 +5,7 @@ set_target_properties(${TARGET_NAME} PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
 
 # Includes
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../kernel/include)
 
 # Add source files
 FILE(GLOB_RECURSE C_SRCS src/*.c)

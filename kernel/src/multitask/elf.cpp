@@ -4,8 +4,7 @@
 
 namespace Multitask
 {
-
-    void LoadElfProgram(uint32_t pFile, Memory::PageFrame& pageFrame)
+    uint32_t LoadElfProgram(uint32_t pFile, Memory::PageFrame& pageFrame)
     {
         // Get ELF header
         const Elf32Header* pHeader = (const Elf32Header*)pFile;
@@ -31,11 +30,11 @@ namespace Multitask
         {
             if (pProgramHeader[i].p_type != PT_LOAD) continue;
 
-            // For now, map all pages as read only, all executable
-            void* data = pageFrame.AllocateMemory(pProgramHeader[i].p_memsz, USER_PAGE_READ_ONLY, pProgramHeader[i].p_vaddr);
+            // For now, map all pages as all readable, all executable
+            void* data = pageFrame.AllocateMemory(pProgramHeader[i].p_memsz, USER_PAGE, pProgramHeader[i].p_vaddr);
             memcpy(data, (void*)(pFile + pProgramHeader[i].p_offset), pProgramHeader[i].p_memsz);
         }
 
-        assert(pHeader->e_entry == USER_PAGING_OFFSET);
+        return pHeader->e_entry;
     }
 }

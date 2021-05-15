@@ -52,6 +52,10 @@ namespace Memory
         stackSize = Memory::RoundToNextPageSize(stackSize);
         for (uint32_t i = 0; i < stackSize / PAGE_SIZE; ++i)
             SetPage(stack + i * PAGE_SIZE, stack + i * PAGE_SIZE, USER_PAGE);
+
+        // Map in framebuffer
+        for (uint32_t i = 0; i < nFramebufferPages; ++i)
+            SetPage(framebufferAddress + i*PAGE_SIZE, FRAMEBUFFER_OFFSET + i*PAGE_SIZE, USER_PAGE);
     }
 
     static inline uint32_t GetPageDirectoryIndex(const uint32_t physicalAddress)

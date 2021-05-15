@@ -91,7 +91,7 @@ namespace Multitask
         PT_LOAD = 1,    // Loadable segment
     };
 
-    void LoadElfProgram(uint32_t pFile, Memory::PageFrame& pageFrame);
+    uint32_t LoadElfProgram(uint32_t pFile, Memory::PageFrame& pageFrame);
 }
 
 #endif

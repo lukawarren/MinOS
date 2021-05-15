@@ -20,12 +20,12 @@ namespace Multitask
     // If we've coming from the kernel, there is no need to save our state
     static bool bCameFromKernel = true;
 
-    Task::Task(char const* sName, const TaskType type, uint32_t entrypoint)
+    Task::Task(char const* sName, const TaskType type, const uint32_t entrypoint)
     {
         // Set member variables
         strncpy(m_sName, sName, sizeof(m_sName));
-        m_Entrypoint = entrypoint;
         m_Type = type;
+        m_Entrypoint = entrypoint;
         
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 16 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
@@ -43,7 +43,7 @@ namespace Multitask
         *--m_pStack = stackTop;             // esp
         *--m_pStack = 0x202;                // eflags - default value with interrupts enabled
         *--m_pStack = codeSegment;          // cs
-        *--m_pStack =  entrypoint;          // eip
+        *--m_pStack = m_Entrypoint;         // eip
 
         // Rest of stack, for restoring registers
         *--m_pStack = 0;                    // eax
@@ -60,7 +60,7 @@ namespace Multitask
         *--m_pStack = dataSegment; // fs
         *--m_pStack = dataSegment; // es
         *--m_pStack = dataSegment; // gs
-        
+
         // Setup page frame allocator for userspace processes
         if (type == TaskType::USER)
             m_PageFrame = Memory::PageFrame(stackBeginInMemory, stackSize);
@@ -82,6 +82,14 @@ namespace Multitask
         pSavedTaskStack = (uint32_t*) &(m_pStack);
     }
 
+    void Task::SetEntrypoint(const uint32_t entrypoint)
+    {
+        // Modify entrypoint in stack
+        m_pStack += 14;
+        *--m_pStack = entrypoint;
+        m_pStack -= 13;
+    }
+
     void Init()
     {
         // Create malloc "slab"
@@ -98,11 +106,12 @@ namespace Multitask
         if (nTasks >= maxTasks) return -1;
 
         // Create task
-        tasks[nTasks] = Task(sName, TaskType::USER, USER_PAGING_OFFSET);
-
+        tasks[nTasks] = Task(sName, TaskType::USER, 0xdeadbeef);
+    
         // Load ELF module into memory
-        uint32_t pModule = Modules::GetModule();
-        Multitask::LoadElfProgram(pModule, tasks[nTasks].m_PageFrame);
+        const uint32_t pModule = Modules::GetModule();
+        const uint32_t entrypoint = Multitask::LoadElfProgram(pModule, tasks[nTasks].m_PageFrame);
+        tasks[nTasks].SetEntrypoint(entrypoint);
 
         nTasks++;
         return nTasks-1;
@@ -115,7 +124,7 @@ namespace Multitask
         if (nTasks >= maxTasks) return -1;
 
         // Create task and return index
-        tasks[nTasks] = Task(sName, type, (uint32_t) entrypoint);
+        tasks[nTasks] = Task(sName, type, (uint32_t)entrypoint);
 
         nTasks++;
         return nTasks-1;
