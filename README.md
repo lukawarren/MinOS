@@ -2,14 +2,8 @@
 A tiny x86 kernel written in modern C++ and Assembly.
 
 ## Features
-* Fully working usermode
-* Multiboot 2 compliant kernel
-* Interrupts
-* Paging
-* VGA output
-* Serial UART output
-* Pre-emptive multitaksing 
-* Ramdisk for loading elf binaries in user space
+* Userspace with standard library
+* Pre-emptive multitaksing
 
 ## Depdendencies
 If you want to build with Docker, then as it would turn out, all you need is:
@@ -62,4 +56,31 @@ sudo dd if=/path/to/MinOS.iso of=/dev/sdx && sync
 On Qemu:
 ```
 qemu-system-i386 -cdrom build/MinOS.iso -serial stdio -vga std
+```
+
+## Newlibc (standard library)
+For convenience, newlibc is already built, as it is a lengthy process and requires very specific versions of sotware (Automake 1.11 and Autoconf 2.65 to be exact).
+If you really must build it for yourself, the following should work:
+
+```
+# 1) Link i686-elf toolchain to "i686-minos"
+cd /path/to/toolchain/
+ln i686-elf-ar i686-myos-ar
+ln i686-elf-as i686-myos-as
+ln i686-elf-gcc i686-myos-gcc
+ln i686-elf-gcc i686-myos-cc
+ln i686-elf-ranlib i686-myos-ranlib
+cd /path/back/to/min/os/ 
+
+# 2) Make build folder and build
+cd lib/newlib-4.1.0
+mkdir build
+cd build
+../configure --prefix=/minos --target=i686-minos
+make -j4 all
+
+# 3) Install to /tmp/minos then move to project
+make DESTDIR=/tmp install
+rm -r ../../i686-minos/
+cp -r /tmp/minos/i686-minos/ ../../i686-minos/
 ```

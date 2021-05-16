@@ -1,5 +1,6 @@
 ENTRY(main)
- 
+STARTUP(../../../lib/i686-minos/lib/crt0.o)
+
 SECTIONS
 {
 	/* Begin at 1GB */

@@ -1,5 +1,6 @@
 build.sh
 buildToolchain.bat
+buildToolchain.sh
 compile.bat
 compile.sh
 bochs.bat
@@ -14,3 +15,5 @@ kernel/build/
 user/pages/build/
 
 tools/filesystem/build
+
+lib/newlib-4.1.0/build
