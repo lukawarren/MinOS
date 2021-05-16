@@ -60,6 +60,11 @@ namespace Memory
     };
 
     extern PageFrame kPageFrame;
+
+    extern "C"
+    {
+        extern uint32_t kernelCR3;
+    }
 }
 
 #endif

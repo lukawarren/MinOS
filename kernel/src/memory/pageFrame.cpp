@@ -7,6 +7,7 @@
 namespace Memory
 {
     PageFrame kPageFrame;
+    uint32_t kernelCR3 = 0;
 
     PageFrame::PageFrame(uint32_t* pPageDirectories, uint32_t* pPageTables, uint32_t* pPageBitmaps)
     {
@@ -15,6 +16,8 @@ namespace Memory
         m_PageDirectories = pPageDirectories;
         m_PageTables = pPageTables;
         m_PageBitmaps = pPageBitmaps;
+
+        kernelCR3 = GetCR3();
     }
 
     PageFrame::PageFrame(const uint32_t stack, uint32_t stackSize)

@@ -5,6 +5,10 @@ section data
 nonErrorCodeValue:
     db 0
 
+; We need to use the
+; kernel's paging
+extern kernelCR3
+
 section text
 
 extern OnInterrupt
@@ -22,6 +26,10 @@ IRQ%1:
 
     ; Preserve registers
     pushad
+    mov eax, cr3
+    push eax
+    mov eax, [kernelCR3]
+    mov cr3, eax
 
     ; Preserve segment registers
     ; (in case we were called from
@@ -50,6 +58,8 @@ IRQ%1:
     pop ds
 
     ; Restore registers
+    pop eax
+    mov cr3, eax
     popad
 
     ; Return
@@ -63,6 +73,12 @@ IRQException%1:
 
     ; Preserve registers
     pushad
+    mov eax, cr3
+    push eax
+    mov eax, [kernelCR3]
+    mov cr3, eax
+    
+    ; Use kernel CR3
 
     ; Preserve segment registers
     ; (in case we were called from
@@ -90,6 +106,8 @@ IRQException%1:
     pop ds
 
     ; Restore registers
+    pop eax
+    mov cr3, eax
     popad
 
     ; Exceptions with an error code

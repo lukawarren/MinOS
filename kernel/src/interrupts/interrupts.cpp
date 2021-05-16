@@ -1,5 +1,6 @@
 #include "interrupts/interrupts.h"
 #include "multitask/multitask.h"
+#include "io/framebuffer.h"
 #include "stdout/uart.h"
 #include "cpu/pic.h"
 #include "cpu/cpu.h"
@@ -137,6 +138,12 @@ namespace Interrupts
         PrintRegister("esi", registers.esi);
 
         UART::WriteString("-----------------------\n");
+
+        // Blue screen
+        using namespace Framebuffer;
+        for (uint32_t y = 0; y < sFramebuffer.height; ++y)
+            for (uint32_t x = 0; x < sFramebuffer.width; ++x)
+                sFramebuffer.SetPixel(x, y, GetColour(0, 0, 255));
 
         // TODO: halt task if running in user-mode
         while (true) asm("hlt");

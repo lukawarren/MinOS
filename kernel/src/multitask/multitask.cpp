@@ -94,9 +94,6 @@ namespace Multitask
     {
         // Create malloc "slab"
         tasks = (Task*) Memory::kPageFrame.AllocateMemory(sizeof(Task) * maxTasks, KERNEL_PAGE);
-
-        // We need to use the kernel's cr3 when switching tasks
-        kernelCR3 = Memory::kPageFrame.GetCR3();
     }
 
     int CreateTask(char const* sName)

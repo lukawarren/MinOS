@@ -26,9 +26,7 @@ pNewTaskStack:
 ; a user task's cr3 register,
 ; so we need a global, kernel
 ; one
-global kernelCR3
-kernelCR3:
-    dd 0
+extern kernelCR3
 
 ; If the privilege (ring) changes,
 ; the old esp is pushed onto the
