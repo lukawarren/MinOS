@@ -8,6 +8,7 @@
 #include "memory/modules.h"
 #include "multitask/multitask.h"
 #include "multitask/elf.h"
+#include "io/framebuffer.h"
 #include "stdlib.h"
 
 extern uint32_t __tss_stack; // TSS stack from linker
@@ -52,6 +53,9 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 
     // Sanity check it all and reserve memory before it's snatched again!
     Modules::PostInit();
+
+    // Setup devices
+    Framebuffer::Init(pMultibootInfo);
 
     // Setup tasks
     Multitask::Init();

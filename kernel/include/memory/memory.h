@@ -20,8 +20,6 @@ namespace Memory
 
     extern uint32_t userspaceBegin;
     extern uint32_t maxGroups;
-    extern uint32_t nFramebufferPages;
-    extern uint32_t framebufferAddress;
 
     extern "C"
     {

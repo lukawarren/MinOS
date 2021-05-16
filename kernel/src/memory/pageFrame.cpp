@@ -1,4 +1,5 @@
 #include "memory/pageFrame.h"
+#include "io/framebuffer.h"
 #include "memory/memory.h"
 #include "cpu/cpu.h"
 #include "stdlib.h"
@@ -54,8 +55,9 @@ namespace Memory
             SetPage(stack + i * PAGE_SIZE, stack + i * PAGE_SIZE, USER_PAGE);
 
         // Map in framebuffer
-        for (uint32_t i = 0; i < nFramebufferPages; ++i)
-            SetPage(framebufferAddress + i*PAGE_SIZE, FRAMEBUFFER_OFFSET + i*PAGE_SIZE, USER_PAGE);
+        using namespace Framebuffer;
+        for (uint32_t i = 0; i < sFramebuffer.size / PAGE_SIZE; ++i)
+            SetPage(sFramebuffer.address + i*PAGE_SIZE, FRAMEBUFFER_OFFSET + i*PAGE_SIZE, USER_PAGE);
     }
 
     static inline uint32_t GetPageDirectoryIndex(const uint32_t physicalAddress)
@@ -202,6 +204,11 @@ namespace Memory
                         {
                             const uint32_t mappedAddress = virtualAddress + page*PAGE_SIZE;
                             SetPage(address, mappedAddress, flags);
+
+                            // Zero-out page for security
+                            uint32_t* pData = (uint32_t*)address;
+                            for (uint32_t i = 0; i < PAGE_SIZE/sizeof(uint32_t); ++i)
+                                *(pData + i) = 0;
                         }
                     }
 
@@ -219,6 +226,11 @@ namespace Memory
                     const uint32_t address = PAGE_SIZE * (group * 32 + nthBit);
                     if (virtualAddress == 0) SetPage(address, address, flags); // Identity maping
                     else SetPage(address, virtualAddress, flags); // Non-identity mapping
+
+                    // Zero-out page for security
+                    uint32_t* pData = (uint32_t*)address;
+                    for (uint32_t i = 0; i < PAGE_SIZE/sizeof(uint32_t); ++i)
+                        *(pData + i) = 0;
 
                     return (void*)address; 
                 }
