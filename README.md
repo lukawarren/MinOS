@@ -74,7 +74,7 @@ cd /path/back/to/min/os/
 
 # 2) Make build folder and build
 cd lib/newlib-4.1.0
-mkdir build
+mkdir -p build
 cd build
 ../configure --prefix=/minos --target=i686-minos
 make -j4 all

@@ -24,12 +24,11 @@ namespace Multitask
             void SwitchFromTask();
             void SetEntrypoint(const uint32_t entrypoint);
 
-        private:
+            void LoadFromTask(const Task& task);
+            
             char m_sName[32];
             uint32_t* m_pStack;
             uint32_t m_Entrypoint;
-            
-        public:
             TaskType m_Type;
             Memory::PageFrame m_PageFrame; // Technically kernel tasks don't need one but hey-ho
     };
@@ -37,6 +36,9 @@ namespace Multitask
     void Init();
     int CreateTask(char const* sName);
     int CreateTask(char const* sName, const TaskType type, void (*entrypoint)());
+    
+    Task& GetCurrentTask();
+    void RemoveCurrentTask();
 
     extern "C"
     {

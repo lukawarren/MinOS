@@ -147,7 +147,7 @@ callCPPCode:
     ; anything goes!
 
     cmp dword [pSavedTaskStack], 0
-    je switchToNewTask
+    je SwitchToNewTask
 
 preserveOldTask:
     ; Move to old task's stack (which
@@ -186,7 +186,12 @@ preserveOldTask:
     mov eax, [pSavedTaskStack]
     mov [eax], esp
 
-switchToNewTask:
+    jmp SwitchToNewTask
+
+; Global because it's called from
+; the _exit syscall
+global SwitchToNewTask
+SwitchToNewTask:
     ; Switch to new stack
     mov eax, [pNewTaskStack]
     mov esp, [eax]

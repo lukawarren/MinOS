@@ -11,4 +11,6 @@ FILE(GLOB_RECURSE C_SRCS src/*.c)
 FILE(GLOB_RECURSE CPP_SRCS src/*.cpp)
 FILE(GLOB_RECURSE ASM_SRCS src/*.S)
 
+add_definitions(-DKernel)
+
 ADD_EXECUTABLE(kernel.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})

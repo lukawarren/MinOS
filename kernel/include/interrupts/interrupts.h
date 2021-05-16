@@ -11,10 +11,11 @@ namespace Interrupts
 {
     struct StackFrameRegisters
     {
-        uint16_t gs;
-        uint16_t fs;
-        uint16_t es;
-        uint16_t ds;
+        uint32_t gs;
+        uint32_t fs;
+        uint32_t es;
+        uint32_t ds;
+        uint32_t cr3;
         uint32_t edi;
         uint32_t esi;
         uint32_t ebp;
@@ -23,7 +24,7 @@ namespace Interrupts
         uint32_t edx;
         uint32_t ecx;
         uint32_t eax;
-    };
+    } __attribute__((packed));
 
     void Init(CPU::IDT* idt);
 

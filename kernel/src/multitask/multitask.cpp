@@ -69,7 +69,6 @@ namespace Multitask
         // whilst using another task's stack, things'd get funky
         if (type == TaskType::USER) *--m_pStack = m_PageFrame.GetCR3();
         else  *--m_pStack = Memory::kPageFrame.GetCR3();
-
     }
 
     void Task::SwitchToTask()
@@ -88,6 +87,16 @@ namespace Multitask
         m_pStack += 14;
         *--m_pStack = entrypoint;
         m_pStack -= 13;
+    }
+
+    void Task::LoadFromTask(const Task& task)
+    {
+        // Glorified copy constructor
+        strncpy(m_sName, task.m_sName, sizeof(m_sName) / sizeof(m_sName[0]));
+        m_pStack = task.m_pStack;
+        m_Entrypoint = task.m_Entrypoint;
+        m_Type = task.m_Type;
+        m_PageFrame = task.m_PageFrame;
     }
 
     void Init()
@@ -158,6 +167,35 @@ namespace Multitask
 
         PIT::Reset(); // Must be reset every interrupt so as to fire again
         PIC::EndInterrupt(0x20); // Offset is 20, and it's IRQ 0
+    }
+
+    Task& GetCurrentTask()
+    {
+        // See below comment
+        return tasks[nPreviousTask];
+    }
+
+    void RemoveCurrentTask()
+    {
+        assert(nTasks > 1);
+
+        // We're in 1 big array, so find the element, and shift all above elements downwards
+        // (unless we're the last task in the array, in which case don't do anything).
+        // Current task is actually the next task to be ran (I know, I know...),
+        // hence the use of the previous task (I really have outdone myself)
+        if (nCurrentTask != maxTasks-1)
+        {
+            for (uint32_t i = nPreviousTask; i < nTasks; ++i)
+            {
+                tasks[i].LoadFromTask(tasks[i+1]);
+            }
+        }
+        nTasks--;
+
+        // Reset to guaranteed state
+        bCameFromKernel = true;
+        nCurrentTask = 0;
+        nPreviousTask = 0;
     }
 
 }

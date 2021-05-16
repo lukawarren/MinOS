@@ -1,5 +1,6 @@
 #include "interrupts/interrupts.h"
 #include "multitask/multitask.h"
+#include "multitask/syscalls.h"
 #include "io/framebuffer.h"
 #include "stdout/uart.h"
 #include "cpu/pic.h"
@@ -69,6 +70,9 @@ namespace Interrupts
 
         // PIT
         idt[offset+0]  = CreateIDTEntry((uint32_t) Multitask::IRQ0,  0x8, ENABLED_R0_INTERRUPT);
+
+        // 0x80 interrupts
+        idt[0x80] = CreateIDTEntry((uint32_t)Multitask::IRQ80, 0x8, ENABLED_R3_INTERRUPT);
     }
     
     void OnInterrupt(const uint32_t irq, const StackFrameRegisters registers)
