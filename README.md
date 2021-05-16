@@ -1,5 +1,5 @@
 # MinOS
-A tiny x86 kernel written in modern C++ and Assembly.
+A x86 operating system written in modern(ish) C++, a bit of C, and Assembly.
 
 ## Features
 * Userspace with standard library

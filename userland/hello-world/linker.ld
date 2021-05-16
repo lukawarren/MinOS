@@ -1,4 +1,4 @@
-ENTRY(main)
+ENTRY(_start)
 STARTUP(../../../lib/i686-minos/lib/crt0.o)
 
 SECTIONS

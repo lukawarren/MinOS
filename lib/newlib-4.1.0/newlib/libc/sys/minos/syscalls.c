@@ -12,7 +12,7 @@ extern int errno;
 
 void _exit(int status)
 {
-    asm("xchg %bx,%bx");
+    while (1) {}
 }
 
 int close(int file);
