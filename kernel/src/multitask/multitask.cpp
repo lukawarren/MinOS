@@ -27,10 +27,10 @@ namespace Multitask
         m_Type = type;
         m_Entrypoint = entrypoint;
         
-        // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 16 to ensure alignment
+        // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 20 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
         const uint32_t stackBeginInMemory = (uint32_t)(Memory::kPageFrame.AllocateMemory(stackSize, KERNEL_PAGE));
-        m_pStack = (uint32_t*) (stackBeginInMemory + stackSize-16);
+        m_pStack = (uint32_t*) (stackBeginInMemory + stackSize-20);
         const uint32_t stackTop = (uint32_t) m_pStack;
 
         // Chose our segment registers *carefully* depending on privilege level

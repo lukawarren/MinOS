@@ -16,4 +16,4 @@ FILE(GLOB_RECURSE CPP_SRCS src/*.cpp)
 FILE(GLOB_RECURSE ASM_SRCS src/*.S)
 
 ADD_EXECUTABLE(hello-world.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})
-target_link_libraries(hello-world.bin libc.a)
+target_link_libraries(hello-world.bin libm.a libc.a libg.a)
