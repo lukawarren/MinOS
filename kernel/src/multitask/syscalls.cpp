@@ -1,12 +1,13 @@
 #include "multitask/syscalls.h"
 #include "multitask/multitask.h"
 #include "stdout/uart.h"
+#include "cpu/pic.h"
 
 namespace Multitask
 {
-    static void _exit(Interrupts::StackFrameRegisters sRegisters); 
+    static void _exit(const Interrupts::StackFrameRegisters sRegisters); 
 
-    void OnSyscall(Interrupts::StackFrameRegisters sRegisters)
+    int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
         // Get syscall id
         const uint32_t id = sRegisters.eax;
@@ -21,19 +22,23 @@ namespace Multitask
                 UART::WriteString("[Syscall] Unexpected syscall ");
                 UART::WriteNumber(id);
                 UART::WriteString("\n");
+            break;
         }
+
+        PIC::EndInterrupt(0x80);
+        return 0; // Stops compiler sullying our stack
     }
 
-    static void _exit(Interrupts::StackFrameRegisters sRegisters)
+    static void _exit(const Interrupts::StackFrameRegisters sRegisters)
     {
         UART::WriteString("[Syscall] Task ");
         UART::WriteString(GetCurrentTask().m_sName);
         UART::WriteString(" exited with code ");
         UART::WriteNumber(sRegisters.ebx);
         UART::WriteString("\n");
-        
+
         RemoveCurrentTask();
-        OnPIT();
+        OnTaskSwitch(false);
         bSwitchTasks = true;
     }
 

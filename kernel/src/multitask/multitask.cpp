@@ -136,7 +136,7 @@ namespace Multitask
         return nTasks-1;
     }
 
-    void OnPIT()
+    void OnTaskSwitch(const bool bPIT)
     {
         assert(nTasks > 0);
 
@@ -165,8 +165,11 @@ namespace Multitask
         nCurrentTask++;
         if (nCurrentTask >= nTasks) nCurrentTask = 0;
 
-        PIT::Reset(); // Must be reset every interrupt so as to fire again
-        PIC::EndInterrupt(0x20); // Offset is 20, and it's IRQ 0
+        if (bPIT)
+        {
+            PIT::Reset(); // Must be reset every interrupt so as to fire again
+            PIC::EndInterrupt(0x20); // Offset is 20, and it's IRQ 0
+        }
     }
 
     Task& GetCurrentTask()
@@ -192,10 +195,11 @@ namespace Multitask
         }
         nTasks--;
 
-        // Reset to guaranteed state
+        // Reset to original, guaranteed state
         bCameFromKernel = true;
         nCurrentTask = 0;
         nPreviousTask = 0;
+        pSavedTaskStack = 0;
     }
 
 }

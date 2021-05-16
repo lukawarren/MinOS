@@ -68,7 +68,7 @@ oldCR3:
 
 section text
 
-extern OnPIT
+extern OnTaskSwitch
 
 ; PIT interrupt handler
 global IRQ0
@@ -127,7 +127,9 @@ callCPPCode:
     mov gs, ax
 
     ; Call C++ code
-    call OnPIT
+    push dword 1 ; bPIT = true
+    call OnTaskSwitch
+    add esp, 4
 
     ; Restore segment registers
     pop gs

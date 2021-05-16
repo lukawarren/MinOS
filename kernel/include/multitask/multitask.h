@@ -25,7 +25,7 @@ namespace Multitask
             void SetEntrypoint(const uint32_t entrypoint);
 
             void LoadFromTask(const Task& task);
-            
+
             char m_sName[32];
             uint32_t* m_pStack;
             uint32_t m_Entrypoint;
@@ -45,9 +45,9 @@ namespace Multitask
         // Variables for assembly
         extern uint32_t* pSavedTaskStack;
         extern uint32_t* pNewTaskStack;
-        extern bool bPrivilegeChange;
+        extern volatile bool bPrivilegeChange;
 
-        void OnPIT();
+        void OnTaskSwitch(const bool bPIT);
         void IRQ0();
     }
 }

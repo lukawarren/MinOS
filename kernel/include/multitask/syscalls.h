@@ -56,10 +56,10 @@ namespace Multitask
 {
     extern "C"
     {
-        void OnSyscall(Interrupts::StackFrameRegisters sRegisters);
+        int OnSyscall(const Interrupts::StackFrameRegisters sRegisters);
         extern void IRQ80();
 
-        extern bool bSwitchTasks;
+        extern volatile bool bSwitchTasks;
     }
 }
 #endif

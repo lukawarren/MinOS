@@ -62,17 +62,11 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     
     Multitask::CreateTask("Colonel", Multitask::TaskType::KERNEL, []
     {
-        UART::WriteString("[Colonel] Hello!\n");
+        UART::WriteString("[Colonel] Hello from kernel land!\n");
         while(1) asm("nop");
     });
 
     Multitask::CreateTask("Userland");
-
-    Multitask::CreateTask("Colonel 2", Multitask::TaskType::KERNEL, []
-    {
-        UART::WriteString("[Colonel 2] I'm not even page faulting!\n");
-        while(1) asm("nop");
-    });
 
     // Enable interrupts
     CPU::EnableInterrupts();
