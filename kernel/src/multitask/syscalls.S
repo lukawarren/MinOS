@@ -1,11 +1,7 @@
 section data
 
 extern kernelCR3
-
-; For switching tasks after _exit
-global bSwitchTasks
-bSwitchTasks:
-    db 0
+extern bSwitchTasks
 
 section text
 

@@ -125,7 +125,7 @@ namespace Interrupts
         UART::WriteNumber(irq);
         UART::WriteString("\n");
 
-        const auto PrintRegister = [](const char* name, const uint32_t value)
+        const auto PrintValue = [](const char* name, const uint32_t value)
         {
             UART::WriteString(name);
             UART::WriteString(": ");
@@ -133,24 +133,40 @@ namespace Interrupts
             UART::WriteString("\n");
         };
 
-        PrintRegister("eax", registers.eax);
-        PrintRegister("ecx", registers.ecx);
-        PrintRegister("edx", registers.edx);
-        PrintRegister("ebx", registers.ebx);
-        PrintRegister("esp", registers.esp);
-        PrintRegister("ebp", registers.ebp);
-        PrintRegister("esi", registers.esi);
+        PrintValue("eax", registers.eax);
+        PrintValue("ecx", registers.ecx);
+        PrintValue("edx", registers.edx);
+        PrintValue("ebx", registers.ebx);
+        PrintValue("esp", registers.esp);
+        PrintValue("ebp", registers.ebp);
+        PrintValue("esi", registers.esi);
+
+        PrintValue("Number of tasks", Multitask::nTasks);
+        const bool bUserTask = Multitask::nTasks > 0 && Multitask::GetCurrentTask().m_Type == Multitask::TaskType::USER;
+        if (bUserTask)
+        {
+            UART::WriteString("Current userland task: ");
+            UART::WriteString(Multitask::GetCurrentTask().m_sName);
+            UART::WriteString("\n");
+
+            // Terminate task and switch tasks after we exit C++
+            Multitask::RemoveCurrentTask();
+            Multitask::OnTaskSwitch(false);
+            Interrupts::bSwitchTasks = true;
+        }
 
         UART::WriteString("-----------------------\n");
 
-        // Blue screen
-        using namespace Framebuffer;
-        for (uint32_t y = 0; y < sFramebuffer.height; ++y)
-            for (uint32_t x = 0; x < sFramebuffer.width; ++x)
-                sFramebuffer.SetPixel(x, y, GetColour(0, 0, 255));
+        // Kernel errors cause a blue screen then halt the CPu
+        if (!bUserTask)
+        {
+            using namespace Framebuffer;
+            for (uint32_t y = 0; y < sFramebuffer.height; ++y)
+                for (uint32_t x = 0; x < sFramebuffer.width; ++x)
+                    sFramebuffer.SetPixel(x, y, GetColour(0, 0, 255));
 
-        // TODO: halt task if running in user-mode
-        while (true) asm("hlt");
+            while (true) asm("hlt");
+        }
 
         PIC::EndInterrupt((uint8_t) irq);
     }

@@ -21,7 +21,13 @@ namespace Multitask
             default:
                 UART::WriteString("[Syscall] Unexpected syscall ");
                 UART::WriteNumber(id);
+                UART::WriteString(" by task ");
+                UART::WriteString(Multitask::GetCurrentTask().m_sName);
                 UART::WriteString("\n");
+                
+                RemoveCurrentTask();
+                OnTaskSwitch(false);
+                Interrupts::bSwitchTasks = true;
             break;
         }
 
@@ -39,7 +45,7 @@ namespace Multitask
 
         RemoveCurrentTask();
         OnTaskSwitch(false);
-        bSwitchTasks = true;
+        Interrupts::bSwitchTasks = true;
     }
 
 }

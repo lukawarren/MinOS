@@ -12,8 +12,8 @@ namespace Multitask
     constexpr uint32_t maxTasks = PAGE_SIZE * 2 / sizeof(Task);
     static Task* tasks;
 
-    // House keepipng
-    static uint32_t nTasks = 0;
+    // House keeping
+    uint32_t nTasks = 0;
     static uint32_t nCurrentTask = 0;
     static uint32_t nPreviousTask = 0;
 

@@ -82,6 +82,8 @@ namespace Interrupts
         extern void IRQException28();
         extern void IRQException29();
         extern void IRQException30();
+
+        extern volatile bool bSwitchTasks;
     }
 }
 

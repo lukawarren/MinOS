@@ -40,6 +40,8 @@ namespace Multitask
     Task& GetCurrentTask();
     void RemoveCurrentTask();
 
+    extern uint32_t nTasks;
+
     extern "C"
     {
         // Variables for assembly

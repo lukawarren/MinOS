@@ -5,6 +5,12 @@ section data
 nonErrorCodeValue:
     db 0
 
+; For switching tasks after _exit
+; or a CPU exception
+global bSwitchTasks
+bSwitchTasks:
+    db 0
+
 ; We need to use the
 ; kernel's paging
 extern kernelCR3
@@ -13,6 +19,7 @@ section text
 
 extern OnInterrupt
 extern OnException
+extern SwitchToNewTask
 
 ; Dummy interrupt handler
 global BlankIRQ
@@ -105,19 +112,38 @@ IRQException%1:
     pop es
     pop ds
 
+    ; Exceptions with an error code
+    ; need to be manually pulled off
+    ; the stack
+    cmp byte [nonErrorCodeValue], %2
+    je checkForTaskSwitch%1
+    add esp, 4
+
+checkForTaskSwitch%1:
+    ; Check if we need to switch tasks
+    cmp byte [bSwitchTasks], 1
+    jne returnFromException%1
+    mov byte [bSwitchTasks], 0
+
+    ; If we are switching, mend stack first
+    ; (we're not restoring the old cr3 you see)
+    add esp, 4
+    popad
+
+    ; Our iret will use the new task's stack,
+    ; so we need to remove the current iret frame,
+    ; which is 6 dword pops, or 4*6 = 24
+    add esp, 24
+
+    jmp SwitchToNewTask
+
+returnFromException%1:
+
     ; Restore registers
     pop eax
     mov cr3, eax
     popad
 
-    ; Exceptions with an error code
-    ; need to be manually pulled off
-    ; the stack
-    cmp byte [nonErrorCodeValue], %2
-    je returnFromException%1
-    add esp, 4
-
-returnFromException%1:
     iret
 %endmacro
 
