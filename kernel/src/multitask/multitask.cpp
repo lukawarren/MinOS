@@ -182,6 +182,9 @@ namespace Multitask
     {
         assert(nTasks > 1);
 
+        // Deallocate all the task's memory (including stack) - see below for "nPreviousTask"
+        tasks[nPreviousTask].m_PageFrame.FreeAllPages();
+
         // We're in 1 big array, so find the element, and shift all above elements downwards
         // (unless we're the last task in the array, in which case don't do anything).
         // Current task is actually the next task to be ran (I know, I know...),

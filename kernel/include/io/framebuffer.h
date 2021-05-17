@@ -27,6 +27,6 @@ namespace Framebuffer
     uint32_t GetColour(const uint8_t r, const uint8_t g, const uint8_t b);
 
     extern Framebuffer sFramebuffer;
-};
+}
 
 #endif

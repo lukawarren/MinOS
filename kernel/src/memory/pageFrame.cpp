@@ -52,7 +52,7 @@ namespace Memory
         for (uint32_t i = 0; i < userspaceBegin / PAGE_SIZE; ++i)
             SetPage(i * PAGE_SIZE, i * PAGE_SIZE, KERNEL_PAGE);
 
-        // Allocate stack pages
+        // Map stack pages
         stackSize = Memory::RoundToNextPageSize(stackSize);
         for (uint32_t i = 0; i < stackSize / PAGE_SIZE; ++i)
             SetPage(stack + i * PAGE_SIZE, stack + i * PAGE_SIZE, USER_PAGE);
@@ -329,4 +329,50 @@ namespace Memory
     {
         return (uint32_t)m_PageDirectories;
     }
+
+    void PageFrame::FreeAllPages()
+    {
+        assert(m_Type == Type::USERSPACE);
+
+        // Go through each page in our bitmap and free that page, unless we're talking something special like the kernel or the framebuffer
+        // By luck (or good design) this will also free our stack, even though that was actually allocated with the kernel's page frame
+        for (uint32_t page = 0; page < NUM_DIRECTORIES*NUM_TABLES; ++page)
+        {
+            const uint32_t address = page * PAGE_SIZE;
+            bool bUserPage =
+                (address >= userspaceBegin) &&
+                (address < Framebuffer::sFramebuffer.address || address > Framebuffer::sFramebuffer.address + Framebuffer::sFramebuffer.size);
+
+            if (bUserPage && IsPageSet(address)) ClearPage(address);
+        }
+
+        // Free paging structures
+        kPageFrame.FreeMemory(m_PageDirectories, sizeof(uint32_t) * NUM_DIRECTORIES);
+        kPageFrame.FreeMemory(m_PageTables, sizeof(uint32_t)*NUM_TABLES*NUM_DIRECTORIES);
+        kPageFrame.FreeMemory(m_PageBitmaps, sizeof(uint32_t)*NUM_DIRECTORIES*NUM_TABLES/32);
+    }
+
+    static uint32_t GetNumberOfBitsSet(uint32_t i)
+    {
+        // GCC 10 will recognise this if we use "-O3 -march=nehalem -mtune=skylake" (any Intel CPU after 2008 should work),
+        // and replace it with a single instruction, "popcnt"
+        i = i - ((i >> 1) & 0x55555555);        // add pairs of bits
+        i = (i & 0x33333333) + ((i >> 2) & 0x33333333);  // quads
+        i = (i + (i >> 4)) & 0x0F0F0F0F;        // groups of 8
+        return (i * 0x01010101) >> 24;          // horizontal sum of bytes
+    }
+
+    uint32_t PageFrame::GetUsedPages()
+    {
+        uint32_t pages = 0;
+
+        for (uint32_t page = 0; page < NUM_DIRECTORIES*NUM_TABLES / 32; ++page)
+        {
+            const uint32_t bitmap = m_PageBitmaps[page];
+            pages += GetNumberOfBitsSet(bitmap);
+        }
+        
+        return pages;
+    }
+
 }

@@ -47,6 +47,10 @@ namespace Memory
             void UsePaging();
             uint32_t GetCR3();
 
+            void FreeAllPages();
+
+            uint32_t GetUsedPages();
+
         private:
 
             // Page directories, tables and what-not
