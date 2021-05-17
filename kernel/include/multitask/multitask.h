@@ -26,11 +26,18 @@ namespace Multitask
 
             void LoadFromTask(const Task& task);
 
+            // Task data
             char m_sName[32];
             uint32_t* m_pStack;
             uint32_t m_Entrypoint;
             TaskType m_Type;
-            Memory::PageFrame m_PageFrame; // Technically kernel tasks don't need one but hey-ho
+
+            // Paeg frame - technically kernel tasks don't need one but hey-ho
+            Memory::PageFrame m_PageFrame;
+
+            // Sbrk implementation
+            void* m_pSbrkBuffer;
+            uint32_t m_nSbrkBytesUsed;
     };
 
     void Init();

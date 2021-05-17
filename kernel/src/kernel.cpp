@@ -9,7 +9,7 @@
 #include "multitask/multitask.h"
 #include "multitask/elf.h"
 #include "io/framebuffer.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 extern uint32_t __tss_stack; // TSS stack from linker
 

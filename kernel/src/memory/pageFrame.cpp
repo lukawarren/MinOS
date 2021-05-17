@@ -2,7 +2,7 @@
 #include "io/framebuffer.h"
 #include "memory/memory.h"
 #include "cpu/cpu.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 namespace Memory
 {
@@ -251,15 +251,15 @@ namespace Memory
             uint32_t startingGroup = 0;
 
             // Search through each "group", limited to the confines of physical memory
-            for (uint32_t group = 0; group < maxGroups; ++group)
+            for (uint32_t group = startingGroup; group < maxGroups; ++group)
             {
                 uint32_t bitmap = kPageFrame.m_PageBitmaps[group]; // See AllocateMemory(...) for why it's kPageFrame
-
+                
                 // If we're not the last group
                 if (remainingPages > 32)
                 {
                     // If our group isn't empty, give up our current groups
-                    if (bitmap + 1 == 0)
+                    if (bitmap != 0)
                     {
                         remainingPages = neededPages;
                         startingGroup = group+1;
@@ -273,7 +273,7 @@ namespace Memory
                 {
                     // If we are in the last group, our remaining pages need to be *at the start* of the group
                     const uint32_t mask = (1 << remainingPages) - 1;
-                    if ((bitmap & mask) == mask)
+                    if ((~bitmap & mask) == mask)
                     {
                         // Now just work out the address and set that number of pages
                         const uint32_t nthPage = startingGroup * 32;
@@ -298,10 +298,11 @@ namespace Memory
                         
                         return (void*)(PAGE_SIZE * nthPage);
                     }
-                    else // Once again, give up otherwise
+                    else // Once again, give up otherwise, but repeat this iteration
                     {
                         remainingPages = neededPages;
-                        startingGroup = group+1;
+                        startingGroup = group;
+                        group--;
                     }
                 }
             }

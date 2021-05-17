@@ -8,8 +8,9 @@
 #include "multiboot.h"
 #include "memory/pageFrame.h"
 
-#define USER_PAGING_OFFSET 0x40000000
-#define FRAMEBUFFER_OFFSET 0x30000000
+#define USER_PAGING_OFFSET      0x40000000
+#define FRAMEBUFFER_OFFSET      0x30000000
+#define SBRK_BUFFER_MAX_SIZE    0x00100000
 
 namespace Memory
 {

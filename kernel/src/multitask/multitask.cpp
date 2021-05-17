@@ -4,7 +4,7 @@
 #include "memory/modules.h"
 #include "cpu/pit.h"
 #include "cpu/pic.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 namespace Multitask
 {
@@ -29,7 +29,7 @@ namespace Multitask
         
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 16 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
-        const uint32_t stackBeginInMemory = (uint32_t)(Memory::kPageFrame.AllocateMemory(stackSize, KERNEL_PAGE));
+        const uint32_t stackBeginInMemory = (uint32_t)(Memory::kPageFrame.AllocateMemory(stackSize, KERNEL_PAGE)); // Mapped as user by *it's own* page frame
         m_pStack = (uint32_t*) (stackBeginInMemory + stackSize-16);
         const uint32_t stackTop = (uint32_t) m_pStack;
 
@@ -63,7 +63,11 @@ namespace Multitask
 
         // Setup page frame allocator for userspace processes
         if (type == TaskType::USER)
+        {
             m_PageFrame = Memory::PageFrame(stackBeginInMemory, stackSize);
+            m_pSbrkBuffer = m_PageFrame.AllocateMemory(SBRK_BUFFER_MAX_SIZE, USER_PAGE);
+            m_nSbrkBytesUsed = 0;
+        }
 
         // CR3 on stack as if we swtitched to it in C code,
         // whilst using another task's stack, things'd get funky
@@ -97,6 +101,8 @@ namespace Multitask
         m_Entrypoint = task.m_Entrypoint;
         m_Type = task.m_Type;
         m_PageFrame = task.m_PageFrame;
+        m_nSbrkBytesUsed = task.m_nSbrkBytesUsed;
+        m_pSbrkBuffer = task.m_pSbrkBuffer;
     }
 
     void Init()

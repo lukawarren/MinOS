@@ -1,6 +1,6 @@
 #include "multitask/elf.h"
 #include "memory/memory.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 namespace Multitask
 {

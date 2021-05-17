@@ -6,7 +6,7 @@
 #include "cpu/pic.h"
 #include "cpu/cpu.h"
 #include "cpu/pit.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 namespace Interrupts
 {
