@@ -2,7 +2,7 @@
 A x86 operating system written in modern(ish) C++, a bit of C, and Assembly.
 
 ## Features
-* Userspace with standard library
+* Userspace with newlibc standard library (with old sbrk-style malloc replaced with liballoc)
 * Pre-emptive multitaksing
 
 ## Depdendencies

@@ -51,11 +51,11 @@ namespace Multitask
             break;
 
             case 4:
-                return fstat((int)sRegisters.ebx, (stat*)sRegisters.ecx);
+                returnStatus = fstat((int)sRegisters.ebx, (stat*)sRegisters.ecx);
             break;
 
             case 12:
-                return (int) sbrk((int)sRegisters.ebx);
+                returnStatus = (int) sbrk((int)sRegisters.ebx);
             break;
 
             default:
@@ -70,7 +70,7 @@ namespace Multitask
                 Interrupts::bSwitchTasks = true;
             break;
         }
-
+        
         PIC::EndInterrupt(0x80);
         return returnStatus;
     }
