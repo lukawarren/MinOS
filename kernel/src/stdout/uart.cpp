@@ -1,6 +1,6 @@
 #include "stdout/uart.h"
 #include "cpu/cpu.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 namespace UART
 {

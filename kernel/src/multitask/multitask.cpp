@@ -4,7 +4,7 @@
 #include "memory/modules.h"
 #include "cpu/pit.h"
 #include "cpu/pic.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 namespace Multitask
 {
@@ -12,8 +12,8 @@ namespace Multitask
     constexpr uint32_t maxTasks = PAGE_SIZE * 2 / sizeof(Task);
     static Task* tasks;
 
-    // House keepipng
-    static uint32_t nTasks = 0;
+    // House keeping
+    uint32_t nTasks = 0;
     static uint32_t nCurrentTask = 0;
     static uint32_t nPreviousTask = 0;
 
@@ -29,8 +29,8 @@ namespace Multitask
         
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 20 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
-        const uint32_t stackBeginInMemory = (uint32_t)(Memory::kPageFrame.AllocateMemory(stackSize, KERNEL_PAGE));
-        m_pStack = (uint32_t*) (stackBeginInMemory + stackSize-20);
+        const uint32_t stackBeginInMemory = (uint32_t)(Memory::kPageFrame.AllocateMemory(stackSize, KERNEL_PAGE)); // Mapped as user by *it's own* page frame
+        m_pStack = (uint32_t*) (stackBeginInMemory + stackSize-16);
         const uint32_t stackTop = (uint32_t) m_pStack;
 
         // Chose our segment registers *carefully* depending on privilege level
@@ -63,7 +63,11 @@ namespace Multitask
 
         // Setup page frame allocator for userspace processes
         if (type == TaskType::USER)
+        {
             m_PageFrame = Memory::PageFrame(stackBeginInMemory, stackSize);
+            m_pSbrkBuffer = nullptr;
+            m_nSbrkBytesUsed = 0;
+        }
 
         // CR3 on stack as if we swtitched to it in C code,
         // whilst using another task's stack, things'd get funky
@@ -97,6 +101,8 @@ namespace Multitask
         m_Entrypoint = task.m_Entrypoint;
         m_Type = task.m_Type;
         m_PageFrame = task.m_PageFrame;
+        m_nSbrkBytesUsed = task.m_nSbrkBytesUsed;
+        m_pSbrkBuffer = task.m_pSbrkBuffer;
     }
 
     void Init()
@@ -172,15 +178,18 @@ namespace Multitask
         }
     }
 
-    Task& GetCurrentTask()
+    Task* GetCurrentTask()
     {
         // See below comment
-        return tasks[nPreviousTask];
+        return &tasks[nPreviousTask];
     }
 
     void RemoveCurrentTask()
     {
         assert(nTasks > 1);
+
+        // Deallocate all the task's memory (including stack) - see below for "nPreviousTask"
+        tasks[nPreviousTask].m_PageFrame.FreeAllPages();
 
         // We're in 1 big array, so find the element, and shift all above elements downwards
         // (unless we're the last task in the array, in which case don't do anything).

@@ -1,4 +1,4 @@
-#include "stdlib.h"
+#include "kstdlib.h"
 
 size_t strlen(const char* string)
 {

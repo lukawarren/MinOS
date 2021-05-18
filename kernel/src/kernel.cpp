@@ -9,7 +9,7 @@
 #include "multitask/multitask.h"
 #include "multitask/elf.h"
 #include "io/framebuffer.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 extern uint32_t __tss_stack; // TSS stack from linker
 
@@ -63,7 +63,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     Multitask::CreateTask("Colonel", Multitask::TaskType::KERNEL, []
     {
         UART::WriteString("[Colonel] Hello from kernel land!\n");
-        while(1) asm("nop");
+        while(1) {}
     });
 
     Multitask::CreateTask("Userland");

@@ -1,7 +1,7 @@
 #include "memory/memory.h"
 #include "stdout/uart.h"
 #include "cpu/cpu.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"

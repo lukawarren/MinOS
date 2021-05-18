@@ -58,8 +58,6 @@ namespace Multitask
     {
         int OnSyscall(const Interrupts::StackFrameRegisters sRegisters);
         extern void IRQ80();
-
-        extern volatile bool bSwitchTasks;
     }
 }
 #endif

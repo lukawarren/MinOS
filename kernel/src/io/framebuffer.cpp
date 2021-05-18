@@ -1,6 +1,6 @@
 #include "io/framebuffer.h"
 #include "memory/pageFrame.h"
-#include "stdlib.h"
+#include "kstdlib.h"
 
 namespace Framebuffer
 {

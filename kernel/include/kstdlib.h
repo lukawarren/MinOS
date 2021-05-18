@@ -1,5 +1,5 @@
-#ifndef STDLIB_H
-#define STDLIB_H
+#ifndef KSTDLIB_H
+#define KSTDLIB_H
 
 #include <stdint.h>
 #include <stddef.h>
