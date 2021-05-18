@@ -44,7 +44,7 @@ namespace Multitask
     int CreateTask(char const* sName);
     int CreateTask(char const* sName, const TaskType type, void (*entrypoint)());
     
-    Task& GetCurrentTask();
+    Task* GetCurrentTask();
     void RemoveCurrentTask();
 
     extern uint32_t nTasks;

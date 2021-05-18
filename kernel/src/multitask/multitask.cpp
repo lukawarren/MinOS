@@ -65,7 +65,7 @@ namespace Multitask
         if (type == TaskType::USER)
         {
             m_PageFrame = Memory::PageFrame(stackBeginInMemory, stackSize);
-            m_pSbrkBuffer = m_PageFrame.AllocateMemory(SBRK_BUFFER_MAX_SIZE, USER_PAGE);
+            m_pSbrkBuffer = nullptr;
             m_nSbrkBytesUsed = 0;
         }
 
@@ -178,10 +178,10 @@ namespace Multitask
         }
     }
 
-    Task& GetCurrentTask()
+    Task* GetCurrentTask()
     {
         // See below comment
-        return tasks[nPreviousTask];
+        return &tasks[nPreviousTask];
     }
 
     void RemoveCurrentTask()

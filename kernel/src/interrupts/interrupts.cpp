@@ -142,11 +142,11 @@ namespace Interrupts
         PrintValue("esi", registers.esi);
 
         PrintValue("Number of tasks", Multitask::nTasks);
-        const bool bUserTask = Multitask::nTasks > 0 && Multitask::GetCurrentTask().m_Type == Multitask::TaskType::USER;
+        const bool bUserTask = Multitask::nTasks > 0 && Multitask::GetCurrentTask()->m_Type == Multitask::TaskType::USER;
         if (bUserTask)
         {
             UART::WriteString("Current userland task: ");
-            UART::WriteString(Multitask::GetCurrentTask().m_sName);
+            UART::WriteString(Multitask::GetCurrentTask()->m_sName);
             UART::WriteString("\n");
 
             // Terminate task and switch tasks after we exit C++

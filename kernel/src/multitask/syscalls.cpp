@@ -62,7 +62,7 @@ namespace Multitask
                 UART::WriteString("[Syscall] Unexpected syscall ");
                 UART::WriteNumber(id);
                 UART::WriteString(" by task ");
-                UART::WriteString(Multitask::GetCurrentTask().m_sName);
+                UART::WriteString(Multitask::GetCurrentTask()->m_sName);
                 UART::WriteString("\n");
                 
                 RemoveCurrentTask();
@@ -78,7 +78,7 @@ namespace Multitask
     static void _exit(int status)
     {
         UART::WriteString("[Syscall] Task ");
-        UART::WriteString(GetCurrentTask().m_sName);
+        UART::WriteString(GetCurrentTask()->m_sName);
         UART::WriteString(" exited with code ");
         UART::WriteNumber(status);
         UART::WriteString("\n");
@@ -103,15 +103,20 @@ namespace Multitask
         // Mac OSX solves this by giving a fixed 4mb pool for each process's sbrk calls, and crashing after that,
         // so that's what I do too (well I don't know about the 4mb but you get the idea).
         auto task = Multitask::GetCurrentTask();
-        const uint32_t oldAddress = (uint32_t)task.m_pSbrkBuffer + task.m_nSbrkBytesUsed;
+        
+        if (task->m_pSbrkBuffer == nullptr)
+        {
+            task->m_PageFrame.AllocateMemory(SBRK_BUFFER_MAX_SIZE, USER_PAGE, 0x50000000);
+        }
 
-        Multitask::GetCurrentTask().m_nSbrkBytesUsed += (uint32_t) incr;
+        const uint32_t oldAddress = (uint32_t)task->m_pSbrkBuffer + task->m_nSbrkBytesUsed;
+        task->m_nSbrkBytesUsed += (uint32_t) incr;
 
         // If memory has overflown, kill the process
-        if (task.m_nSbrkBytesUsed > SBRK_BUFFER_MAX_SIZE)
+        if (task->m_nSbrkBytesUsed >= SBRK_BUFFER_MAX_SIZE)
         {
             UART::WriteString("[Syscall] Task ");
-            UART::WriteString(GetCurrentTask().m_sName);
+            UART::WriteString(GetCurrentTask()->m_sName);
             UART::WriteString(" filled sbrk buffer\n");
             UART::WriteString("\n");
             RemoveCurrentTask();
@@ -119,9 +124,6 @@ namespace Multitask
             Interrupts::bSwitchTasks = true;
         }
 
-        UART::WriteNumber(oldAddress);
-        UART::WriteString("\n");
-        asm("xchg %bx, %bx");
         return (caddr_t) oldAddress;
     }
 
