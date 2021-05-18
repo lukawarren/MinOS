@@ -45,17 +45,27 @@ namespace Multitask
             const auto size =  pSectionHeaders[i].sh_size;
             const auto flags = pSectionHeaders[i].sh_flags;
 
+            if (size == 0) continue;
+            if ((flags & SectionHeaderFlags::SHF_ALLOC) == false) continue;
+
             switch (type)
             {
+                
                 case SectionHeaderType::SHT_NOBITS: // BSS
                 {
-                    if (size == 0) break;
-                    if ((flags & SectionHeaderFlags::SHF_ALLOC) == false) break;
-
                     // Allocate memory and zero it
                     void* data = pageFrame.AllocateMemory(size, USER_PAGE, pSectionHeaders[i].sh_addr);
                     memset(data, size, 0);
+                    break;
+                }
 
+                case SectionHeaderType::SHT_PROGBITS:
+                { 
+                    // If it's time to figure out issues with identity (or lack thereof) mapping, we're in trouble, and make it double!
+                    assert(pSectionHeaders[i].sh_addr >= USER_PAGING_OFFSET);
+
+                    //  .text, .text.startup, .rodata and .data actually get loaded (by pure luck I might add) by our program headers
+                    // so all is well with the world (well the flags might be a bit off bit you can't have everything)
                     break;
                 }
 
