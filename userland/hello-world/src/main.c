@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+static int scaryNonInitialisedMemory;
 
 int main()
 {
-    printf("Hello world!\n");
-    return 0;
+    return scaryNonInitialisedMemory;
 }

@@ -22,17 +22,51 @@ namespace Multitask
         assert(pHeader->e_machine           == EM_386);
         assert(pHeader->e_type              == ET_EXEC);
 
-        // Get program header
-        const ElfProgramHeader* pProgramHeader = (const ElfProgramHeader*)(pFile + pHeader->e_phoff);
+        // Get program headers
+        const ElfProgramHeader* pProgramHeaders = (const ElfProgramHeader*)(pFile + pHeader->e_phoff);
 
-        // Load each section
+        // Load each program header
         for (uint32_t i = 0; i < pHeader->e_phnum; ++i)
         {
-            if (pProgramHeader[i].p_type != PT_LOAD) continue;
+            if (pProgramHeaders[i].p_type != PT_LOAD) continue;
 
             // For now, map all pages as all readable, all executable
-            void* data = pageFrame.AllocateMemory(pProgramHeader[i].p_memsz, USER_PAGE, pProgramHeader[i].p_vaddr);
-            memcpy(data, (void*)(pFile + pProgramHeader[i].p_offset), pProgramHeader[i].p_memsz);
+            void* data = pageFrame.AllocateMemory(pProgramHeaders[i].p_memsz, USER_PAGE, pProgramHeaders[i].p_vaddr);
+            memcpy(data, (void*)(pFile + pProgramHeaders[i].p_offset), pProgramHeaders[i].p_memsz);
+        }
+
+        // Get section headers
+        const ElfSectionHeader* pSectionHeaders = (const ElfSectionHeader*)(pFile + pHeader->e_shoff);
+
+        // Load section headers
+        for (uint32_t i = 0; i < pHeader->e_shnum; ++i)
+        {
+            const auto type =  pSectionHeaders[i].sh_type;
+            const auto size =  pSectionHeaders[i].sh_size;
+            const auto flags = pSectionHeaders[i].sh_flags;
+
+            switch (type)
+            {
+                case SectionHeaderType::SHT_NOBITS: // BSS
+                {
+                    if (size == 0) break;
+                    if ((flags & SectionHeaderFlags::SHF_ALLOC) == false) break;
+
+                    // Allocate memory and zero it
+                    void* data = pageFrame.AllocateMemory(size, USER_PAGE, pSectionHeaders[i].sh_addr);
+                    memset(data, size, 0);
+
+                    break;
+                }
+
+                case SectionHeaderType::SHT_STRTAB:
+                    assert(false);
+                break;
+
+                default:
+                    assert(false);
+                break;
+            }
         }
 
         return pHeader->e_entry;

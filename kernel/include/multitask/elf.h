@@ -91,6 +91,40 @@ namespace Multitask
         PT_LOAD = 1,    // Loadable segment
     };
 
+    // Section header
+    struct ElfSectionHeader
+    {
+        elf32_word sh_name;
+        elf32_word sh_type;
+        elf32_word sh_flags;
+        elf32_address sh_addr;
+        elf32_offset sh_offset;
+        elf32_word sh_size;
+        elf32_word sh_link;
+        elf32_word sh_info;
+        elf32_word sh_addralign;
+        elf32_word sh_entsize;
+    } __attribute__((packed));
+
+    // Section header sh_type
+    enum SectionHeaderType
+    {
+        SHT_NULL	    = 0, // Null section
+        SHT_PROGBITS	= 1, // Program information
+        SHT_SYMTAB	    = 2, // Symbol table
+        SHT_STRTAB	    = 3, // String table
+        SHT_RELA	    = 4, // Relocation (with addend)
+        SHT_NOBITS	    = 8, // Not present in file
+        SHT_REL		    = 9, // Relocation (no addend)
+    };
+
+    // Section header sh_flags
+    enum SectionHeaderFlags
+    {
+        SHF_WRITE	= 0x01, // Writable section
+	    SHF_ALLOC	= 0x02  // Exists in memory
+    };
+
     uint32_t LoadElfProgram(uint32_t pFile, Memory::PageFrame& pageFrame);
 }
 

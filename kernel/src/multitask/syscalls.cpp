@@ -42,6 +42,9 @@ namespace Multitask
     {
         // Get syscall id
         const uint32_t id = sRegisters.eax;
+        UART::WriteString("Syscall ");
+        UART::WriteNumber(id);
+        UART::WriteString("\n");
 
         int returnStatus = 0;
         switch (id)
