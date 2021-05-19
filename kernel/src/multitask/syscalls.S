@@ -3,6 +3,9 @@ section data
 extern kernelCR3
 extern bSwitchTasks
 
+eaxBuffer:
+    dd 0
+
 section text
 
 extern OnSyscall
@@ -11,7 +14,6 @@ extern SwitchToNewTask
 ; Syscall interrupt handler
 global IRQ80
 IRQ80:
-    xchg bx, bx
     ; Preserve registers
     pushad
     mov eax, cr3
@@ -41,6 +43,7 @@ IRQ80:
     ; now lies in eax, but C++ set it
     ; directly so there's no need
     ; to treat anything differently
+    mov [eaxBuffer], eax
 
     ; Restore segment registers
     pop gs
@@ -70,6 +73,9 @@ finishSyscall:
     pop eax
     mov cr3, eax
     popad
+
+    ; Get back eax
+    mov eax, [eaxBuffer]
 
     ; Return
     iret

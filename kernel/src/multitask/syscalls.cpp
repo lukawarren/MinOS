@@ -39,6 +39,7 @@ namespace Multitask
     static int      fstat(int file, stat* st);
     static caddr_t  sbrk(int incr);
     static void*    mmap(struct sMmapArgs* args);
+    static int      mprotect(void* addr, size_t len, int prot);
     static int      getpagesize();
 
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
@@ -65,8 +66,12 @@ namespace Multitask
                 returnStatus = (int) mmap((struct sMmapArgs*)sRegisters.ebx);
             break;
 
+            case 21:
+                returnStatus = (int)mprotect((void*)sRegisters.ebx, (size_t)sRegisters.ecx, (int)sRegisters.edx);
+            break;
+
             case 22:
-                returnStatus = getpagesize();
+                returnStatus = (int) getpagesize();
             break;
 
             default:
@@ -149,7 +154,7 @@ namespace Multitask
         assert(args->prot == PROT_NONE);
         const uint32_t pageFlags = PD_PRESENT(1);
 
-        // Flags - TODO: implement!
+        // Flags
         assert(args->flags == (MAP_PRIVATE| MAP_NORESERVE | MAP_ANONYMOUS));
 
         // File descriptor and offset
@@ -158,7 +163,31 @@ namespace Multitask
         // Address can be NULL, in which case we're free to do what we like
         assert(args->addr == NULL);
 
-        return task->m_PageFrame.AllocateMemory(args->length, pageFlags);
+        // Jury rig the flags to avoid mprotect
+        return task->m_PageFrame.AllocateMemory(args->length, USER_PAGE);
+    }
+
+    static int mprotect(void* addr __attribute__((unused)), size_t len __attribute__((unused)), int prot __attribute__((unused)))
+    {
+        /*
+            // TODO: Sanitise memory locations
+            auto task = Multitask::GetCurrentTask();
+            
+            // Virtual vs physical address will likely cause us problems
+            assert((uint32_t)addr < USER_PAGING_OFFSET);
+
+            // Check alignment and what-not
+            assert((uint32_t)addr % PAGE_SIZE == 0 && len % PAGE_SIZE == 0);
+
+            // Flags
+            assert(prot == (PROT_READ | PROT_WRITE));
+
+            for (int i = 0; i < len / PAGE_SIZE; ++i)
+                task->m_PageFrame.SetPage((uint32_t)addr + i*PAGE_SIZE, (uint32_t)addr + i*PAGE_SIZE, USER_PAGE);
+        */
+
+        // See mmap, we've jury rigged it!
+        return 0;
     }
 
     static int getpagesize()
