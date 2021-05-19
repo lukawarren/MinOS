@@ -24,6 +24,7 @@
 */
 
 #define MAP_FAILED ((void*)-1)
+#define __USE_MISC
 
 /* The following definitions basically come from the kernel headers.
    But the kernel header is not namespace clean.  */

@@ -15,7 +15,7 @@
 struct sMmapArgs
 {
     void* addr;
-    size_t size;
+    size_t length;
     int prot;
     int flags;
     int fd;
@@ -62,7 +62,7 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
     struct sMmapArgs args;
     args.addr = addr;
-    args.size = length;
+    args.length = length;
     args.prot = prot;
     args.flags = flags;
     args.fd = fd;

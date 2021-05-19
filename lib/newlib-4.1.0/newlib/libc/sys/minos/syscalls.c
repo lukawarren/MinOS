@@ -8,7 +8,6 @@
 
 // "It just works"
 #include "../../../../../kernel/include/multitask/syscalls.h"
-#define __USE_MISC
 #include "../../../../../kernel/include/multitask/mman.h"
 
 char **environ; /* pointer to array of char * strings that define the current environment variables */
