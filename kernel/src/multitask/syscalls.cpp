@@ -33,11 +33,17 @@ struct stat
 
 typedef	char* caddr_t;
 
+#define STDIN   0
+#define STDOUT  1
+#define STDERR  2
+
 namespace Multitask
 {
-    static void     _exit(int status); 
+    static void     _exit(int status);
+    static int      close(int fd);
     static int      fstat(int file, stat* st);
     static caddr_t  sbrk(int incr);
+    static int      write(int file, const void* ptr, size_t len);
     static void*    mmap(struct sMmapArgs* args);
     static int      mprotect(void* addr, size_t len, int prot);
     static int      getpagesize();
@@ -54,12 +60,20 @@ namespace Multitask
                 _exit((int)sRegisters.ebx);
             break;
 
+            case 1:
+                returnStatus = close((int)sRegisters.ebx);
+            break;
+
             case 4:
                 returnStatus = fstat((int)sRegisters.ebx, (stat*)sRegisters.ecx);
             break;
 
             case 12:
                 returnStatus = (int) sbrk((int)sRegisters.ebx);
+            break;
+
+            case 17:
+                returnStatus = write((int)sRegisters.ebx, (const void*)sRegisters.ecx, (size_t)sRegisters.edx);
             break;
 
             case 19:
@@ -104,6 +118,12 @@ namespace Multitask
         Interrupts::bSwitchTasks = true;
     }
 
+    static int close(int fd)
+    {
+        assert(fd == STDOUT || fd == STDIN || fd == STDERR);
+        return 0;
+    }
+
     static int fstat(int file __attribute__((unused)), stat* st)
     {
         // TODO: Sanitise memory location
@@ -143,6 +163,21 @@ namespace Multitask
         return (caddr_t) oldAddress;
     }
 
+    static int write(int file, const void* ptr, size_t len)
+    {
+        // TODO: Sanitise memory locations
+        assert(file == STDOUT);
+        
+        // Virtual vs physical address will likely cause us problems
+        assert((uint32_t)ptr < USER_PAGING_OFFSET);
+
+        const char* string = (const char*) ptr;
+        for (size_t i = 0; i < len; ++i)
+            UART::WriteChar(string[i]);
+
+        return 0;
+    }
+
     static void* mmap(struct sMmapArgs* args)
     {
         assert(args->length > 0);
@@ -152,7 +187,6 @@ namespace Multitask
         
         // Prot
         assert(args->prot == PROT_NONE);
-        const uint32_t pageFlags = PD_PRESENT(1);
 
         // Flags
         assert(args->flags == (MAP_PRIVATE| MAP_NORESERVE | MAP_ANONYMOUS));
