@@ -690,7 +690,7 @@ _ELIDABLE_INLINE int __sputc_r(struct _reent *_ptr, int _c, FILE *_p) {
 	  __sputc_r (_ptr, '\r', _p);
 #endif
 	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
-		return (*_p->_p++ = _c);
+		return (*_p->_p++ = (unsigned char)_c);
 	else
 		return (__swbuf_r(_ptr, _c, _p));
 }
