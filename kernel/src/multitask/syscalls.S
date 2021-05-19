@@ -11,6 +11,7 @@ extern SwitchToNewTask
 ; Syscall interrupt handler
 global IRQ80
 IRQ80:
+    xchg bx, bx
     ; Preserve registers
     pushad
     mov eax, cr3

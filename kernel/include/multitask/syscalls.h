@@ -60,7 +60,7 @@ SYSCALL_ARGS_2(int, gettimeofday, 18, struct timeval*, p, void*, tz)
 
 void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
-    struct sMmapArgs args;
+    volatile struct sMmapArgs args;
     args.addr = addr;
     args.length = length;
     args.prot = prot;

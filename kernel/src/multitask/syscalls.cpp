@@ -142,32 +142,23 @@ namespace Multitask
     {
         assert(args->length > 0);
 
-        // TODO: Sanitise memory location
+        // TODO: Sanitise memory locations
         auto task = Multitask::GetCurrentTask();
-
+        
         // Prot
-        uint32_t pageFlags = 0;
-        if (args->prot & PROT_READ || args->prot & PROT_WRITE || args->prot & PROT_EXEC)
-            pageFlags |= PD_PRESENT(1) | PD_GLOBALACCESS(1);
-        if (args->prot & PROT_READ) pageFlags |= PD_READWRITE(1);
+        assert(args->prot == PROT_NONE);
+        const uint32_t pageFlags = PD_PRESENT(1);
 
         // Flags - TODO: implement!
-        assert(args->flags == (MAP_PRIVATE|MAP_NORESERVE|MAP_ANONYMOUS));
+        assert(args->flags == (MAP_PRIVATE| MAP_NORESERVE | MAP_ANONYMOUS));
 
-        // File descriptor and offseet
-        assert(args->offset == NULL && args->fd == NULL);
+        // File descriptor and offset
+        assert(args->offset == 0 && args->fd == -1);
 
         // Address can be NULL, in which case we're free to do what we like
         assert(args->addr == NULL);
 
-        UART::WriteNumber((uint32_t) args->addr); UART::WriteChar('\n');
-        UART::WriteNumber(args->length); UART::WriteChar('\n');
-        UART::WriteNumber(args->prot); UART::WriteChar('\n');
-        UART::WriteNumber(args->flags); UART::WriteChar('\n');
-        UART::WriteNumber(args->fd); UART::WriteChar('\n');
-        UART::WriteNumber(args->offset); UART::WriteChar('\n');
-
-        return task->m_PageFrame.AllocateMemory(args->length, USER_PAGE, (uint32_t)args->addr);
+        return task->m_PageFrame.AllocateMemory(args->length, pageFlags);
     }
 
     static int getpagesize()
