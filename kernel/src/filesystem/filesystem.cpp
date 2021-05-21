@@ -5,12 +5,19 @@
 
 namespace Filesystem
 {
-    static File pFiles[1];
+    constexpr uint32_t nFiles = 1;
+    static File pFiles[nFiles];
 
     void Init()
     {
         pFiles[0] =  FramebufferFile();
         UART::WriteString("[Filesystem] Built filesystem\n");
+    }
+
+    File GetFile(const FileDescriptor fd)
+    {
+        assert(fd < nFiles);
+        return pFiles[fd];
     }
 
 }
