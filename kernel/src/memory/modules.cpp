@@ -1,6 +1,6 @@
 #include "memory/modules.h"
 #include "memory/memory.h"
-#include "stdout/uart.h"
+#include "io/uart.h"
 #include "kstdlib.h"
 
 namespace Modules

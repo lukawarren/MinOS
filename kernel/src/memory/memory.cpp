@@ -1,5 +1,5 @@
 #include "memory/memory.h"
-#include "stdout/uart.h"
+#include "io/uart.h"
 #include "cpu/cpu.h"
 #include "kstdlib.h"
 

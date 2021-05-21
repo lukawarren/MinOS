@@ -2,7 +2,7 @@
 #include "multitask/multitask.h"
 #include "multitask/syscalls.h"
 #include "io/framebuffer.h"
-#include "stdout/uart.h"
+#include "io/uart.h"
 #include "cpu/pic.h"
 #include "cpu/cpu.h"
 #include "cpu/pit.h"

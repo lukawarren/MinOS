@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <stdout/uart.h>
+#include <io/uart.h>
 
 size_t strlen(const char* string);
 char* strncpy(char* dest, const char* src, size_t maxLength);

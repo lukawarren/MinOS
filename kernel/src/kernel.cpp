@@ -3,7 +3,7 @@
 #include "cpu/gdt.h"
 #include "cpu/pic.h"
 #include "cpu/cmos.h"
-#include "stdout/uart.h"
+#include "io/uart.h"
 #include "memory/memory.h"
 #include "memory/modules.h"
 #include "multitask/multitask.h"

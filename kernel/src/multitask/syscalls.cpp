@@ -2,7 +2,7 @@
 #include "multitask/multitask.h"
 #include "multitask/mman.h"
 #include "memory/memory.h"
-#include "stdout/uart.h"
+#include "io/uart.h"
 #include "cpu/pic.h"
 #include "kstdlib.h"
 
