@@ -11,7 +11,7 @@ namespace Framebuffer
 {
     struct Framebuffer
     {
-        uint32_t address;
+        uint32_t address = 0;
         uint32_t width;
         uint32_t height;
         uint32_t pitch;

@@ -4,7 +4,7 @@
 
 namespace Framebuffer
 {
-    Framebuffer sFramebuffer;
+    Framebuffer sFramebuffer = {};
 
     void Init(const multiboot_info_t* pMultiboot)
     {

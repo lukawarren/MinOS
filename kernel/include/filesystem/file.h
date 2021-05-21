@@ -5,17 +5,24 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "kstdlib.h"
+
 namespace Filesystem
 {
     
     class File
     {
     public:
-        File();
-
         constexpr bool IsFile() const;
         constexpr bool IsDevice() const;
 
+        void Write(void* data)
+        {
+            memcpy(m_pData, data, m_size);
+        } 
+
+        void* m_pData = nullptr;
+        uint32_t m_size = 0;
     };
 
 }
