@@ -10,7 +10,7 @@
 #include "multitask/elf.h"
 #include "io/framebuffer.h"
 #include "multitask/multitask.h"
-#include "filesystem/Filesystem.h"
+#include "filesystem/filesystem.h"
 
 extern uint32_t __tss_stack; // TSS stack from linker
 
@@ -57,6 +57,9 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 
     // Setup devices
     Framebuffer::Init(pMultibootInfo);
+
+    // Setup filesystem
+    Filesystem::Init();
 
     // Setup tasks
     Multitask::Init();
