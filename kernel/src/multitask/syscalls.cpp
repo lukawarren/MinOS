@@ -37,11 +37,14 @@ typedef	char* caddr_t;
 #define STDOUT  1
 #define STDERR  2
 
+typedef uint32_t mode_t;
+
 namespace Multitask
 {
     static void     _exit(int status);
     static int      close(int fd);
     static int      fstat(int file, stat* st);
+    static int      open(const char *pathname, int flags, mode_t mode);
     static caddr_t  sbrk(int incr);
     static int      write(int file, const void* ptr, size_t len);
     static void*    mmap(struct sMmapArgs* args);
@@ -66,6 +69,10 @@ namespace Multitask
 
             case 4:
                 returnStatus = fstat((int)sRegisters.ebx, (stat*)sRegisters.ecx);
+            break;
+
+            case 10:
+                returnStatus = open((const char*)sRegisters.ebx, (int)sRegisters.ecx, (uint32_t)sRegisters.edx);
             break;
 
             case 12:
@@ -128,6 +135,17 @@ namespace Multitask
     {
         // TODO: Sanitise memory location
         st->st_mode = S_IFCHR; // Character device
+        return 0;
+    }
+
+    static int open(const char *pathname, int flags, mode_t mode)
+    {
+        auto task = Multitask::GetCurrentTask();
+        char const* path = (const char*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)pathname);
+
+        UART::WriteString("Path: ");
+        UART::WriteString(path);
+        UART::WriteString("\n");
         return 0;
     }
 

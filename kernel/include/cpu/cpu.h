@@ -40,6 +40,8 @@ namespace CPU
         extern void FlushTLB();
         extern void EnablePaging();
         extern void LoadPageDirectories(const uint32_t pageDirectoryAddress);
+
+        extern uint32_t GetCR3();
     }
 }
 

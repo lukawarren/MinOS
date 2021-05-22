@@ -63,14 +63,14 @@ namespace Memory
             SetPage(sFramebuffer.address + i*PAGE_SIZE, FRAMEBUFFER_OFFSET + i*PAGE_SIZE, USER_PAGE);
     }
 
-    static inline uint32_t GetPageDirectoryIndex(const uint32_t physicalAddress)
+    static inline uint32_t GetPageDirectoryIndex(const uint32_t virtualAddress)
     {
-        return (physicalAddress == 0) ? 0 : (physicalAddress / DIRECTORY_SIZE);
+        return (virtualAddress == 0) ? 0 : (virtualAddress / DIRECTORY_SIZE);
     }
 
-    static inline uint32_t GetPageTableIndex(const uint32_t physicalAddress)
+    static inline uint32_t GetPageTableIndex(const uint32_t virtualAddress)
     {
-        return (physicalAddress == 0) ? 0 : (physicalAddress / PAGE_SIZE);
+        return (virtualAddress == 0) ? 0 : (virtualAddress / PAGE_SIZE);
     }
 
     void PageFrame::InitPageDirectory(const uint32_t physicalAddress)
@@ -106,7 +106,7 @@ namespace Memory
         if (m_Type == Type::USERSPACE) kPageFrame.SetPageInBitmap(physicalAddress, bAllocated);
     }
 
-    void PageFrame::SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags)
+    void PageFrame::SetPage(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t flags)
     {
         // Set page table and bitmap
         m_PageTables[GetPageTableIndex(virtualAddress)] = physicalAddress | flags;
@@ -119,9 +119,9 @@ namespace Memory
         CPU::FlushTLB();
     }
 
-    void PageFrame::ClearPage(const uint32_t physicalAddress)
+    void PageFrame::ClearPage(const uint32_t physicalAddress, const uint32_t virtualAddress)
     {
-        m_PageTables[GetPageTableIndex(physicalAddress)] = PD_PRESENT(0);
+        m_PageTables[GetPageTableIndex(virtualAddress)] = PD_PRESENT(0);
         SetPageInBitmap(physicalAddress, false);
         CPU::FlushTLB();
     }
@@ -312,12 +312,12 @@ namespace Memory
         }
     }
 
-    void PageFrame::FreeMemory(const void* physicalAddress, const uint32_t size)
+    void PageFrame::FreeMemory(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t size)
     {
         const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
         for (uint32_t page = 0; page < neededPages; ++page)
         {
-            ClearPage((uint32_t)physicalAddress + page*PAGE_SIZE);
+            ClearPage((uint32_t)physicalAddress + page*PAGE_SIZE, virtualAddress + page*PAGE_SIZE);
         }
     }
     
@@ -339,18 +339,20 @@ namespace Memory
         // By luck (or good design) this will also free our stack, even though that was actually allocated with the kernel's page frame
         for (uint32_t page = 0; page < NUM_DIRECTORIES*NUM_TABLES; ++page)
         {
-            const uint32_t address = page * PAGE_SIZE;
+            const uint32_t virtualAddress = page * PAGE_SIZE;
             bool bUserPage =
-                (address >= userspaceBegin) &&
-                (address < Framebuffer::sFramebuffer.address || address > Framebuffer::sFramebuffer.address + Framebuffer::sFramebuffer.size);
+                (virtualAddress >= userspaceBegin) &&
+                (virtualAddress < FRAMEBUFFER_OFFSET || virtualAddress > FRAMEBUFFER_OFFSET + Framebuffer::sFramebuffer.size);
 
-            if (bUserPage && IsPageSet(address)) ClearPage(address);
+            const uint32_t physicalAddress = VirtualToPhysicalAddress(virtualAddress);
+
+            if (bUserPage && IsPageSet(physicalAddress)) ClearPage(physicalAddress, virtualAddress);
         }
 
         // Free paging structures
-        kPageFrame.FreeMemory(m_PageDirectories, sizeof(uint32_t) * NUM_DIRECTORIES);
-        kPageFrame.FreeMemory(m_PageTables, sizeof(uint32_t)*NUM_TABLES*NUM_DIRECTORIES);
-        kPageFrame.FreeMemory(m_PageBitmaps, sizeof(uint32_t)*NUM_DIRECTORIES*NUM_TABLES/32);
+        kPageFrame.FreeMemory((uint32_t)m_PageDirectories,  (uint32_t)m_PageDirectories,    sizeof(uint32_t)*NUM_DIRECTORIES);
+        kPageFrame.FreeMemory((uint32_t)m_PageTables,       (uint32_t)m_PageTables,         sizeof(uint32_t)*NUM_TABLES*NUM_DIRECTORIES);
+        kPageFrame.FreeMemory((uint32_t)m_PageBitmaps,      (uint32_t)m_PageBitmaps,        sizeof(uint32_t)*NUM_DIRECTORIES*NUM_TABLES/32);
     }
 
     static uint32_t GetNumberOfBitsSet(uint32_t i)
@@ -374,6 +376,15 @@ namespace Memory
         }
         
         return pages;
+    }
+
+    uint32_t PageFrame::VirtualToPhysicalAddress(uint32_t address)
+    {
+        // Work out offset from page aligned address
+        const uint32_t offset = address % PAGE_SIZE;
+
+        // Return appropriate entry
+        return (m_PageTables[GetPageTableIndex(address)] & 0b11111111111111111111000000000000) + offset;
     }
 
 }

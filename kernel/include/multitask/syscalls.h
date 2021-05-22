@@ -106,7 +106,7 @@ int open(const char* name, int flags, ...)
     va_end(arguments);
 
     int a;
-    asm volatile("int $0x80" : "=a" (a) : "0" (10), "b" ((unsigned int)name), "c" ((unsigned int)flags), "d" (0));
+    asm volatile("int $0x80" : "=a" (a) : "0" (10), "b" ((unsigned int)name), "c" ((unsigned int)flags), "d" ((uint32_t)mode));
     if (a < 0)
     {
         errno = a;

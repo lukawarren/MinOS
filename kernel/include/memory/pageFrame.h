@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "cpu/cpu.h"
+
 #define DIRECTORY_SIZE 0x400000
 #define PAGE_SIZE 0x1000
 
@@ -37,19 +39,35 @@ namespace Memory
 
             void InitPageDirectory(const uint32_t physicalAddress);
 
-            void SetPage(uint32_t physicalAddress, uint32_t virtualAddress, uint32_t flags);
-            void ClearPage(const uint32_t physicalAddress);
+            void SetPage(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t flags);
+            void ClearPage(const uint32_t physicalAddress, const uint32_t virtualAddress);
             bool IsPageSet(const uint32_t physicalAddress);
 
             void* AllocateMemory(const uint32_t size, const uint32_t flags, const uint32_t virtualAddress = 0);
-            void FreeMemory(const void* physicalAddress, const uint32_t size);
+            void FreeMemory(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t size);
 
             void UsePaging();
             uint32_t GetCR3();
 
             void FreeAllPages();
-
             uint32_t GetUsedPages();
+
+            template<typename T>
+            T GetValueAtVirtualAddress(uint32_t address)
+            {
+                uint32_t oldCR3 = CPU::GetCR3();
+
+                // De-reference address with our CR3...
+                T value;
+                UsePaging();
+                value = *((T*)address);
+
+                // ...then reload the original one
+                CPU::LoadPageDirectories(oldCR3);
+                return value;
+            }
+
+            uint32_t VirtualToPhysicalAddress(uint32_t address);
 
         private:
 
