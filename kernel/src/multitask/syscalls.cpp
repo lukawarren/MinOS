@@ -39,6 +39,39 @@ typedef	char* caddr_t;
 
 typedef uint32_t mode_t;
 
+// Open flags
+#define FILEIO_O_RDONLY           0x0
+#define FILEIO_O_WRONLY           0x1
+#define FILEIO_O_RDWR             0x2
+#define FILEIO_O_APPEND           0x8
+#define FILEIO_O_CREAT          0x200
+#define FILEIO_O_TRUNC          0x400
+#define FILEIO_O_EXCL           0x800
+#define FILEIO_O_SUPPORTED	(FILEIO_O_RDONLY | FILEIO_O_WRONLY| \
+				 FILEIO_O_RDWR   | FILEIO_O_APPEND| \
+				 FILEIO_O_CREAT  | FILEIO_O_TRUNC| \
+				 FILEIO_O_EXCL)
+
+// mode_t bits
+#define FILEIO_S_IFREG        0100000
+#define FILEIO_S_IFDIR         040000
+#define FILEIO_S_IFCHR         020000
+#define FILEIO_S_IRUSR           0400   // User has read permission
+#define FILEIO_S_IWUSR           0200
+#define FILEIO_S_IXUSR           0100
+#define FILEIO_S_IRWXU           0700
+#define FILEIO_S_IRGRP            040
+#define FILEIO_S_IWGRP            020   // Group has write permission
+#define FILEIO_S_IXGRP            010   // Group has execute permission
+#define FILEIO_S_IRWXG            070
+#define FILEIO_S_IROTH             04
+#define FILEIO_S_IWOTH             02
+#define FILEIO_S_IXOTH             01
+#define FILEIO_S_IRWXO             07
+#define FILEIO_S_SUPPORTED         (FILEIO_S_IFREG|FILEIO_S_IFDIR|  \
+				    FILEIO_S_IRWXU|FILEIO_S_IRWXG|  \
+                                    FILEIO_S_IRWXO)
+
 namespace Multitask
 {
     static void     _exit(int status);
@@ -138,14 +171,19 @@ namespace Multitask
         return 0;
     }
 
-    static int open(const char *pathname, int flags, mode_t mode)
+    static int open(const char *pathname, int flags, mode_t mode __attribute__((unused)))
     {
         auto task = Multitask::GetCurrentTask();
+        
+        // Get path
         char const* path = (const char*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)pathname);
+        assert(strcmp(path, "/dev/fb"));
 
-        UART::WriteString("Path: ");
-        UART::WriteString(path);
-        UART::WriteString("\n");
+        // Flags
+        assert(flags == (FILEIO_O_RDWR | FILEIO_O_CREAT | FILEIO_O_TRUNC));
+
+        // Mode specifies what permissions should be applied, should the file be created
+
         return 0;
     }
 
