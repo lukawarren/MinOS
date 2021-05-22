@@ -7,10 +7,67 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define SYSCALL_ARGS_0(type, fn, num) type fn() { int a; asm volatile("int $0x80" : "=a" (a) : "0" (num)); return (type) a; }
-#define SYSCALL_ARGS_1(type, fn, num, p1, n1) type fn(p1 n1) { int a; asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((unsigned int)n1)); return (type) a; }
-#define SYSCALL_ARGS_2(type, fn, num, p1, n1, p2, n2) type fn(p1 n1, p2 n2) { int a; asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((unsigned int)n1), "c" ((unsigned int)n2)); return (type) a; }
-#define SYSCALL_ARGS_3(type, fn, num, p1, n1, p2, n2, p3, n3) type fn(p1 n1, p2 n2, p3 n3) { int a; asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((unsigned int)n1), "c" ((unsigned int)n2), "d" ((unsigned int)n3)); return (type) a; }
+#ifndef Kernel
+
+#include <errno.h>
+#undef errno
+extern int errno;
+
+#include <stdarg.h>
+
+#endif
+
+#define SYSCALL_ARGS_0(type, fn, num)\
+type fn()\
+{\
+    int a;\
+    asm volatile("int $0x80" : "=a" (a) : "0" (num));\
+    if (a < 0)\
+    {\
+        errno = a;\
+        return (type) -1;\
+    }\
+    return (type) a;\
+}
+
+#define SYSCALL_ARGS_1(type, fn, num, p1, n1)\
+type fn(p1 n1)\
+{\
+    int a;\
+    asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((unsigned int)n1));\
+    if (a < 0)\
+    {\
+        errno = a;\
+        return (type) -1;\
+    }\
+    return (type) a;\
+}
+
+#define SYSCALL_ARGS_2(type, fn, num, p1, n1, p2, n2)\
+type fn(p1 n1, p2 n2)\
+{\
+    int a;\
+    asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((unsigned int)n1), "c" ((unsigned int)n2));\
+    if (a < 0)\
+    {\
+        errno = a;\
+        return (type) -1;\
+    }\
+    return (type) a;\
+}
+
+#define SYSCALL_ARGS_3(type, fn, num, p1, n1, p2, n2, p3, n3)\
+type fn(p1 n1, p2 n2, p3 n3)\
+{\
+    int a;\
+    asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((unsigned int)n1), "c" ((unsigned int)n2), "d" ((unsigned int)n3));\
+    if (a < 0)\
+    {\
+        errno = a;\
+        return (type) -1;\
+    }\
+    return (type) a;\
+}
 
 struct sMmapArgs
 {
@@ -39,13 +96,22 @@ SYSCALL_ARGS_2(int, kill, 7, int, pid, int, sig)
 SYSCALL_ARGS_2(int, link, 8, const char*, old, const char*, new)
 SYSCALL_ARGS_3(off_t, lseek, 9, int, file, off_t, ptr, int, dir)
 
-#include <errno.h>
-#undef errno
-extern int errno;
 int open(const char* name, int flags, ...)
 {
+    va_list arguments;
+    mode_t mode = 0;
+
+    va_start(arguments, mode);
+    mode |= va_arg(arguments, mode_t);
+    va_end(arguments);
+
     int a;
-    asm volatile("int $0x80" : "=a" (a) : "0" (10));
+    asm volatile("int $0x80" : "=a" (a) : "0" (10), "b" ((unsigned int)name), "c" ((unsigned int)flags), "d" (0));
+    if (a < 0)
+    {
+        errno = a;
+        return -1;
+    }
     return a;
 }
 
