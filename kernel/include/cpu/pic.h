@@ -29,9 +29,12 @@
 
 #define PIC_MASK_PIT_CODE               0x1
 #define PIC_MASK_KEYBOARD_CODE          0x2
+#define PIC_MASK_MOUSE_CODE             0xc
 #define PIC_MASK_PIT                    0xff ^ PIC_MASK_PIT_CODE
 #define PIC_MASK_KEYBOARD               0xff ^ PIC_MASK_KEYBOARD_CODE
 #define PIC_MASK_PIT_AND_KEYBOARD       0xff ^ PIC_MASK_PIT_CODE ^ PIC_MASK_KEYBOARD_CODE
+#define PIC_MASK_PIT_AND_MOUSE          0xff ^ PIC_MASK_PIT_CODE ^ PIC_MASK_MOUSE_CODE
+#define PIC_PIT_KEYBOARD_AND_MOUSE      0xff ^ PIC_MASK_PIT ^ PIC_MASK_KEYBOARD ^ PIC_MASK_MOUSE_CODE
 #define PIC_MASK_ALL                    0xff
 
 namespace PIC

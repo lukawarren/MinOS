@@ -76,7 +76,7 @@ namespace Multitask
 {
     static void     _exit(int status);
     static int      close(int fd);
-    static int      fstat(int file, stat* st);
+    static int      fstat(int fd, stat* st);
     static int      open(const char *pathname, int flags, mode_t mode);
     static caddr_t  sbrk(int incr);
     static int      write(int file, const void* ptr, size_t len);
@@ -140,7 +140,7 @@ namespace Multitask
                 Interrupts::bSwitchTasks = true;
             break;
         }
-        
+
         PIC::EndInterrupt(0x80);
         return returnStatus;
     }
@@ -160,13 +160,14 @@ namespace Multitask
 
     static int close(int fd)
     {
-        assert(fd == STDOUT || fd == STDIN || fd == STDERR);
+        assert(fd == STDOUT || fd == STDIN || fd == STDERR || fd == 4); // 4 being /dev/fb
         return 0;
     }
 
-    static int fstat(int file __attribute__((unused)), stat* st)
+    static int fstat(int fd __attribute__((unused)), stat* st)
     {
         // TODO: Sanitise memory location
+        assert(fd == STDOUT || fd == STDIN || fd == STDERR);
         st->st_mode = S_IFCHR; // Character device
         return 0;
     }
@@ -184,7 +185,7 @@ namespace Multitask
 
         // Mode specifies what permissions should be applied, should the file be created
 
-        return 0;
+        return 4;  // File descriptor for /dev/fb
     }
 
     static caddr_t sbrk(int incr)
@@ -239,22 +240,41 @@ namespace Multitask
         assert(args->length > 0);
 
         // TODO: Sanitise memory locations
-        auto task = Multitask::GetCurrentTask();
+        Task* task = Multitask::GetCurrentTask();
         
-        // Prot
-        assert(args->prot == PROT_NONE);
+        // Jury rigged for malloc's mmap
+        if (args->fd == -1)
+        {
+            // Prot
+            assert(args->prot == PROT_NONE);
 
-        // Flags
-        assert(args->flags == (MAP_PRIVATE| MAP_NORESERVE | MAP_ANONYMOUS));
+            // Flags
+            assert(args->flags == (MAP_PRIVATE| MAP_NORESERVE | MAP_ANONYMOUS));
 
-        // File descriptor and offset
-        assert(args->offset == 0 && args->fd == -1);
+            // File descriptor and offset
+            assert(args->offset == 0 && args->fd == -1);
 
-        // Address can be NULL, in which case we're free to do what we like
-        assert(args->addr == NULL);
+            // Address can be NULL, in which case we're free to do what we like
+            assert(args->addr == NULL);
 
-        // Jury rig the flags to avoid mprotect
-        return task->m_PageFrame.AllocateMemory(args->length, USER_PAGE);
+            // Jury rig the flags to avoid mprotect
+            return task->m_PageFrame.AllocateMemory(args->length, USER_PAGE);
+        }
+
+        // File mmap
+        else if (args->fd == 4) // 4 being /dev/fb
+        {
+            // Surprise - we were already mapped!
+            // TODO: Actually map
+            return (void*)FRAMEBUFFER_OFFSET;
+        }
+
+        // Else time to actually implement mmap!
+        else
+        {
+            assert(false);
+            return 0;
+        }
     }
 
     static int mprotect(void* addr __attribute__((unused)), size_t len __attribute__((unused)), int prot __attribute__((unused)))

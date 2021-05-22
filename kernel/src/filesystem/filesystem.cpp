@@ -5,12 +5,12 @@
 
 namespace Filesystem
 {
-    constexpr uint32_t nFiles = 1;
+    constexpr uint32_t nFiles = 4; // First 3 are reserved for stdout, stdin and stderr
     static File pFiles[nFiles];
 
     void Init()
     {
-        pFiles[0] =  FramebufferFile();
+        pFiles[3] =  FramebufferFile();
         UART::WriteString("[Filesystem] Built filesystem\n");
     }
 

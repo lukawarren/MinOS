@@ -57,7 +57,7 @@ namespace Memory
         for (uint32_t i = 0; i < stackSize / PAGE_SIZE; ++i)
             SetPage(stack + i * PAGE_SIZE, stack + i * PAGE_SIZE, USER_PAGE);
 
-        // Map in framebuffer
+        // Map in framebuffer - TODO: don't!
         using namespace Framebuffer;
         for (uint32_t i = 0; i < sFramebuffer.size / PAGE_SIZE; ++i)
             SetPage(sFramebuffer.address + i*PAGE_SIZE, FRAMEBUFFER_OFFSET + i*PAGE_SIZE, USER_PAGE);
