@@ -2,6 +2,8 @@
 #include "multitask/multitask.h"
 #include "multitask/syscalls.h"
 #include "io/framebuffer.h"
+#include "io/keyboard.h"
+#include "io/mouse.h"
 #include "io/uart.h"
 #include "cpu/pic.h"
 #include "cpu/cpu.h"
@@ -79,8 +81,16 @@ namespace Interrupts
     {
         switch (irq)
         {
-            case 0x0: // IRQ
+            case 0x0: // PIT
                 assert(false); // Shouldn't be using the generic interrupt handler!
+            break;
+
+            case 0x1: // Keyboard
+                Keyboard::OnInterrupt();
+            break;
+
+            case 0xC: // Mouse
+                Mouse::OnInterrupt();
             break;
 
             default:

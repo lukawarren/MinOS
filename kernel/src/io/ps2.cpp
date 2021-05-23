@@ -7,11 +7,6 @@ namespace PS2
     static void WaitForOutput();
     static void WaitForInput();
 
-    static uint8_t WriteAndRead(const uint8_t value);
-    static void Write(const uint8_t port, const uint8_t value);
-    
-    static uint8_t SendMouseMessage(const uint8_t value);
-
     void Init()
     {
         using namespace CPU;
@@ -76,21 +71,12 @@ namespace PS2
 
         Write(PS2_STATUS_AND_COMMAND_PORT, PS2_WRITE_CONFIG_BYTE);
         Write(PS2_DATA_PORT, configByte);
-
-        /*
-        // Reset first device
-        WaitForOutput();    outb(PS2_DATA_PORT, PS2_RESET_DEVICE);
-        WaitForInput();     inb(PS2_DATA_PORT);
-
-        // Reset second device
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_NEXT_BYTE_USES_SECOND_PORT);
-        WaitForOutput();    outb(PS2_DATA_PORT, PS2_RESET_DEVICE);
-        WaitForInput();     inb(PS2_DATA_PORT);
-        */
         
-        // Init mouse
-        assert(SendMouseMessage(PS2_MOUSE_USE_DEFAULTS) == PS2_ACK);
-        assert(SendMouseMessage(PS2_MOUSE_ENABLE_STREAMING) == PS2_ACK);
+        // Reset keyboard
+        assert(SendKeyboardMessage(PS2_RESET_DEVICE) == PS2_SELF_TEST_PASSED);
+
+        // Reset mouse
+        assert(SendMouseMessage(PS2_RESET_DEVICE) == PS2_ACK);
 
         UART::WriteString("[PS/2] Initialised\n");
     }
@@ -99,7 +85,7 @@ namespace PS2
     {
         for(;;)
         {
-            if((CPU::inb(PS2_STATUS_AND_COMMAND_PORT) & PS2_OUTPUT_BUFFER_FULL) == false)
+            if((CPU::inb(PS2_STATUS_AND_COMMAND_PORT) & PS2_INPUT_BUFFER_FULL) == false)
                 return;
         }
     }
@@ -108,12 +94,12 @@ namespace PS2
     {
         for(;;)
         {
-            if((CPU::inb(PS2_STATUS_AND_COMMAND_PORT) & PS2_INPUT_BUFFER_FULL) == false)
+            if((CPU::inb(PS2_STATUS_AND_COMMAND_PORT) & PS2_OUTPUT_BUFFER_FULL) == true)
                 return;
         }
     }
 
-    static uint8_t WriteAndRead(const uint8_t value)
+    uint8_t WriteAndRead(const uint8_t value)
     {
         WaitForOutput();
         CPU::outb(PS2_STATUS_AND_COMMAND_PORT, value);
@@ -121,18 +107,26 @@ namespace PS2
         return CPU::inb(PS2_DATA_PORT);
     }
 
-    static void Write(const uint8_t port, const uint8_t value)
+    void Write(const uint8_t port, const uint8_t value)
     {
         WaitForOutput();
         CPU::outb(port, value);
     }
 
-    static uint8_t SendMouseMessage(const uint8_t value)
+    uint8_t SendKeyboardMessage(const uint8_t value)
+    {
+        WaitForOutput();
+        CPU::outb(PS2_DATA_PORT, value);
+        WaitForInput();
+        CPU::inb(PS2_DATA_PORT);
+        WaitForInput();
+        return CPU::inb(PS2_DATA_PORT);
+    }
+
+    uint8_t SendMouseMessage(const uint8_t value)
     {
         WaitForOutput();
         CPU::outb(PS2_STATUS_AND_COMMAND_PORT, PS2_NEXT_BYTE_USES_SECOND_PORT);
-        WaitForInput();
-        CPU::inb(PS2_DATA_PORT);
         WaitForOutput();
         CPU::outb(PS2_DATA_PORT, value);
         WaitForInput();

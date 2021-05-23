@@ -5,6 +5,8 @@
 #include "cpu/pic.h"
 #include "io/uart.h"
 #include "io/ps2.h"
+#include "io/mouse.h"
+#include "io/keyboard.h"
 #include "cpu/cmos.h"
 #include "memory/memory.h"
 #include "memory/modules.h"
@@ -45,8 +47,8 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 
     // TSS descriptor - offset from start of GDT OR'ed with 3 to enable RPL 3
     const uint16_t tssDescriptor = (5 * sizeof(uint64_t)) | 3;
-
-    CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), tssDescriptor, PIC_MASK_PIT_KEYBOARD_AND_MOUSE, PIC_MASK_ALL);
+    
+    CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), tssDescriptor, PIC_MASK_NONE, PIC_MASK_NONE);
 
     // Check multiboot, quickly grab GRUB modules, then configure memory
     if ((pMultibootInfo->flags & 6) == false) UART::WriteString("Multiboot error!");
@@ -59,6 +61,8 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     // Setup devices
     Framebuffer::Init(pMultibootInfo);
     PS2::Init();
+    Mouse::Init();
+    Keyboard::Init();
 
     // Setup filesystem
     Filesystem::Init();

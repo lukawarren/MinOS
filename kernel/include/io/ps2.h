@@ -1,6 +1,6 @@
 #pragma once
-#ifndef MOUSE_H
-#define MOUSE_H
+#ifndef PS2_H
+#define PS2_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -39,6 +39,7 @@
 
 #define PS2_RESET_DEVICE                    0xFF
 #define PS2_ACK                             0xFA
+#define PS2_SELF_TEST_PASSED                0xAA
 
 // Mouse
 #define PS2_MOUSE_USE_DEFAULTS              0xF6
@@ -57,6 +58,12 @@
 namespace PS2
 {
     void Init();
+
+    uint8_t WriteAndRead(const uint8_t value);
+    void Write(const uint8_t port, const uint8_t value);
+
+    uint8_t SendKeyboardMessage(const uint8_t value);
+    uint8_t SendMouseMessage(const uint8_t value);
 }
 
 #endif
