@@ -6,7 +6,10 @@ namespace PS2
 {
     static void WaitForOutput();
     static void WaitForInput();
+
     static uint8_t WriteAndRead(const uint8_t value);
+    static void Write(const uint8_t port, const uint8_t value);
+    
     static uint8_t SendMouseMessage(const uint8_t value);
 
     void Init()
@@ -14,28 +17,24 @@ namespace PS2
         using namespace CPU;
 
         // First things first, disable any PS/2 devices so they can't complain
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_DISABLE_FIRST_PORT);
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_DISABLE_SECOND_PORT);
+        Write(PS2_STATUS_AND_COMMAND_PORT, PS2_DISABLE_FIRST_PORT);
+        Write(PS2_STATUS_AND_COMMAND_PORT, PS2_DISABLE_SECOND_PORT);
 
         // Flush the output buffer (who knwows what happened?!)
         inb(0x60);
 
         // Get the configuration
         uint8_t configByte = WriteAndRead(PS2_READ_CONFIG_BYTE);
-        Configuration configuration = *reinterpret_cast<Configuration*>(&configByte); 
 
         // Sanity check
-        assert(configuration.systemFlag == 1);
+        assert(~configByte & PS2_CONFIG_MUST_BE_ZERO);
 
-        // Set the controller configuration byte
-        configuration.firstPortInterrupt = 0;
-        configuration.secondPortInterrupt = 0;
-        configuration.firstPortTranslation = 1;
+        // Disable interrupts and translation
+        configByte &= (uint8_t) ~(PS2_CONFIG_FIRST_PORT_INTERRUPT | PS2_CONFIG_SECOND_PORT_INTERRUPT | PS2_CONFIG_FIRST_PORT_TRANSLATION);
 
         // Write to controller
-        configByte = *reinterpret_cast<uint8_t*>(&configuration);
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_WRITE_CONFIG_BYTE);
-        WaitForOutput();    outb(PS2_DATA_PORT, configByte);
+        Write(PS2_STATUS_AND_COMMAND_PORT, PS2_WRITE_CONFIG_BYTE);
+        Write(PS2_DATA_PORT, configByte);
 
         // Perform controller self-test
         const auto controllerStatus = WriteAndRead(PS2_TEST_CONTROLLER);
@@ -46,18 +45,17 @@ namespace PS2
         }
 
         // Check for two channels by enabling second port then querying configuration again
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_ENABLE_SECOND_PORT);
+        Write(PS2_STATUS_AND_COMMAND_PORT, PS2_ENABLE_SECOND_PORT);
         configByte = WriteAndRead(PS2_READ_CONFIG_BYTE);
-        configuration = *reinterpret_cast<Configuration*>(&configByte); 
 
-        if (configuration.secondPortClock != 0)
+        if (configByte & PS2_CONFIG_SECOND_PORT_CLOCK)
         {
             UART::WriteString("[PS/2] Second channel is not present\n");
             assert(false); 
         }
 
         // Disable it again before things get funky
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_DISABLE_SECOND_PORT);
+        Write(PS2_STATUS_AND_COMMAND_PORT, PS2_DISABLE_SECOND_PORT);
 
         // Check both channels
         if (WriteAndRead(PS2_TEST_FIRST_PORT) != PS2_PORT_TEST_PASSED || WriteAndRead(PS2_TEST_SECOND_PORT) != PS2_PORT_TEST_PASSED)
@@ -66,29 +64,18 @@ namespace PS2
             assert(false); 
         }
 
-        // Enable interupts
-        configuration.firstPortInterrupt = 1;
-        configuration.secondPortInterrupt = 1;
-        configuration.firstPortClock = 0;
-        configuration.secondPortClock = 0;
-        configuration.firstPortTranslation = 1;
-        configByte = *reinterpret_cast<uint8_t*>(&configuration);
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_WRITE_CONFIG_BYTE);
-        WaitForOutput();    outb(PS2_DATA_PORT, configByte);
-
         // Enable devices
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_ENABLE_FIRST_PORT);
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_ENABLE_SECOND_PORT);
+        Write(PS2_STATUS_AND_COMMAND_PORT, PS2_ENABLE_FIRST_PORT);
+        Write(PS2_STATUS_AND_COMMAND_PORT, PS2_ENABLE_SECOND_PORT);
 
-        // Enable interupts
-        configuration.firstPortInterrupt = 1;
-        configuration.secondPortInterrupt = 1;
-        configuration.firstPortClock = 0;
-        configuration.secondPortClock = 0;
-        configuration.firstPortTranslation = 1;
-        configByte = *reinterpret_cast<uint8_t*>(&configuration);
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_WRITE_CONFIG_BYTE);
-        WaitForOutput();    outb(PS2_DATA_PORT, configByte);
+        // Enable interupts, translation and set the system flag too
+        configByte |= (PS2_CONFIG_FIRST_PORT_INTERRUPT | PS2_CONFIG_SECOND_PORT_INTERRUPT | PS2_CONFIG_FIRST_PORT_TRANSLATION | PS2_CONFIG_SYSTEM_FLAG);
+
+        // Enable clocks by clearing bits
+        configByte &= (uint8_t) ~(PS2_CONFIG_FIRST_PORT_CLOCK | PS2_CONFIG_SECOND_PORT_CLOCK);
+
+        Write(PS2_STATUS_AND_COMMAND_PORT, PS2_WRITE_CONFIG_BYTE);
+        Write(PS2_DATA_PORT, configByte);
 
         /*
         // Reset first device
@@ -134,13 +121,22 @@ namespace PS2
         return CPU::inb(PS2_DATA_PORT);
     }
 
+    static void Write(const uint8_t port, const uint8_t value)
+    {
+        WaitForOutput();
+        CPU::outb(port, value);
+    }
+
     static uint8_t SendMouseMessage(const uint8_t value)
     {
-        using namespace CPU;
-        WaitForOutput();    outb(PS2_STATUS_AND_COMMAND_PORT, PS2_NEXT_BYTE_USES_SECOND_PORT);
-        WaitForInput();     inb(PS2_DATA_PORT);
-        WaitForOutput();    outb(PS2_DATA_PORT, value);
-        WaitForInput();     return inb(PS2_DATA_PORT);
+        WaitForOutput();
+        CPU::outb(PS2_STATUS_AND_COMMAND_PORT, PS2_NEXT_BYTE_USES_SECOND_PORT);
+        WaitForInput();
+        CPU::inb(PS2_DATA_PORT);
+        WaitForOutput();
+        CPU::outb(PS2_DATA_PORT, value);
+        WaitForInput();
+        return CPU::inb(PS2_DATA_PORT);
     }
 
 }
