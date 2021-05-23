@@ -1,4 +1,5 @@
 #include "memory/pageFrame.h"
+#include "filesystem/filesystem.h"
 #include "io/framebuffer.h"
 #include "memory/memory.h"
 #include "cpu/cpu.h"
@@ -56,11 +57,6 @@ namespace Memory
         stackSize = Memory::RoundToNextPageSize(stackSize);
         for (uint32_t i = 0; i < stackSize / PAGE_SIZE; ++i)
             SetPage(stack + i * PAGE_SIZE, stack + i * PAGE_SIZE, USER_PAGE);
-
-        // Map in framebuffer - TODO: don't!
-        using namespace Framebuffer;
-        for (uint32_t i = 0; i < sFramebuffer.size / PAGE_SIZE; ++i)
-            SetPage(sFramebuffer.address + i*PAGE_SIZE, FRAMEBUFFER_OFFSET + i*PAGE_SIZE, USER_PAGE);
     }
 
     static inline uint32_t GetPageDirectoryIndex(const uint32_t virtualAddress)
@@ -320,6 +316,16 @@ namespace Memory
             ClearPage((uint32_t)physicalAddress + page*PAGE_SIZE, virtualAddress + page*PAGE_SIZE);
         }
     }
+
+    void PageFrame::UnmapMemory(const uint32_t virtualAddress, const uint32_t size)
+    {
+        const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
+        for (uint32_t page = 0; page < neededPages; ++page)
+        {
+            m_PageTables[GetPageTableIndex(virtualAddress)] = PD_PRESENT(0);
+            CPU::FlushTLB();
+        }
+    }
     
     void PageFrame::UsePaging()
     {
@@ -335,16 +341,14 @@ namespace Memory
     {
         assert(m_Type == Type::USERSPACE);
 
-        // Go through each page in our bitmap and free that page, unless we're talking something special like the kernel or the framebuffer
+        // Go through each page in our bitmap and free that page, unless we're talking something special like the kernel
         // By luck (or good design) this will also free our stack, even though that was actually allocated with the kernel's page frame
         for (uint32_t page = 0; page < NUM_DIRECTORIES*NUM_TABLES; ++page)
         {
             const uint32_t virtualAddress = page * PAGE_SIZE;
-            bool bUserPage =
-                (virtualAddress >= userspaceBegin) &&
-                (virtualAddress < FRAMEBUFFER_OFFSET || virtualAddress > FRAMEBUFFER_OFFSET + Framebuffer::sFramebuffer.size);
-
             const uint32_t physicalAddress = VirtualToPhysicalAddress(virtualAddress);
+
+            bool bUserPage = (virtualAddress >= userspaceBegin);
 
             if (bUserPage && IsPageSet(physicalAddress)) ClearPage(physicalAddress, virtualAddress);
         }

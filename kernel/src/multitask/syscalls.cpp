@@ -1,5 +1,6 @@
 #include "multitask/syscalls.h"
 #include "multitask/multitask.h"
+#include "filesystem/filesystem.h"
 #include "multitask/mman.h"
 #include "memory/memory.h"
 #include "io/uart.h"
@@ -160,15 +161,23 @@ namespace Multitask
 
     static int close(int fd)
     {
-        assert(fd == STDOUT || fd == STDIN || fd == STDERR || fd == 4); // 4 being /dev/fb
+        assert(fd == STDOUT || fd == STDIN || fd == STDERR || fd == Filesystem::FileDescriptors::framebuffer || fd == Filesystem::FileDescriptors::mouse);
         return 0;
     }
 
-    static int fstat(int fd __attribute__((unused)), stat* st)
+    static int fstat(int fd, stat* st)
     {
         // TODO: Sanitise memory location
-        assert(fd == STDOUT || fd == STDIN || fd == STDERR);
-        st->st_mode = S_IFCHR; // Character device
+        struct stat* kernelMappedSt = (struct stat*) Multitask::GetCurrentTask()->m_PageFrame.VirtualToPhysicalAddress((uint32_t)st);
+
+        if(fd == STDOUT || fd == STDIN || fd == STDERR) kernelMappedSt->st_mode = S_IFCHR; // Character device
+        else
+        {
+            // Block device
+            kernelMappedSt->st_mode = S_IFBLK;
+            kernelMappedSt->st_size = Filesystem::GetFile(fd)->m_Size;
+        }
+
         return 0;
     }
 
@@ -178,14 +187,15 @@ namespace Multitask
         
         // Get path
         char const* path = (const char*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)pathname);
-        assert(strcmp(path, "/dev/fb"));
+        assert(strcmp(path, "/dev/fb") || strcmp(path, "/dev/mouse"));
 
         // Flags
         assert(flags == (FILEIO_O_RDWR | FILEIO_O_CREAT | FILEIO_O_TRUNC));
 
-        // Mode specifies what permissions should be applied, should the file be created
+        // (Mode specifies what permissions should be applied, should the file be created)
 
-        return 4;  // File descriptor for /dev/fb
+        if (strcmp(path, "/dev/fb")) return Filesystem::FileDescriptors::framebuffer;
+        else return Filesystem::FileDescriptors::mouse;
     }
 
     static caddr_t sbrk(int incr)
@@ -262,18 +272,23 @@ namespace Multitask
         }
 
         // File mmap
-        else if (args->fd == 4) // 4 being /dev/fb
-        {
-            // Surprise - we were already mapped!
-            // TODO: Actually map
-            return (void*)FRAMEBUFFER_OFFSET;
-        }
-
-        // Else time to actually implement mmap!
         else
         {
-            assert(false);
-            return 0;
+            assert(args->offset == 0);
+            assert(args->addr == NULL);
+
+            // (ignore flags, protection, and everything else for now)
+
+            const Filesystem::File* file = Filesystem::GetFile(args->fd);
+            
+            // Map into memory
+            uint32_t address = (uint32_t) task->m_PageFrame.AllocateMemory(file->m_Size, USER_PAGE);
+            for (uint32_t i = 0; i < Memory::RoundToNextPageSize(file->m_Size) / PAGE_SIZE; ++i)
+            {
+                task->m_PageFrame.SetPage((uint32_t)file->m_pData + i*PAGE_SIZE, address + i*PAGE_SIZE, USER_PAGE);
+            }
+
+            return (void*)address;
         }
     }
 

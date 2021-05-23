@@ -12,9 +12,21 @@ namespace Filesystem
     
     typedef uint32_t FileDescriptor;
 
-    void Init();
-    File GetFile(const FileDescriptor fd);
+    enum FileDescriptors
+    {
+        stdin = 0,
+        stdout = 1,
+        stderr = 2,
 
+        framebuffer = 3,
+        mouse = 4,
+
+        N_FILES = 5
+    };
+
+    void Init();
+
+    File* GetFile(const FileDescriptor fd);
 }
 
 #endif

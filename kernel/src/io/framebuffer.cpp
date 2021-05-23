@@ -1,5 +1,7 @@
 #include "io/framebuffer.h"
 #include "memory/pageFrame.h"
+#include "filesystem/filesystem.h"
+#include "filesystem/deviceFile.h"
 #include "kstdlib.h"
 
 namespace Framebuffer
@@ -19,10 +21,13 @@ namespace Framebuffer
         sFramebuffer.size = sFramebuffer.pitch * sFramebuffer.width;
         assert(sFramebuffer.pitch == sizeof(uint32_t)*sFramebuffer.width); // Check it's 1 uint32_t per pixel
 
-        // Map framebuffer
+        // Map framebuffer into kernel
         const uint32_t nPages = sFramebuffer.size / PAGE_SIZE;
         for (uint32_t i = 0; i < nPages; ++i)
             Memory::kPageFrame.SetPage(sFramebuffer.address + i*PAGE_SIZE, sFramebuffer.address + i*PAGE_SIZE, KERNEL_PAGE);
+
+        // Install file
+        *Filesystem::GetFile(Filesystem::FileDescriptors::framebuffer) = Filesystem::DeviceFile(sFramebuffer.size, (void*)sFramebuffer.address);
     }
 
     uint32_t GetColour(const uint8_t r, const uint8_t g, const uint8_t b)

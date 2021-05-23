@@ -18,11 +18,11 @@ namespace Filesystem
 
         void Write(void* data)
         {
-            memcpy(m_pData, data, m_size);
+            memcpy(m_pData, data, m_Size);
         } 
 
         void* m_pData = nullptr;
-        uint32_t m_size = 0;
+        uint32_t m_Size = 0;
     };
 
 }

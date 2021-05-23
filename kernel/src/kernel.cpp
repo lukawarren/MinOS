@@ -58,14 +58,14 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     // Sanity check it all and reserve memory before it's snatched again!
     Modules::PostInit();
 
+    // Setup filesystem
+    Filesystem::Init();
+
     // Setup devices
     Framebuffer::Init(pMultibootInfo);
     PS2::Init();
     Mouse::Init();
     Keyboard::Init();
-
-    // Setup filesystem
-    Filesystem::Init();
 
     // Setup tasks
     Multitask::Init();
@@ -73,8 +73,22 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     Multitask::CreateTask("Colonel", Multitask::TaskType::KERNEL, []
     {
         UART::WriteString("[Colonel] Hello from kernel land!\n");
+        
+        while(1)
+        {
+            UART::WriteString("Pages: ");
+        UART::WriteNumber(Memory::kPageFrame.GetUsedPages());
+        UART::WriteString("\n");
+
+            for (int i = 0; i < 1000000000; ++i) asm("nop");
+        }
+
         while(1) {}
     });
+
+    UART::WriteString("Pages: ");
+    UART::WriteNumber(Memory::kPageFrame.GetUsedPages());
+    UART::WriteString("\n");
 
     Multitask::CreateTask("Userland");
 

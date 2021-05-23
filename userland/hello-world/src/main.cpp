@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <sys/stat.h>
 
 #include "../../../kernel/include/multitask/mman.h"
 
@@ -37,10 +38,18 @@ int main();
 
 int main()
 {
-   // Open and mmap framebuffer
-   FILE* file = fopen("/dev/fb", "w+");
-   uint32_t* pFramebuffer = (uint32_t*) mmap(NULL, WIDTH*HEIGHT*sizeof(uint32_t), PROT_WRITE | PROT_READ, MAP_SHARED, file->_file, 0);
+   /*
+   // Open framebuffer
+   FILE* framebufferFile = fopen("/dev/fb", "w+");
 
+   // Get size
+   struct stat framebufferStat;
+   fstat(framebufferFile->_file, &framebufferStat);
+   const uint32_t framebufferSize = framebufferStat.st_mode;
+
+   // Map into memory
+   uint32_t* pFramebuffer = (uint32_t*) mmap(NULL, framebufferSize, PROT_WRITE | PROT_READ, MAP_SHARED, framebufferFile->_file, 0);
+   
    // Clear framebuffer
    for (uint32_t i = 0; i < WIDTH*HEIGHT; ++i)
          pFramebuffer[i] = 0;
@@ -88,6 +97,27 @@ int main()
          WritePixel(window.x + x, window.y + y, bIsWeirdLine ? weirdBarShade : GetColour(shade, shade, shade));
       }
 
-   fclose(file);
+   fclose(framebufferFile);
+
+   */
+
+   // Get mouse
+   FILE* mouseFile = fopen("/dev/mouse", "w+");
+
+   // Get mouse size
+   struct stat mouseStat;
+   fstat(mouseFile->_file, &mouseStat);
+   const uint32_t mouseSize = mouseStat.st_mode;
+
+   int* pMouse = (int*) mmap(NULL, mouseSize, PROT_WRITE | PROT_READ, MAP_SHARED, mouseFile->_file, 0);
+   pMouse[1] = 1245;
+
+   //while (pMouse[0] >= 0)
+   {
+      printf("%d\n", (uint32_t)&pMouse);
+      printf("%d, %d\n", pMouse[0], pMouse[1]);
+   }
+
+   fclose(mouseFile);
    return 0;
 }

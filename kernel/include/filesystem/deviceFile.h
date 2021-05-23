@@ -1,6 +1,6 @@
 #pragma once
-#ifndef FRAMEBUFFER_FILE_H
-#define FRAMEBUFFER_FILE_H
+#ifndef DEVICE_FILE_H
+#define DEVICE_FILE_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -12,14 +12,13 @@
 namespace Filesystem
 {
     
-    class FramebufferFile : public File
+    class DeviceFile : public File
     {
     public:
-        FramebufferFile()
+        DeviceFile(const uint32_t size, void* pData)
         {
-            assert(Framebuffer::sFramebuffer.address != 0);
-            m_size = Framebuffer::sFramebuffer.size;
-            m_pData = (void*) Framebuffer::sFramebuffer.address;
+            m_Size = size;
+            m_pData = pData;
         }
 
         constexpr bool IsFile() const { return false; }
