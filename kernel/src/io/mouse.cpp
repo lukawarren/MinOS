@@ -3,16 +3,17 @@
 #include "cpu/cpu.h"
 #include "filesystem/filesystem.h"
 #include "filesystem/deviceFile.h"
+#include "memory/memory.h"
 #include "kstdlib.h"
 
 namespace Mouse
 {
     struct MouseData
     {
-        int mouseX = 0;
-        int mouseY = 0;
+        int deltaX = 0;
+        int deltaY = 0;
     };
-    static MouseData mouseData = {};
+    static MouseData* pMouseData;
 
     static uint8_t nMouseInterrupt = 0;
     static uint8_t mouseInterruptBuffer[2];
@@ -22,9 +23,14 @@ namespace Mouse
         PS2::SendMouseMessage(PS2_MOUSE_USE_DEFAULTS);
         PS2::SendMouseMessage(PS2_MOUSE_ENABLE_STREAMING);
 
+        // Mouse data needs to have its own page
+        pMouseData = (MouseData*) Memory::kPageFrame.AllocateMemory(sizeof(pMouseData), KERNEL_PAGE);
+
         // Install file
-        *Filesystem::GetFile(Filesystem::FileDescriptors::mouse) = Filesystem::DeviceFile(sizeof(mouseData), (void*)&mouseData);
-        
+        *Filesystem::GetFile(Filesystem::FileDescriptors::mouse) = Filesystem::DeviceFile(sizeof(MouseData), (void*)pMouseData);
+        UART::WriteString("Actual address: ");
+        UART::WriteNumber((uint32_t)pMouseData);
+
         UART::WriteString("[Mouse] Initialised\n");
     }
 
@@ -46,13 +52,17 @@ namespace Mouse
 
             case 2: // Mouse Y
 
-                // Final byte, update mouse
-                mouseData.mouseX = mouseInterruptBuffer[1];
-                mouseData.mouseY = data;
+                // Check we didn't move the mouse too fast and overflow
+                if (mouseInterruptBuffer[0] & MOUSE_BYTE_X_DID_OVERFLOW || mouseInterruptBuffer[0] & MOUSE_BYTE_Y_DID_OVERFLOW)
+                    break;
 
-                // Account for signed bits
-                if (mouseInterruptBuffer[0] & MOUSE_BYTE_X_SIGN_BIT) mouseData.mouseX |= 0xFFFFFF00;
-                if (mouseInterruptBuffer[0] & MOUSE_BYTE_Y_SIGN_BIT) mouseData.mouseY |= 0xFFFFFF00;
+                // It's the final byte, so update mouse
+                pMouseData->deltaX = mouseInterruptBuffer[1];
+                pMouseData->deltaY = data;
+
+                // Account for signed bits (we're talking a 9-bit signed value here, don't ask me why!)
+                //if (mouseInterruptBuffer[0] & MOUSE_BYTE_X_SIGN_BIT) pMouseData->deltaX |= 0xFFFFFF00;
+                //if (mouseInterruptBuffer[0] & MOUSE_BYTE_Y_SIGN_BIT) pMouseData->deltaY |= 0xFFFFFF00;
 
             break;
 

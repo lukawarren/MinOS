@@ -110,13 +110,13 @@ int main()
    const uint32_t mouseSize = mouseStat.st_mode;
 
    int* pMouse = (int*) mmap(NULL, mouseSize, PROT_WRITE | PROT_READ, MAP_SHARED, mouseFile->_file, 0);
-   pMouse[1] = 1245;
 
-   //while (pMouse[0] >= 0)
+   while (1)
    {
-      printf("%d\n", (uint32_t)&pMouse);
       printf("%d, %d\n", pMouse[0], pMouse[1]);
    }
+
+   asm("xchg %bx, %bx");
 
    fclose(mouseFile);
    return 0;
