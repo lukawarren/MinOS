@@ -20,16 +20,22 @@ namespace Mouse
 
     void Init()
     {
+        // Setup mosue
         PS2::SendMouseMessage(PS2_MOUSE_USE_DEFAULTS);
         PS2::SendMouseMessage(PS2_MOUSE_ENABLE_STREAMING);
+
+        // Change sample rate
+        PS2::SendMouseMessage(PS2_MOUSE_SET_SAMPLE_RATE);
+        PS2::SendMouseMessage(200);
 
         // Mouse data needs to have its own page
         pMouseData = (MouseData*) Memory::kPageFrame.AllocateMemory(sizeof(pMouseData), KERNEL_PAGE);
 
         // Install file
         *Filesystem::GetFile(Filesystem::FileDescriptors::mouse) = Filesystem::DeviceFile(sizeof(MouseData), (void*)pMouseData);
-        UART::WriteString("Actual address: ");
-        UART::WriteNumber((uint32_t)pMouseData);
+
+        // The mouse setup will send us an extra interrupt so account for it in the initial counting of interrupt state
+        nMouseInterrupt = 2;
 
         UART::WriteString("[Mouse] Initialised\n");
     }
@@ -52,17 +58,20 @@ namespace Mouse
 
             case 2: // Mouse Y
 
-                // Check we didn't move the mouse too fast and overflow
-                if (mouseInterruptBuffer[0] & MOUSE_BYTE_X_DID_OVERFLOW || mouseInterruptBuffer[0] & MOUSE_BYTE_Y_DID_OVERFLOW)
-                    break;
-
                 // It's the final byte, so update mouse
                 pMouseData->deltaX = mouseInterruptBuffer[1];
                 pMouseData->deltaY = data;
 
                 // Account for signed bits (we're talking a 9-bit signed value here, don't ask me why!)
-                //if (mouseInterruptBuffer[0] & MOUSE_BYTE_X_SIGN_BIT) pMouseData->deltaX |= 0xFFFFFF00;
-                //if (mouseInterruptBuffer[0] & MOUSE_BYTE_Y_SIGN_BIT) pMouseData->deltaY |= 0xFFFFFF00;
+                if (pMouseData->deltaX && (mouseInterruptBuffer[0] & MOUSE_BYTE_X_SIGN_BIT)) pMouseData->deltaX |= 0xFFFFFF00;
+                if (pMouseData->deltaY && (mouseInterruptBuffer[0] & MOUSE_BYTE_Y_SIGN_BIT)) pMouseData->deltaY |= 0xFFFFFF00;
+
+                // Check we didn't move the mouse too fast and overflow
+                if (mouseInterruptBuffer[0] & 0x40)
+                {
+                    pMouseData->deltaX = 0;
+                    pMouseData->deltaY = 0;
+                }
 
             break;
 

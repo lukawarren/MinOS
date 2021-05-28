@@ -34,11 +34,19 @@ struct Window
    uint32_t height;
 };
 
+struct Mouse
+{
+   int x;
+   int y;
+};
+
+Mouse mouse;
+
 int main();
 
 int main()
 {
-   /*
+   
    // Open framebuffer
    FILE* framebufferFile = fopen("/dev/fb", "w+");
 
@@ -97,10 +105,6 @@ int main()
          WritePixel(window.x + x, window.y + y, bIsWeirdLine ? weirdBarShade : GetColour(shade, shade, shade));
       }
 
-   fclose(framebufferFile);
-
-   */
-
    // Get mouse
    FILE* mouseFile = fopen("/dev/mouse", "w+");
 
@@ -113,11 +117,23 @@ int main()
 
    while (1)
    {
-      printf("%d, %d\n", pMouse[0], pMouse[1]);
+      
+      mouse.x += pMouse[0];
+      mouse.y += -pMouse[1];
+      pMouse[0] = 0;
+      pMouse[1] = 0;
+      if (mouse.x > WIDTH-1) mouse.x = WIDTH-1;
+      if (mouse.y > HEIGHT-1) mouse.y = HEIGHT-1;
+      if (mouse.x < 0) mouse.x = 0;
+      if (mouse.y < 0) mouse.y = 0;
+
+      for (int x = -5; x < 5; ++x)
+         for (int y = -5; y < 5; ++y)
+            if (x > 0 && y > 0)
+               WritePixel(mouse.x + x, mouse.y + y, 0xffffffff);
    }
 
-   asm("xchg %bx, %bx");
-
+   fclose(framebufferFile);
    fclose(mouseFile);
    return 0;
 }
