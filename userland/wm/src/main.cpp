@@ -13,12 +13,6 @@ Mouse mouse;
 
 int main();
 
-extern "C" void __cxa_pure_virtual()
-{
-   printf("Pure virtual function called!\n");
-   while (1) {}
-}
-
 int main()
 {
    Graphics::Init();

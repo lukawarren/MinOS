@@ -409,7 +409,7 @@ struct _reent
   char *_asctime_buf;
 
   /* signal info */
-  void (**(_sig_func))(int);
+  void (**_sig_func)(int);
 
 # ifndef _REENT_GLOBAL_ATEXIT
   /* atexit stuff */
@@ -682,7 +682,7 @@ struct _reent
 # endif
 
   /* signal info */
-  void (**(_sig_func))(int);
+  void (**_sig_func)(int);
 
   /* These are here last so that __FILE can grow without changing the offsets
      of the above members (on the off chance that future binary compatibility

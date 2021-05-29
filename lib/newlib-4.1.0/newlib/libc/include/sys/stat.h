@@ -134,6 +134,8 @@ struct	stat
 #define UTIME_OMIT	-1L
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow" // For C++
 int	chmod (const char *__path, mode_t __mode );
 int     fchmod (int __fd, mode_t __mode);
 int	fstat (int __fd, struct stat *__sbuf );
@@ -141,6 +143,7 @@ int	mkdir (const char *_path, mode_t __mode );
 int	mkfifo (const char *__path, mode_t __mode );
 int	stat (const char *__restrict __path, struct stat *__restrict __sbuf );
 mode_t	umask (mode_t __mask );
+#pragma GCC diagnostic pop
 
 #if defined (__SPU__) || defined(__rtems__) || defined(__CYGWIN__) && !defined(__INSIDE_CYGWIN__)
 int	lstat (const char *__restrict __path, struct stat *__restrict __buf );
