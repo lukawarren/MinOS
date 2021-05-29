@@ -11,6 +11,12 @@ struct Mouse
 
 Mouse mouse;
 
+void * operator new(size_t size)
+{
+   void* p = malloc(size);
+   return p;
+}
+
 void operator delete(void * p)
 {
    free(p);

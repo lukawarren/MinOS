@@ -32,15 +32,8 @@ void Graphics::Init()
     for (uint32_t i = 0; i < WIDTH*HEIGHT; ++i)
         pFramebuffer[i] = 0;
 
-    Panel* panel = (Panel*) malloc(sizeof(Panel));
-    printf("Panel location: 0x%X\n", (unsigned int)panel);
-    asm("xchg %bx, %bx");
-    *panel = Panel(600, 400, 100, 100);
-    pWidgets[0] = panel;
-
-    Bar* bar = (Bar*) malloc(sizeof(Bar));
-    *bar = Bar(600, 20, 100, 50);
-    pWidgets[1] = bar;
+    pWidgets[0] = new Panel(600, 400, 100, 100);
+    pWidgets[1] = new Bar(600, 20, 100, 50);
 
     // Redraw screen
     DrawRegion(0, 0, WIDTH, HEIGHT);
