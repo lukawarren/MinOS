@@ -65,6 +65,6 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
 
 void Graphics::Terminate()
 {
-    //for (const Widget* widget : pWidgets) delete widget;
+    for (const Widget* widget : pWidgets) delete widget;
     fclose(fFramebuffer);
 }
