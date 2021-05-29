@@ -10,6 +10,9 @@
 #include <sys/stat.h>
 #include "../../../kernel/include/multitask/mman.h"
 
+#define WIDTH 1024
+#define HEIGHT 768
+
 namespace Graphics
 {
     struct Window
@@ -23,11 +26,6 @@ namespace Graphics
     void Init();
     void DrawRegion(const uint32_t x, const uint32_t y, const uint32_t width, const uint32_t height);
     void Terminate();
-
-    extern "C"
-    {
-        extern void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
-    }
 
     constexpr inline uint32_t GetColour(const uint32_t r, const uint32_t g, const uint32_t b)
     {

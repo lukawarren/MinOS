@@ -5,8 +5,10 @@
 #include "panel.h"
 #include "bar.h"
 
-#define WIDTH 1024
-#define HEIGHT 768
+extern "C"
+{
+    extern void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
+}
 
 // Framebuffer
 static FILE* fFramebuffer;
@@ -54,11 +56,23 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
             const uint32_t screenX = x + j;
             const uint32_t screenY = y + k;
 
+            if (screenX > WIDTH || screenY > HEIGHT) continue;
+
+            bool bDrew = false;
+
             // Work out widgets covered by region and redraw
             for (const Widget* widget : pWidgets)
             {
-                if (widget->IsCoveredByRegion(screenX, screenY)) widget->Draw(screenX, screenY);
+                if (widget->IsCoveredByRegion(screenX, screenY))
+                {
+                    WritePixel(screenX, screenY, widget->GetPixel(screenX, screenY));
+                    bDrew = true;
+                }
             }
+
+            // Oh... we're the desktop?
+            if (!bDrew)
+                WritePixel(screenX, screenY, 0xff777777);
         }
     }
 }

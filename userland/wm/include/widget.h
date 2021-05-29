@@ -19,7 +19,7 @@ namespace Graphics
 
         virtual ~Widget() {}
         
-        virtual void Draw(const uint32_t screenX, const uint32_t screenY) const = 0;
+        virtual uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const = 0;
 
         bool IsCoveredByRegion(const uint32_t x, const uint32_t y) const
         {
@@ -29,7 +29,7 @@ namespace Graphics
                 x <= m_X + m_Width &&
                 y <= m_Y + m_Height;
         }
-
+        
     protected:
         unsigned int m_Width;
         unsigned int m_Height;

@@ -77,8 +77,8 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
         while(1)
         {
             UART::WriteString("Pages: ");
-        UART::WriteNumber(Memory::kPageFrame.GetUsedPages());
-        UART::WriteString("\n");
+            UART::WriteNumber(Memory::kPageFrame.GetUsedPages());
+            UART::WriteString("\n");
 
             for (int i = 0; i < 1000000000; ++i) asm("nop");
         }

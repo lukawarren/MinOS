@@ -19,7 +19,7 @@ namespace Graphics
 
         ~Bar() {}
 
-        void Draw(const uint32_t screenX, const uint32_t screenY) const override;
+        uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const override;
     };
 }
 
