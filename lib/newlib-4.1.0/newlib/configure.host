@@ -634,8 +634,9 @@ case "${host}" in
 	sys_dir=z8ksim
 	;;
   i[3-7]86-*-minos*)
-    	sys_dir=minos
-	newlib_cflags="${newlib_cflags} -DMALLOC_PROVIDED"
+    sys_dir=minos
+	have_crt0="yes"
+	newlib_cflags="${newlib_cflags} -DMALLOC_PROVIDED -DHAVE_INITFINI_ARRAY -DHAVE_INIT_FINI"
     	;;
 
 esac

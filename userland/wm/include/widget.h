@@ -17,7 +17,7 @@ namespace Graphics
         Widget(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y) :
             m_Width(width), m_Height(height), m_X(x), m_Y(y) {}
 
-        ~Widget() {}
+        virtual ~Widget() {}
         
         virtual void Draw(const uint32_t screenX, const uint32_t screenY) const = 0;
 

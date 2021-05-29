@@ -11,7 +11,13 @@ struct Mouse
 
 Mouse mouse;
 
+void operator delete(void * p)
+{
+   free(p);
+}
+
 int main();
+
 
 int main()
 {
