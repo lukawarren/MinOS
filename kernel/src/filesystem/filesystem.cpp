@@ -19,7 +19,7 @@ namespace Filesystem
         char rdev[6];       // For block devices and what-not, contains the device number
         char mtime[11];     // Last modified time
         char nameSize[6];   // Size of name string to come
-        char fieSize[11];  // File size
+        char fieSize[11];   // File size
     };
 
     void Init()

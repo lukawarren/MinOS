@@ -17,3 +17,13 @@ FILE(GLOB_RECURSE ASM_SRCS src/*.S)
 
 ADD_EXECUTABLE(wm.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})
 target_link_libraries(wm.bin libm.a libc.a libg.a)
+
+# Make initramfs
+add_custom_target(initramfs ALL)
+add_custom_command(
+  TARGET initramfs
+  POST_BUILD
+  COMMAND cd build/userland && find . -type f -name '*.bin' | cpio --quiet -ov -H odc > ../../build/initramfs.cpio
+  WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/"
+  COMMENT "Building initramfs..."
+)
