@@ -31,6 +31,7 @@ namespace Multitask
             uint32_t* m_pStack;
             uint32_t m_Entrypoint;
             TaskType m_Type;
+            uint32_t m_PID;
 
             // Paeg frame - technically kernel tasks don't need one but hey-ho
             Memory::PageFrame m_PageFrame;
@@ -46,6 +47,7 @@ namespace Multitask
     
     Task* GetCurrentTask();
     void RemoveCurrentTask();
+    void RemoveTaskWithID(const uint32_t pid);
 
     extern uint32_t nTasks;
 

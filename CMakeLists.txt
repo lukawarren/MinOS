@@ -17,7 +17,7 @@ set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
 # Set compile flags
 set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Winline -Wno-long-long -Wconversion")
-set (CMAKE_CXX_FLAGS "-std=c++17 ${WARNINGS} -ffreestanding -ffreestanding -O2 -fno-exceptions -fno-rtti -nostdlib")
+set (CMAKE_CXX_FLAGS "-std=c++17 ${WARNINGS} -ffreestanding -ffreestanding -O2 -fno-exceptions -fno-rtti -nostdlib -fno-use-cxa-atexit -fno-sized-deallocation")
 set (CMAKE_C_FLAGS "-std=gnu99 ${WARNINGS} -ffreestanding -O2 -nostdlib")
 
 # Add stuff

@@ -78,6 +78,8 @@ namespace Multitask
     static void     _exit(int status);
     static int      close(int fd);
     static int      fstat(int fd, stat* st);
+    static int      getpid();
+    static int      kill(int pid, int sig);
     static int      open(const char *pathname, int flags, mode_t mode);
     static caddr_t  sbrk(int incr);
     static int      write(int file, const void* ptr, size_t len);
@@ -103,6 +105,14 @@ namespace Multitask
 
             case 4:
                 returnStatus = fstat((int)sRegisters.ebx, (stat*)sRegisters.ecx);
+            break;
+
+            case 5:
+                returnStatus = getpid();
+            break;
+
+            case 7:
+                returnStatus = kill((int)sRegisters.ebx, (int)sRegisters.ecx);
             break;
 
             case 10:
@@ -181,6 +191,25 @@ namespace Multitask
         return 0;
     }
 
+    static int getpid()
+    {
+        return Multitask::GetCurrentTask()->m_PID;
+    }
+
+    static int kill(int pid, int sig)
+    {
+        UART::WriteString("[Syscall] Task ");
+        UART::WriteString(GetCurrentTask()->m_sName);
+        UART::WriteString(" killed task ");
+        UART::WriteNumber(pid);
+        UART::WriteString(" with status ");
+        UART::WriteNumber(sig);
+        UART::WriteString("\n");
+
+        Multitask::RemoveTaskWithID(pid);
+        return 0;
+    }
+
     static int open(const char *pathname, int flags, mode_t mode __attribute__((unused)))
     {
         auto task = Multitask::GetCurrentTask();
@@ -233,12 +262,13 @@ namespace Multitask
     static int write(int file, const void* ptr, size_t len)
     {
         // TODO: Sanitise memory locations
-        assert(file == STDOUT);
+        assert(file == STDOUT || file == STDERR);
         
-        // Virtual vs physical address will likely cause us problems
-        assert((uint32_t)ptr < USER_PAGING_OFFSET);
+        // Get string
+        const auto task = Multitask::GetCurrentTask();
+        const char* string = (const char*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)ptr);
 
-        const char* string = (const char*) ptr;
+        // Print
         for (size_t i = 0; i < len; ++i)
             UART::WriteChar(string[i]);
 

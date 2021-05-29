@@ -90,7 +90,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     UART::WriteNumber(Memory::kPageFrame.GetUsedPages());
     UART::WriteString("\n");
 
-    Multitask::CreateTask("Userland");
+    Multitask::CreateTask("wm");
 
     // Enable interrupts
     CPU::EnableInterrupts();

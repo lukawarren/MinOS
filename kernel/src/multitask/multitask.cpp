@@ -16,6 +16,7 @@ namespace Multitask
     uint32_t nTasks = 0;
     static uint32_t nCurrentTask = 0;
     static uint32_t nPreviousTask = 0;
+    static uint32_t nPIDs = 0;
 
     // If we've coming from the kernel, there is no need to save our state
     static bool bCameFromKernel = true;
@@ -26,7 +27,8 @@ namespace Multitask
         strncpy(m_sName, sName, sizeof(m_sName));
         m_Type = type;
         m_Entrypoint = entrypoint;
-        
+        m_PID = ++nPIDs;
+
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 20 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
         const uint32_t stackBeginInMemory = (uint32_t)(Memory::kPageFrame.AllocateMemory(stackSize, KERNEL_PAGE)); // Mapped as user by *it's own* page frame
@@ -209,6 +211,12 @@ namespace Multitask
         nCurrentTask = 0;
         nPreviousTask = 0;
         pSavedTaskStack = 0;
+    }
+
+    void RemoveTaskWithID(const uint32_t pid)
+    {
+        if (pid == GetCurrentTask()->m_PID) RemoveCurrentTask();
+        else assert(false);
     }
 
 }
