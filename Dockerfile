@@ -6,7 +6,7 @@ RUN apt-get update                                  && \
     apt-get install -y gcc wget build-essential     && \
     # deps for grub 2:
     apt-get install -y autoconf flex bison	    && \
-    apt-get install -y curl python3
+    apt-get install -y curl python3 cpio ninja-build
 	
 # Specify binutils/gcc version
 ENV DOWNLOAD_BINUTILS=binutils-2.35
