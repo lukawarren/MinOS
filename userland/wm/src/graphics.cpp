@@ -3,6 +3,7 @@
 
 #include "widget.h"
 #include "panel.h"
+#include "text.h"
 #include "bar.h"
 
 extern "C"
@@ -15,7 +16,7 @@ static FILE* fFramebuffer;
 static uint32_t* pFramebuffer;
 
 // Widgets
-static Graphics::Widget* pWidgets[2];
+static Graphics::Widget* pWidgets[4];
 
 void Graphics::Init()
 {
@@ -34,8 +35,10 @@ void Graphics::Init()
     for (uint32_t i = 0; i < WIDTH*HEIGHT; ++i)
         pFramebuffer[i] = 0;
 
-    pWidgets[0] = new Panel(600, 400, 100, 100);
-    pWidgets[1] = new Bar(600, 20, 100, 50);
+    pWidgets[0] = new Panel(600, 400, WIDTH/2-600/2, HEIGHT/2-400/2);
+    pWidgets[1] = new Bar(600, 20,WIDTH/2-600/2, HEIGHT/2-400/2-20);
+    pWidgets[2] = new Text("Terminal", WIDTH/2-600/2+5, HEIGHT/2-400/2-20/2-CHAR_HEIGHT/2);
+    pWidgets[3] = new Text("colonel@minos /home $", WIDTH/2-600/2+5, HEIGHT/2-400/2+CHAR_HEIGHT/2);
 
     // Redraw screen
     DrawRegion(0, 0, WIDTH, HEIGHT);
@@ -63,7 +66,7 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
             // Work out widgets covered by region and redraw
             for (const Widget* widget : pWidgets)
             {
-                if (widget->IsCoveredByRegion(screenX, screenY))
+                if (widget->IsCoveredByRegion(screenX, screenY) && widget->IsPixelSet(screenX, screenY))
                 {
                     WritePixel(screenX, screenY, widget->GetPixel(screenX, screenY));
                     bDrew = true;
@@ -72,7 +75,7 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
 
             // Oh... we're the desktop?
             if (!bDrew)
-                WritePixel(screenX, screenY, 0xff777777);
+                WritePixel(screenX, screenY, 0);
         }
     }
 }

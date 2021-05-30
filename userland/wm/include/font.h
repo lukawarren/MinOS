@@ -5,7 +5,6 @@
 
 #define CHAR_HEIGHT 8
 #define CHAR_WIDTH 8
-#define CHAR_HEIGHT_SCALE 2
 
 inline const uint8_t* GetFontFromChar(int c) 
 {
