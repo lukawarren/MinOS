@@ -1,5 +1,6 @@
 #include "multitask/multitask.h"
 #include "multitask/elf.h"
+#include "filesystem/filesystem.h"
 #include "memory/memory.h"
 #include "memory/modules.h"
 #include "cpu/pit.h"
@@ -123,8 +124,11 @@ namespace Multitask
         tasks[nTasks] = Task(sName, TaskType::USER, 0xdeadbeef);
     
         // Load ELF module into memory
-        const uint32_t pModule = Modules::GetModule();
-        const uint32_t entrypoint = Multitask::LoadElfProgram(pModule, tasks[nTasks].m_PageFrame);
+        const uint32_t entrypoint = Multitask::LoadElfProgram
+        (
+            (uint32_t)Filesystem::GetFile(Filesystem::FileDescriptors::userspace)->m_pData,
+            tasks[nTasks].m_PageFrame
+        );
         tasks[nTasks].SetEntrypoint(entrypoint);
 
         nTasks++;

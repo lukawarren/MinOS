@@ -13,6 +13,15 @@ namespace Filesystem
     class File
     {
     public:
+
+        File() {}
+
+        File(const uint32_t size, void* pData)
+        {
+            m_Size = size;
+            m_pData = pData;
+        }
+
         constexpr bool IsFile() const;
         constexpr bool IsDevice() const;
 

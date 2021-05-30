@@ -1,5 +1,6 @@
 #include "filesystem/filesystem.h"
 #include "filesystem/file.h"
+#include "filesystem/cpio.h"
 #include "memory/modules.h"
 #include "io/uart.h"
 
@@ -7,30 +8,25 @@ namespace Filesystem
 {
     static File pFiles[FileDescriptors::N_FILES];
 
-    struct sCPIOHeader
-    {
-        char sMagic[6];     // Should be 070707
-        char device[6];     // Device
-        char ino[6];        // Inode
-        char mode[6];       // Mode - permissions and file type
-        char uid[6];        // UID
-        char gid[6];        // GID
-        char nLinks[6];     // Number of links to file
-        char rdev[6];       // For block devices and what-not, contains the device number
-        char mtime[11];     // Last modified time
-        char nameSize[6];   // Size of name string to come
-        char fieSize[11];   // File size
-    };
-
     void Init()
     {
         // Load CPIO file
         uint32_t pFile = Modules::GetModule();
+        CPIO::sHeader* pHeader = (CPIO::sHeader*)pFile;
 
-        sCPIOHeader* jeff = (sCPIOHeader*)pFile;
-        UART::WriteString(jeff->sMagic);
+        // Check magic
+        assert(pHeader->ConformsToMagic());
+        assert(pHeader->IsFile());
 
-        UART::WriteString("[Filesystem] Built filesystem\n");
+        // Get name, name size and data
+        const char* sName = (const char*) (pHeader+1);
+        const uint32_t nameSize = pHeader->StringToDecimal(pHeader->nameSize, 6);
+        void* pData = (void*)(pFile + sizeof(CPIO::sHeader) + nameSize);
+
+        // Get size of data
+        const uint32_t fileSize = pHeader->StringToDecimal(pHeader->fileSize, 11);
+
+        pFiles[FileDescriptors::userspace] = File(fileSize, pData);
     }
 
     File* GetFile(const FileDescriptor fd)

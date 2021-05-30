@@ -21,11 +21,12 @@ namespace Filesystem
         framebuffer = 3,
         mouse = 4,
 
-        N_FILES = 5
+        userspace = 5,
+
+        N_FILES = 6
     };
 
     void Init();
-
     File* GetFile(const FileDescriptor fd);
 }
 
