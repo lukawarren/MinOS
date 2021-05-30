@@ -42,6 +42,12 @@ namespace Graphics
         unsigned int m_Y;
 
     };
+
+    constexpr inline uint32_t GetColour(const uint32_t r, const uint32_t g, const uint32_t b)
+    {
+        const auto a = 0xff;
+        return a << 24 | r << 16 | g << 8 | b;
+    }
 }
 
 #endif

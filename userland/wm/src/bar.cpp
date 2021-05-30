@@ -9,6 +9,7 @@ uint32_t Graphics::Bar::GetPixel(const uint32_t screenX, const uint32_t screenY)
 {
     const auto nLinePadding = 5;
     const auto nTextMargin = 80;
+    const auto nButtonsMargin = 30;
 
     // Convert to local space
     const uint32_t x = screenX - m_X;
@@ -16,7 +17,7 @@ uint32_t Graphics::Bar::GetPixel(const uint32_t screenX, const uint32_t screenY)
 
     const bool bIsLine = y >= nLinePadding && y <= m_Height - nLinePadding &&
                         x <= m_Width - nLinePadding && x >= nLinePadding &&
-                        x >= nTextMargin && y % 2 == 0;
+                        x >= nTextMargin && x <= m_Width - nButtonsMargin && y % 2 == 0;
 
     return bIsLine ? cWindowLineShade : cWindowBarShade;
 }

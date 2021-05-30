@@ -27,12 +27,6 @@ namespace Graphics
     void DrawRegion(const uint32_t x, const uint32_t y, const uint32_t width, const uint32_t height);
     void Terminate();
 
-    constexpr inline uint32_t GetColour(const uint32_t r, const uint32_t g, const uint32_t b)
-    {
-        const auto a = 0xff;
-        return a << 24 | r << 16 | g << 8 | b;
-    }
-
     void WritePixel(const uint32_t x, const uint32_t y, const uint32_t colour);
 }
 

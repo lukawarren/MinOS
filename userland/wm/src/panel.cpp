@@ -1,10 +1,11 @@
 #include "panel.h"
 #include "graphics.h"
 
-// Colours
-constexpr uint32_t cPanelBackground    = Graphics::GetColour(212, 208, 200);
-constexpr uint32_t cPanelLeadingEdge   = Graphics::GetColour(128, 128, 128);
-constexpr uint32_t cPanelTrim          = Graphics::GetColour(255, 255, 255);
+Graphics::Panel::Panel(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, const uint32_t colour) :
+    Widget(width, height, x, y)
+{
+    m_cPanelColour = colour;
+}        
 
 uint32_t Graphics::Panel::GetPixel(const uint32_t screenX, const uint32_t screenY) const
 {
@@ -19,8 +20,8 @@ uint32_t Graphics::Panel::GetPixel(const uint32_t screenX, const uint32_t screen
     if (x > 0 && y == m_Height-1) return cPanelLeadingEdge;
 
     // White trim
-    if (x > 0 && x < m_Width && y == 1) return cPanelTrim;
-    if (y > 0 && y < m_Height && x == 1) return cPanelTrim;
+    if (m_cPanelColour == cPanelBackground && x < m_Width  && y == 0) return cPanelTrim;
+    if (m_cPanelColour == cPanelBackground && y < m_Height && x == 0) return cPanelTrim;
 
-    return cPanelBackground;
+    return m_cPanelColour;
 }
