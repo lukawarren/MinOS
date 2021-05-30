@@ -65,6 +65,16 @@ namespace CPIO
         {
             return StringToDecimal(mode, 6) & CPIO_MODE_FILE;
         }
+
+        char const* GetName() const
+        {
+            return (char const*)(this+1);
+        }
+
+        bool IsTerminator() const
+        {
+            return strcmp(GetName(), "TRAILER!!!");
+        }
     };
 }
 

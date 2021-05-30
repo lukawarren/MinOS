@@ -15,10 +15,12 @@ namespace Filesystem
     class DeviceFile : public File
     {
     public:
-        DeviceFile(const uint32_t size, void* pData)
+        DeviceFile(const uint32_t size, void* pData, const char* sName, uint32_t iNode)
         {
             m_Size = size;
             m_pData = pData;
+            strncpy(m_sName, sName, sizeof(m_sName));
+            m_iNode = iNode;
         }
 
         constexpr bool IsFile() const { return false; }

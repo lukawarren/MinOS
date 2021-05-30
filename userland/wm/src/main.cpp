@@ -44,7 +44,7 @@ int main()
 
     int* pMouse = (int*) mmap(NULL, mouseSize, PROT_WRITE | PROT_READ, MAP_SHARED, mouseFile->_file, 0);
 
-    while (1)
+    while (0)
     {   
         // "Clean" last position
         Graphics::DrawRegion(mouse.x - 5, mouse.y - 5, 10, 10);

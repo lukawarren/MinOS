@@ -32,7 +32,7 @@ namespace Mouse
         pMouseData = (MouseData*) Memory::kPageFrame.AllocateMemory(sizeof(pMouseData), KERNEL_PAGE);
 
         // Install file
-        *Filesystem::GetFile(Filesystem::FileDescriptors::mouse) = Filesystem::DeviceFile(sizeof(MouseData), (void*)pMouseData);
+        *Filesystem::GetFile(Filesystem::FileDescriptors::mouse) = Filesystem::DeviceFile(sizeof(MouseData), (void*)pMouseData, "/dev/mouse", Filesystem::FileDescriptors::mouse);
 
         // The mouse setup will send us an extra interrupt so account for it in the initial counting of interrupt state
         nMouseInterrupt = 2;

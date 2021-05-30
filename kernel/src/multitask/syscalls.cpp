@@ -216,15 +216,13 @@ namespace Multitask
         
         // Get path
         char const* path = (const char*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)pathname);
-        assert(strcmp(path, "/dev/fb") || strcmp(path, "/dev/mouse"));
 
         // Flags
         assert(flags == (FILEIO_O_RDWR | FILEIO_O_CREAT | FILEIO_O_TRUNC));
 
         // (Mode specifies what permissions should be applied, should the file be created)
 
-        if (strcmp(path, "/dev/fb")) return Filesystem::FileDescriptors::framebuffer;
-        else return Filesystem::FileDescriptors::mouse;
+        return Filesystem::GetFile(path)->m_iNode;
     }
 
     static caddr_t sbrk(int incr)

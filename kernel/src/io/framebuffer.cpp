@@ -27,7 +27,7 @@ namespace Framebuffer
             Memory::kPageFrame.SetPage(sFramebuffer.address + i*PAGE_SIZE, sFramebuffer.address + i*PAGE_SIZE, KERNEL_PAGE);
 
         // Install file
-        *Filesystem::GetFile(Filesystem::FileDescriptors::framebuffer) = Filesystem::DeviceFile(sFramebuffer.size, (void*)sFramebuffer.address);
+        *Filesystem::GetFile(Filesystem::FileDescriptors::framebuffer) = Filesystem::DeviceFile(sFramebuffer.size, (void*)sFramebuffer.address, "/dev/fb", Filesystem::FileDescriptors::framebuffer);
     }
 
     uint32_t GetColour(const uint8_t r, const uint8_t g, const uint8_t b)

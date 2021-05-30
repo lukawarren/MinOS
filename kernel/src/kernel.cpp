@@ -90,7 +90,8 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     UART::WriteNumber(Memory::kPageFrame.GetUsedPages());
     UART::WriteString("\n");
 
-    Multitask::CreateTask("wm");
+    Multitask::CreateTask("wm/wm.bin");
+    Multitask::CreateTask("getpagesize/getpagesize.bin");
 
     // Enable interrupts
     CPU::EnableInterrupts();

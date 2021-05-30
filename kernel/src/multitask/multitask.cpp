@@ -126,7 +126,7 @@ namespace Multitask
         // Load ELF module into memory
         const uint32_t entrypoint = Multitask::LoadElfProgram
         (
-            (uint32_t)Filesystem::GetFile(Filesystem::FileDescriptors::userspace)->m_pData,
+            (uint32_t)Filesystem::GetFile(sName)->m_pData,
             tasks[nTasks].m_PageFrame
         );
         tasks[nTasks].SetEntrypoint(entrypoint);
