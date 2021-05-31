@@ -21,7 +21,7 @@ int liballoc_unlock() { return 0; }
 
 void* liballoc_alloc(int pages)
 {
-    if ( page_size < 0 ) page_size = getpagesize();
+    if ( page_size <= 0 ) page_size = getpagesize();
 	unsigned int size = pages * page_size;
 		
 	char *p2 = (char*)mmap(0, size, PROT_NONE, MAP_PRIVATE|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0);

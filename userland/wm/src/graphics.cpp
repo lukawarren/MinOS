@@ -23,12 +23,18 @@ static Graphics::Widget* pWidgets[7];
 void Graphics::Init()
 {
     // Open framebuffer
+    printf("fopen\n");
     fFramebuffer = fopen("/dev/fb", "w+");
 
     // Get size
     struct stat framebufferStat;
+    printf("fstat\n");
     fstat(fFramebuffer->_file, &framebufferStat);
-    framebufferSize = framebufferStat.st_mode;
+    framebufferSize = framebufferStat.st_size;
+
+    printf("Userspace offset %d\n", (int)((uint32_t)&framebufferStat.st_size -(uint32_t)&framebufferStat));
+
+    printf("Framebuffer size: %d\n", (int)framebufferSize);
 
     // Map into memory
     pFramebuffer = (uint32_t*) mmap(NULL, framebufferSize, PROT_WRITE | PROT_READ, MAP_SHARED, fFramebuffer->_file, 0);

@@ -41,11 +41,11 @@ int main()
     // Get mouse size
     struct stat mouseStat;
     fstat(mouseFile->_file, &mouseStat);
-    const uint32_t mouseSize = mouseStat.st_mode;
+    const uint32_t mouseSize = mouseStat.st_size;
 
     int* pMouse = (int*) mmap(NULL, mouseSize, PROT_WRITE | PROT_READ, MAP_SHARED, mouseFile->_file, 0);
 
-    while (0)
+    while (1)
     {   
         // "Clean" last position
         Graphics::DrawRegion(mouse.x - 5, mouse.y - 5, 10, 10);

@@ -15,30 +15,43 @@
 #define	S_IFSOCK	0140000 // Socket
 #define	S_IFIFO		0010000 // FIFO / pipe
 
+typedef uint32_t uid_t;
+typedef uint32_t gid_t;
+typedef int pid_t;
+typedef char* caddr_t;
+typedef int id_t;
+typedef uint32_t ino_t;
+typedef int64_t off_t;
+typedef uint32_t blkcnt_t;
+typedef uint32_t blksize_t;
+typedef uint32_t dev_t;
+typedef uint16_t mode_t;
+typedef uint32_t nlink_t;
+typedef int64_t time_t;
+typedef uint32_t useconds_t;
+typedef int32_t suseconds_t;
+typedef uint32_t clock_t;
+
 struct stat
 {
-    uint32_t st_dev;     /* ID of device containing file */
-    uint16_t st_ino;     /* inode number */
-    int32_t  st_mode;    /* protection */
-    uint16_t st_nlink;   /* number of hard links */
-    uint16_t st_uid;     /* user ID of owner */
-    uint16_t st_gid;     /* group ID of owner */
-    uint32_t st_rdev;    /* device ID (if special file) */
-    long     st_size;    /* total size, in bytes */
-    long     st_blksize; /* blocksize for file system I/O */
-    long     st_blocks;  /* number of 512B blocks allocated */
-    long     st_atime;   /* time of last access */
-    long     st_mtime;   /* time of last modification */
-    long     st_ctime;   /* time of last status change */
+    dev_t     st_dev;     /* ID of device containing file */
+    ino_t     st_ino;     /* inode number */
+    mode_t    st_mode;    /* protection */
+    nlink_t   st_nlink;   /* number of hard links */
+    uid_t     st_uid;     /* user ID of owner */
+    gid_t     st_gid;     /* group ID of owner */
+    dev_t     st_rdev;    /* device ID (if special file) */
+    off_t     st_size;    /* total size, in bytes */
+    blksize_t st_blksize; /* blocksize for file system I/O */
+    blkcnt_t  st_blocks;  /* number of 512B blocks allocated */
+    time_t    st_atime;   /* time of last access */
+    time_t    st_mtime;   /* time of last modification */
+    time_t    st_ctime;   /* time of last status change */
 };
-
-typedef	char* caddr_t;
 
 #define STDIN   0
 #define STDOUT  1
 #define STDERR  2
-
-typedef uint32_t mode_t;
 
 // Open flags
 #define FILEIO_O_RDONLY           0x0
@@ -77,7 +90,7 @@ namespace Multitask
 {
     static void     _exit(int status);
     static int      close(int fd);
-    static int      fstat(int fd, stat* st);
+    static int      fstat(int fd, struct stat* st);
     static int      getpid();
     static int      kill(int pid, int sig);
     static int      open(const char *pathname, int flags, mode_t mode);
@@ -105,7 +118,7 @@ namespace Multitask
             break;
 
             case 4:
-                returnStatus = fstat((int)sRegisters.ebx, (stat*)sRegisters.ecx);
+                returnStatus = fstat((int)sRegisters.ebx, (struct stat*)sRegisters.ecx);
             break;
 
             case 5:
@@ -117,7 +130,7 @@ namespace Multitask
             break;
 
             case 10:
-                returnStatus = open((const char*)sRegisters.ebx, (int)sRegisters.ecx, (uint32_t)sRegisters.edx);
+                returnStatus = open((const char*)sRegisters.ebx, (int)sRegisters.ecx, (mode_t)sRegisters.edx);
             break;
 
             case 12:
@@ -180,7 +193,7 @@ namespace Multitask
         return 0;
     }
 
-    static int fstat(int fd, stat* st)
+    static int fstat(int fd, struct stat* st)
     {
         // TODO: Sanitise memory location
         struct stat* kernelMappedSt = (struct stat*) Multitask::GetCurrentTask()->m_PageFrame.VirtualToPhysicalAddress((uint32_t)st);
@@ -192,6 +205,10 @@ namespace Multitask
             kernelMappedSt->st_mode = S_IFBLK;
             kernelMappedSt->st_size = Filesystem::GetFile(fd)->m_Size;
         }
+
+        UART::WriteString("Offset ");
+        UART::WriteNumber((uint32_t)&kernelMappedSt->st_size - (uint32_t)kernelMappedSt);
+        UART::WriteString("\n");
 
         return 0;
     }
@@ -266,7 +283,7 @@ namespace Multitask
     {
         // TODO: Sanitise memory locations
         assert(file == STDOUT || file == STDERR);
-        
+
         // Get string
         const auto task = Multitask::GetCurrentTask();
         const char* string = (const char*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)ptr);
@@ -280,39 +297,40 @@ namespace Multitask
 
     static void* mmap(struct sMmapArgs* args)
     {
-        assert(args->length > 0);
-
         // TODO: Sanitise memory locations
         Task* task = Multitask::GetCurrentTask();
-        
+        struct sMmapArgs* kArgs = (struct sMmapArgs*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)args);
+
+        assert(kArgs->length > 0);
+
         // Jury rigged for malloc's mmap
-        if (args->fd == -1)
+        if (kArgs->fd == -1)
         {
             // Prot
-            assert(args->prot == PROT_NONE);
+            assert(kArgs->prot == PROT_NONE);
 
             // Flags
-            assert(args->flags == (MAP_PRIVATE| MAP_NORESERVE | MAP_ANONYMOUS));
+            assert(kArgs->flags == (MAP_PRIVATE| MAP_NORESERVE | MAP_ANONYMOUS));
 
             // File descriptor and offset
-            assert(args->offset == 0 && args->fd == -1);
+            assert(kArgs->offset == 0 && kArgs->fd == -1);
 
             // Address can be NULL, in which case we're free to do what we like
-            assert(args->addr == NULL);
+            assert(kArgs->addr == NULL);
 
             // Jury rig the flags to avoid mprotect
-            return task->m_PageFrame.AllocateMemory(args->length, USER_PAGE);
+            return task->m_PageFrame.AllocateMemory(kArgs->length, USER_PAGE);
         }
 
         // File mmap
         else
         {
-            assert(args->offset == 0);
-            assert(args->addr == NULL);
+            assert(kArgs->offset == 0);
+            assert(kArgs->addr == NULL);
 
-            // (ignore flags, protection, and everything else for now)
+            // (ignore flags, protection, length, and everything else for now)
 
-            const Filesystem::File* file = Filesystem::GetFile(args->fd);
+            const Filesystem::File* file = Filesystem::GetFile(kArgs->fd);
             
             // Map into memory
             uint32_t address = (uint32_t) task->m_PageFrame.AllocateMemory(file->m_Size, USER_PAGE);

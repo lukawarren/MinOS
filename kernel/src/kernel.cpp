@@ -69,29 +69,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 
     // Setup tasks
     Multitask::Init();
-    
-    Multitask::CreateTask("Colonel", Multitask::TaskType::KERNEL, []
-    {
-        UART::WriteString("[Colonel] Hello from kernel land!\n");
-        
-        while(1)
-        {
-            UART::WriteString("Pages: ");
-            UART::WriteNumber(Memory::kPageFrame.GetUsedPages());
-            UART::WriteString("\n");
-
-            for (int i = 0; i < 1000000000; ++i) asm("nop");
-        }
-
-        while(1) {}
-    });
-
-    UART::WriteString("Pages: ");
-    UART::WriteNumber(Memory::kPageFrame.GetUsedPages());
-    UART::WriteString("\n");
-
     Multitask::CreateTask("wm/wm.bin");
-    Multitask::CreateTask("getpagesize/getpagesize.bin");
 
     // Enable interrupts
     CPU::EnableInterrupts();
