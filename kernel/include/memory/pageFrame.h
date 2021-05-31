@@ -39,7 +39,7 @@ namespace Memory
 
             void InitPageDirectory(const uint32_t physicalAddress);
 
-            void SetPage(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t flags);
+            void SetPage(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t flags, const bool bReflectInBitmap = true);
             void ClearPage(const uint32_t physicalAddress, const uint32_t virtualAddress);
             bool IsPageSet(const uint32_t physicalAddress);
 

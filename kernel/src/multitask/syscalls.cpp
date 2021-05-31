@@ -313,7 +313,8 @@ namespace Multitask
             uint32_t address = (uint32_t) task->m_PageFrame.AllocateMemory(file->m_Size, USER_PAGE);
             for (uint32_t i = 0; i < Memory::RoundToNextPageSize(file->m_Size) / PAGE_SIZE; ++i)
             {
-                task->m_PageFrame.SetPage((uint32_t)file->m_pData + i*PAGE_SIZE, address + i*PAGE_SIZE, USER_PAGE);
+                // Last argument tells page frame to not reflect mapping in bitmap as pages are already marked as used in kernel
+                task->m_PageFrame.SetPage((uint32_t)file->m_pData + i*PAGE_SIZE, address + i*PAGE_SIZE, USER_PAGE, false);
             }
 
             return (void*)address;

@@ -49,9 +49,9 @@ namespace Memory
         for (uint32_t i = 0; i < NUM_DIRECTORIES; ++i)
             InitPageDirectory(i * DIRECTORY_SIZE);
         
-        // Identity-map kernel pages
+        // Identity-map kernel pages, but do *not* set them in the bitmap (they're already reflected in the kernel)
         for (uint32_t i = 0; i < userspaceBegin / PAGE_SIZE; ++i)
-            SetPage(i * PAGE_SIZE, i * PAGE_SIZE, KERNEL_PAGE);
+            SetPage(i * PAGE_SIZE, i * PAGE_SIZE, KERNEL_PAGE, false);
 
         // Map stack pages
         stackSize = Memory::RoundToNextPageSize(stackSize);
@@ -102,11 +102,11 @@ namespace Memory
         if (m_Type == Type::USERSPACE) kPageFrame.SetPageInBitmap(physicalAddress, bAllocated);
     }
 
-    void PageFrame::SetPage(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t flags)
+    void PageFrame::SetPage(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t flags, const bool bReflectInBitmap)
     {
         // Set page table and bitmap
         m_PageTables[GetPageTableIndex(virtualAddress)] = physicalAddress | flags;
-        SetPageInBitmap(physicalAddress, true);
+        if (bReflectInBitmap) SetPageInBitmap(physicalAddress, true);
 
         // Identity map *in kernel* so that user allocations can be modified on their behalf
         if (this != &kPageFrame)
@@ -341,17 +341,15 @@ namespace Memory
     {
         assert(m_Type == Type::USERSPACE);
 
-        // Go through each page in our bitmap and free that page, unless we're talking something special like the kernel
-        // By luck (or good design) this will also free our stack, even though that was actually allocated with the kernel's page frame
+        // Go through each page in *our* bitmap and free that page, *ignored mapping* (as non-identity mapping might make us skip over pages!)
+        // We don't actually unmap pages, because at this point we're a dead man walking, so who cares?!
         for (uint32_t page = 0; page < NUM_DIRECTORIES*NUM_TABLES; ++page)
         {
-            const uint32_t virtualAddress = page * PAGE_SIZE;
-            const uint32_t physicalAddress = VirtualToPhysicalAddress(virtualAddress);
-
-            bool bUserPage = (virtualAddress >= userspaceBegin);
-
-            if (bUserPage && IsPageSet(physicalAddress)) ClearPage(physicalAddress, virtualAddress);
+            const uint32_t address = page*PAGE_SIZE;
+            if (IsPageSet(address)) SetPageInBitmap(address, false);
         }
+
+        assert(GetUsedPages() == 0);
 
         // Free paging structures
         kPageFrame.FreeMemory((uint32_t)m_PageDirectories,  (uint32_t)m_PageDirectories,    sizeof(uint32_t)*NUM_DIRECTORIES);
@@ -372,7 +370,7 @@ namespace Memory
     uint32_t PageFrame::GetUsedPages()
     {
         uint32_t pages = 0;
-
+        
         for (uint32_t page = 0; page < NUM_DIRECTORIES*NUM_TABLES / 32; ++page)
         {
             const uint32_t bitmap = m_PageBitmaps[page];
