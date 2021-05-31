@@ -84,6 +84,7 @@ namespace Multitask
     static caddr_t  sbrk(int incr);
     static int      write(int file, const void* ptr, size_t len);
     static void*    mmap(struct sMmapArgs* args);
+    static int      munmap(void* addr, size_t length);
     static int      mprotect(void* addr, size_t len, int prot);
     static int      getpagesize();
 
@@ -129,6 +130,10 @@ namespace Multitask
 
             case 19:
                 returnStatus = (int) mmap((struct sMmapArgs*)sRegisters.ebx);
+            break;
+
+            case 20:
+                returnStatus = (int) munmap((void*)sRegisters.ebx, (size_t)sRegisters.ecx);
             break;
 
             case 21:
@@ -319,6 +324,18 @@ namespace Multitask
 
             return (void*)address;
         }
+    }
+
+    static int munmap(void* addr, size_t length)
+    {
+        Task* task = Multitask::GetCurrentTask();
+
+        // TODO: Decide if to reflect in kernel? Seems to work but you never know!
+        const uint32_t virtualAddress = (uint32_t) addr;
+        const uint32_t physicalAddress = task->m_PageFrame.VirtualToPhysicalAddress(virtualAddress);
+
+        task->m_PageFrame.FreeMemory(physicalAddress, virtualAddress, length);
+        return 0;
     }
 
     static int mprotect(void* addr __attribute__((unused)), size_t len __attribute__((unused)), int prot __attribute__((unused)))

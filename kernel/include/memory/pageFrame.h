@@ -45,7 +45,6 @@ namespace Memory
 
             void* AllocateMemory(const uint32_t size, const uint32_t flags, const uint32_t virtualAddress = 0);
             void FreeMemory(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t size);
-            void UnmapMemory(const uint32_t virtualAddress, const uint32_t size);
 
             void UsePaging();
             uint32_t GetCR3();

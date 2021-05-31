@@ -25,6 +25,7 @@ void operator delete(void * p)
 extern "C"
 {
     extern void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
+    extern void* munmap(void* addr, size_t length);
 }
 
 int main();

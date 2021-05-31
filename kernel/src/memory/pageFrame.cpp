@@ -316,16 +316,6 @@ namespace Memory
             ClearPage((uint32_t)physicalAddress + page*PAGE_SIZE, virtualAddress + page*PAGE_SIZE);
         }
     }
-
-    void PageFrame::UnmapMemory(const uint32_t virtualAddress, const uint32_t size)
-    {
-        const uint32_t neededPages = RoundToNextPageSize(size) / PAGE_SIZE;
-        for (uint32_t page = 0; page < neededPages; ++page)
-        {
-            m_PageTables[GetPageTableIndex(virtualAddress)] = PD_PRESENT(0);
-            CPU::FlushTLB();
-        }
-    }
     
     void PageFrame::UsePaging()
     {

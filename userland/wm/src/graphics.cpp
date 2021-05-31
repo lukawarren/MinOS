@@ -9,11 +9,13 @@
 extern "C"
 {
     extern void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
+    extern void* munmap(void* addr, size_t length);
 }
 
 // Framebuffer
 static FILE* fFramebuffer;
 static uint32_t* pFramebuffer;
+static uint32_t framebufferSize;
 
 // Widgets
 static Graphics::Widget* pWidgets[7];
@@ -26,7 +28,7 @@ void Graphics::Init()
     // Get size
     struct stat framebufferStat;
     fstat(fFramebuffer->_file, &framebufferStat);
-    const uint32_t framebufferSize = framebufferStat.st_mode;
+    framebufferSize = framebufferStat.st_mode;
 
     // Map into memory
     pFramebuffer = (uint32_t*) mmap(NULL, framebufferSize, PROT_WRITE | PROT_READ, MAP_SHARED, fFramebuffer->_file, 0);
@@ -86,5 +88,6 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
 void Graphics::Terminate()
 {
     for (const Widget* widget : pWidgets) delete widget;
+    munmap((void*)pFramebuffer, framebufferSize);
     fclose(fFramebuffer);
 }
