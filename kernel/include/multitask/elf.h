@@ -108,14 +108,15 @@ namespace Multitask
 
     // Section header sh_type
     enum SectionHeaderType
-    {
-        SHT_NULL	    = 0, // Null section
-        SHT_PROGBITS	= 1, // Program information
-        SHT_SYMTAB	    = 2, // Symbol table
-        SHT_STRTAB	    = 3, // String table
-        SHT_RELA	    = 4, // Relocation (with addend)
-        SHT_NOBITS	    = 8, // Not present in file
-        SHT_REL		    = 9, // Relocation (no addend)
+     {
+        SHT_NULL	    = 0,  // Null section
+        SHT_PROGBITS	= 1,  // Program information
+        SHT_SYMTAB	    = 2,  // Symbol table
+        SHT_STRTAB	    = 3,  // String table
+        SHT_RELA	    = 4,  // Relocation (with addend)
+        SHT_NOBITS	    = 8,  // Not present in file
+        SHT_REL		    = 9,  // Relocation (no addend)
+        SHT_FINI_ARRAY  = 15, // Array of destructors
     };
 
     // Section header sh_flags

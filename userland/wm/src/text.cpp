@@ -3,8 +3,7 @@
 
 Graphics::Text::Text(const char* text, const unsigned int x, const unsigned int y) : Widget(strlen(text) * CHAR_WIDTH, CHAR_HEIGHT, x, y)
 {
-    m_Text = (char*) malloc(sizeof(char) * strlen(text));
-    strcpy(m_Text, text);
+    m_Text = text;
 }
 
 uint32_t Graphics::Text::GetPixel(const uint32_t screenX __attribute__((unused)), const uint32_t screenY __attribute__((unused))) const

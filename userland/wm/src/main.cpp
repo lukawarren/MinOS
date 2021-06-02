@@ -3,6 +3,9 @@
 
 #include "graphics.h"
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 struct Mouse
 {
    int x;
@@ -30,6 +33,7 @@ extern "C"
 
 int main();
 
+extern Graphics::Window* window;
 
 int main()
 {
@@ -47,9 +51,6 @@ int main()
 
     while (1)
     {   
-        // "Clean" last position
-        Graphics::DrawRegion(mouse.x - 5, mouse.y - 5, 10, 10);
-
         mouse.x += pMouse[0];
         mouse.y += -pMouse[1];
         pMouse[0] = 0;
@@ -59,10 +60,20 @@ int main()
         if (mouse.x < 0) mouse.x = 0;
         if (mouse.y < 0) mouse.y = 0;
 
-        for (int x = -5; x < 5; ++x)
-            for (int y = -5; y < 5; ++y)
-                if (x > 0 && y > 0)
-                    Graphics::WritePixel(mouse.x + x, mouse.y + y, 0xffffffff);
+        uint32_t oldX = window->m_X;
+        uint32_t oldY = window->m_Y;
+        uint32_t oldEndX = oldX + window->m_Width;
+        uint32_t oldEndY = oldY + window->m_Height;
+
+        delete window;
+        window = new Graphics::Window(600, 400, mouse.x, mouse.y, "Terminal");
+
+        uint32_t chosenX = MIN(oldX, window->m_X);
+        uint32_t chosenY = MIN(oldY, window->m_Y);
+        uint32_t chosenEndX = MAX(oldEndX, window->m_Width + window->m_X);
+        uint32_t chosenEndY = MAX(oldEndY, window->m_Height + window->m_Y);
+
+        Graphics::DrawRegion(chosenX, chosenY, chosenEndX - chosenX, chosenEndY - chosenY);
     }
 
     fclose(mouseFile);

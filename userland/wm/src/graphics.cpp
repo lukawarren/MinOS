@@ -1,6 +1,7 @@
 #include "graphics.h"
 #include <assert.h>
 
+#include "window.h"
 #include "widget.h"
 #include "panel.h"
 #include "text.h"
@@ -17,8 +18,8 @@ static FILE* fFramebuffer;
 static uint32_t* pFramebuffer;
 static uint32_t framebufferSize;
 
-// Widgets
-static Graphics::Widget* pWidgets[7];
+// Windows
+Graphics::Window* window;
 
 void Graphics::Init()
 {
@@ -37,18 +38,13 @@ void Graphics::Init()
     for (uint32_t i = 0; i < WIDTH*HEIGHT; ++i)
         pFramebuffer[i] = 0;
 
-    pWidgets[0] = new Panel(600, 400, WIDTH/2-600/2, HEIGHT/2-400/2);
-    pWidgets[1] = new Bar(600, 20,WIDTH/2-600/2, HEIGHT/2-400/2-20);
-    pWidgets[2] = new Text("Terminal", WIDTH/2-600/2+5, HEIGHT/2-400/2-20/2-CHAR_HEIGHT/2);
-    pWidgets[4] = new Text("colonel@minos /home $", WIDTH/2-590/2+5, HEIGHT/2-390/2+CHAR_HEIGHT/2);
-    pWidgets[3] = new Panel(590, 390, WIDTH/2-590/2, HEIGHT/2-390/2, 0);
-    pWidgets[5] = new Panel(20, 16, WIDTH/2+600/2-25, HEIGHT/2-400/2-16-2);
-    pWidgets[6] = new Text("X", WIDTH/2+600/2-25 + 6, HEIGHT/2-400/2-16-2 + 4);
+    // Make window
+    window = new Window(600, 400, WIDTH/2-600/2, HEIGHT/2-400/2, "Terminal");
+
+    printf("[Wm] Initialised\n");
 
     // Redraw screen
     DrawRegion(0, 0, WIDTH, HEIGHT);
-
-    printf("[Wm] Initialised\n");
 }
 
 void Graphics::WritePixel(const uint32_t x, const uint32_t y, const uint32_t colour)
@@ -71,7 +67,7 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
             bool bDrew = false;
 
             // Work out widgets covered by region and redraw
-            for (const Widget* widget : pWidgets)
+            for (const Widget* widget : window->m_pWidgets)
             {
                 if (widget->IsCoveredByRegion(screenX, screenY) && widget->IsPixelSet(screenX, screenY))
                 {
@@ -89,7 +85,7 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
 
 void Graphics::Terminate()
 {
-    for (const Widget* widget : pWidgets) delete widget;
+    delete window;
     munmap((void*)pFramebuffer, framebufferSize);
     fclose(fFramebuffer);
 }

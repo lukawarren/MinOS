@@ -25,7 +25,7 @@ namespace Graphics
         bool IsPixelSet(const uint32_t screenX, const uint32_t screenY) const override;
 
     private:
-        char* m_Text;
+        char const* m_Text;
     };
 }
 

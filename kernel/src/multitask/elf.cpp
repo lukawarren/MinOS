@@ -69,6 +69,13 @@ namespace Multitask
                     break;
                 }
 
+                case SectionHeaderType::SHT_FINI_ARRAY:
+                {
+                    // As above
+                    assert(pSectionHeaders[i].sh_addr >= USER_PAGING_OFFSET);
+                    break;
+                }
+
                 case SectionHeaderType::SHT_STRTAB:
                     assert(false);
                 break;
