@@ -392,6 +392,10 @@ case $1 in
 				basic_machine=arm-unknown
 				os=mingw32ce
 				;;
+			minos)
+				basic_machine=i686-pc
+				os=minos
+				;;
 			monitor)
 				basic_machine=m68k-rom68k
 				os=coff
@@ -1304,6 +1308,9 @@ case $os in
 	# Some version numbers need modification
 	chorusos*)
 		os=chorusos
+		;;
+	-minos*)
+		os=minos
 		;;
 	isc)
 		os=isc2.2

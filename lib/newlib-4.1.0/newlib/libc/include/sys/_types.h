@@ -53,14 +53,14 @@ typedef int __pid_t;
 #endif
 
 #ifndef __machine_dev_t_defined
-typedef short __dev_t;
+typedef int __dev_t;
 #endif
 
 #ifndef __machine_uid_t_defined
-typedef unsigned short __uid_t;
+typedef unsigned int __uid_t;
 #endif
 #ifndef __machine_gid_t_defined
-typedef unsigned short __gid_t;
+typedef unsigned int __gid_t;
 #endif
 
 #ifndef __machine_id_t_defined

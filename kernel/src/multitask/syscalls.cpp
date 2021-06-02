@@ -92,6 +92,7 @@ namespace Multitask
     static int      close(int fd);
     static int      fstat(int fd, struct stat* st);
     static int      getpid();
+    static int      isatty(int fd);
     static int      kill(int pid, int sig);
     static int      open(const char *pathname, int flags, mode_t mode);
     static caddr_t  sbrk(int incr);
@@ -123,6 +124,10 @@ namespace Multitask
 
             case 5:
                 returnStatus = getpid();
+            break;
+
+            case 6:
+                returnStatus = isatty((int)sRegisters.ebx);
             break;
 
             case 7:
@@ -206,16 +211,20 @@ namespace Multitask
             kernelMappedSt->st_size = Filesystem::GetFile(fd)->m_Size;
         }
 
-        UART::WriteString("Offset ");
-        UART::WriteNumber((uint32_t)&kernelMappedSt->st_size - (uint32_t)kernelMappedSt);
-        UART::WriteString("\n");
-
         return 0;
     }
 
     static int getpid()
     {
         return Multitask::GetCurrentTask()->m_PID;
+    }
+
+    static int isatty(int fd)
+    {
+        return
+        (fd == Filesystem::FileDescriptors::stderr  ) ||
+        (fd == Filesystem::FileDescriptors::stdin   ) ||
+        (fd == Filesystem::FileDescriptors::stdout  );
     }
 
     static int kill(int pid, int sig)

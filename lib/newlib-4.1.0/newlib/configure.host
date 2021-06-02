@@ -636,6 +636,10 @@ case "${host}" in
   i[3-7]86-*-minos*)
     sys_dir=minos
 	have_crt0="yes"
+	default_newlib_io_c99_formats="yes"
+	default_newlib_io_long_double="yes"
+	default_newlib_io_long_long="yes"
+	default_newlib_io_pos_args="yes"
 	newlib_cflags="${newlib_cflags} -DMALLOC_PROVIDED -DHAVE_INITFINI_ARRAY -DHAVE_INIT_FINI"
     	;;
 
