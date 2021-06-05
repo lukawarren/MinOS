@@ -17,6 +17,8 @@ namespace Graphics
         Window(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, char const* title);
         ~Window();
     
+        void Redraw();
+
         unsigned int m_Width;
         unsigned int m_Height;
         unsigned int m_X;

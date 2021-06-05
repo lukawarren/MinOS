@@ -168,7 +168,7 @@ namespace Interrupts
         UART::WriteString("-----------------------\n");
 
         // Kernel errors cause a blue screen then halt the CPu
-        if (!bUserTask)
+        if (!bUserTask || Multitask::nTasks == 0)
         {
             using namespace Framebuffer;
             for (uint32_t y = 0; y < sFramebuffer.height; ++y)

@@ -39,7 +39,9 @@ void Graphics::Init()
         pFramebuffer[i] = 0;
 
     // Make window
-    window = new Window(600, 400, WIDTH/2-600/2, HEIGHT/2-400/2, "Terminal");
+    auto width = 400;
+    auto height = 200;
+    window = new Window(width, height, WIDTH/2-width/2, HEIGHT/2-height/2, "Terminal");
 
     printf("[Wm] Initialised\n");
 

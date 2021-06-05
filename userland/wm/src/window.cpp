@@ -14,6 +14,16 @@ constexpr uint32_t nPadding = 5;
 Graphics::Window::Window(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, char const* title):
     m_Width(width), m_Height(height), m_X(x), m_Y(y), m_sTitle(title)
 {
+    Redraw();
+}
+
+void Graphics::Window::Redraw()
+{
+    // Clean up
+    for (Widget* w : m_pWidgets)
+        if (w != nullptr)
+            delete w;
+
     // Bar
     m_pWidgets[0] = new Bar(m_Width, nBarHeight, m_X, m_Y);
 

@@ -59,14 +59,17 @@ int main()
         if (mouse.y > HEIGHT-1) mouse.y = HEIGHT-1;
         if (mouse.x < 0) mouse.x = 0;
         if (mouse.y < 0) mouse.y = 0;
+        if (mouse.x > WIDTH-window->m_Width) mouse.x = WIDTH-window->m_Width;
+        if (mouse.y > HEIGHT-window->m_Height) mouse.y = HEIGHT-window->m_Height;
 
         uint32_t oldX = window->m_X;
         uint32_t oldY = window->m_Y;
         uint32_t oldEndX = oldX + window->m_Width;
         uint32_t oldEndY = oldY + window->m_Height;
 
-        delete window;
-        window = new Graphics::Window(600, 400, mouse.x, mouse.y, "Terminal");
+        window->m_X = mouse.x;
+        window->m_Y = mouse.y;
+        window->Redraw();
 
         uint32_t chosenX = MIN(oldX, window->m_X);
         uint32_t chosenY = MIN(oldY, window->m_Y);
