@@ -4,6 +4,7 @@
 #include "cpu/gdt.h"
 #include "cpu/pic.h"
 #include "io/uart.h"
+#include "io/pci.h"
 #include "io/ps2.h"
 #include "io/mouse.h"
 #include "io/keyboard.h"
@@ -11,7 +12,7 @@
 #include "memory/memory.h"
 #include "memory/modules.h"
 #include "multitask/elf.h"
-#include "io/framebuffer.h"
+#include "io/gfx/framebuffer.h"
 #include "multitask/multitask.h"
 #include "filesystem/filesystem.h"
 
@@ -62,6 +63,7 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     Filesystem::Init();
 
     // Setup devices
+    PCI::Init();
     Framebuffer::Init(pMultibootInfo);
     PS2::Init();
     Mouse::Init();

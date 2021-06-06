@@ -4,6 +4,7 @@
 #include "multitask/mman.h"
 #include "memory/memory.h"
 #include "io/uart.h"
+#include "io/gfx/framebuffer.h"
 #include "cpu/pic.h"
 #include "kstdlib.h"
 
@@ -101,6 +102,8 @@ namespace Multitask
     static int      munmap(void* addr, size_t length);
     static int      mprotect(void* addr, size_t len, int prot);
     static int      getpagesize();
+    static int      getscreenwidth();
+    static int      getscreenheight();
 
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
@@ -160,6 +163,14 @@ namespace Multitask
 
             case 22:
                 returnStatus = (int) getpagesize();
+            break;
+
+            case 23:
+                returnStatus = getscreenwidth();
+            break;
+
+            case 24:
+                returnStatus = getscreenheight();
             break;
 
             default:
@@ -393,4 +404,13 @@ namespace Multitask
         return PAGE_SIZE;
     }
 
+    static int getscreenwidth()
+    {
+        return Framebuffer::graphicsDevice.m_Width;
+    }
+    
+    static int getscreenheight()
+    {
+        return Framebuffer::graphicsDevice.m_Height;
+    }
 }

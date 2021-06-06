@@ -55,12 +55,12 @@ int main()
         mouse.y += -pMouse[1];
         pMouse[0] = 0;
         pMouse[1] = 0;
-        if (mouse.x > WIDTH-1) mouse.x = WIDTH-1;
-        if (mouse.y > HEIGHT-1) mouse.y = HEIGHT-1;
+        if (mouse.x > (int)Graphics::screenWidth-1) mouse.x = Graphics::screenWidth-1;
+        if (mouse.y > (int)Graphics::screenHeight-1) mouse.y = Graphics::screenHeight-1;
         if (mouse.x < 0) mouse.x = 0;
         if (mouse.y < 0) mouse.y = 0;
-        if (mouse.x > WIDTH-window->m_Width) mouse.x = WIDTH-window->m_Width;
-        if (mouse.y > HEIGHT-window->m_Height) mouse.y = HEIGHT-window->m_Height;
+        if (mouse.x > (int)Graphics::screenWidth-(int)window->m_Width) mouse.x = Graphics::screenWidth-window->m_Width;
+        if (mouse.y > (int)Graphics::screenHeight-(int)window->m_Height) mouse.y = Graphics::screenHeight-window->m_Height;
 
         uint32_t oldX = window->m_X;
         uint32_t oldY = window->m_Y;

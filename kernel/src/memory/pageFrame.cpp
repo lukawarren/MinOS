@@ -1,6 +1,6 @@
 #include "memory/pageFrame.h"
 #include "filesystem/filesystem.h"
-#include "io/framebuffer.h"
+#include "io/gfx/framebuffer.h"
 #include "memory/memory.h"
 #include "cpu/cpu.h"
 #include "kstdlib.h"

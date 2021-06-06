@@ -12,9 +12,6 @@
 
 #include "window.h"
 
-#define WIDTH 1024
-#define HEIGHT 768
-
 namespace Graphics
 {
     void Init();
@@ -22,6 +19,9 @@ namespace Graphics
     void Terminate();
 
     void WritePixel(const uint32_t x, const uint32_t y, const uint32_t colour);
+
+    extern uint32_t screenWidth;
+    extern uint32_t screenHeight;
 }
 
 #endif

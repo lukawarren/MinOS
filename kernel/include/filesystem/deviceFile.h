@@ -6,7 +6,7 @@
 #include <stddef.h>
 
 #include "filesystem/file.h"
-#include "io/framebuffer.h"
+#include "io/gfx/framebuffer.h"
 #include "kstdlib.h"
 
 namespace Filesystem

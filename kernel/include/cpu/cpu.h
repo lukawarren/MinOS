@@ -31,6 +31,34 @@ namespace CPU
         return ret;
     }
 
+    inline void outw(uint16_t port, uint16_t data)
+    {
+        asm volatile ( "out %0, %1" : : "a"(data), "d"(port) );
+    }
+
+    inline uint16_t inw(uint16_t port)
+    {
+        uint16_t ret;
+        asm volatile ( "in %1, %0"
+                    : "=a"(ret)
+                    : "Nd"(port) );
+        return ret;
+    }
+
+    inline void outl(uint16_t port, uint32_t data)
+    {
+        asm volatile ( "outl %0, %1" : : "a"(data), "d"(port) );
+    }
+
+    inline uint32_t inl(uint16_t port)
+    {
+        uint32_t ret;
+        asm volatile ( "inl %1, %0"
+                    : "=a"(ret)
+                    : "Nd"(port) );
+        return ret;
+    }
+
     extern "C"
     {
         extern void LoadGDT(const uint64_t* gdt, const size_t size);
