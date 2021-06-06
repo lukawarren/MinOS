@@ -1,4 +1,5 @@
 #include "kstdlib.h"
+#include "io/uart.h"
 
 size_t strlen(const char* string)
 {
@@ -61,4 +62,15 @@ void memcpy(void *dest, void *src, size_t n)
 
     for (size_t i=0; i<n; i++) 
         cdest[i] = csrc[i]; 
+}
+
+void error(const char* file, unsigned int line, const char* expression)
+{
+    UART::WriteString("Assertion failed in ");
+    UART::WriteString(file);
+    UART::WriteString(" - line ");
+    UART::WriteNumber(line);
+    UART::WriteString(": ");
+    UART::WriteString(expression);
+    UART::WriteString("\n");
 }

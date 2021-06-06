@@ -1,4 +1,5 @@
 #include "io/keyboard.h"
+#include "io/uart.h"
 #include "cpu/cpu.h"
 #include "kstdlib.h"
 

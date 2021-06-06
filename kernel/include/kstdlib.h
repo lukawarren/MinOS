@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <io/uart.h>
 
 size_t strlen(const char* string);
 char* strncpy(char* dest, const char* src, size_t maxLength);
@@ -17,15 +16,6 @@ void memcpy(void *dest, void *src, size_t n);
     if (!(expr)) \
         error(__FILE__, __LINE__, #expr)
 
-inline void error(const char* file, unsigned int line, const char* expression)
-{
-    UART::WriteString("Assertion failed in ");
-    UART::WriteString(file);
-    UART::WriteString(" - line ");
-    UART::WriteNumber(line);
-    UART::WriteString(": ");
-    UART::WriteString(expression);
-    UART::WriteString("\n");
-}
+void error(const char* file, unsigned int line, const char* expression);
 
 #endif
