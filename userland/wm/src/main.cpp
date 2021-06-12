@@ -29,6 +29,7 @@ extern "C"
 {
     extern void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
     extern void* munmap(void* addr, size_t length);
+    extern int swapscreenbuffer();
 }
 
 int main();
@@ -77,6 +78,7 @@ int main()
         uint32_t chosenEndY = MAX(oldEndY, window->m_Height + window->m_Y);
 
         Graphics::DrawRegion(chosenX, chosenY, chosenEndX - chosenX, chosenEndY - chosenY);
+        //Graphics::DrawRegion(0, 0, Graphics::screenWidth, Graphics::screenHeight);
     }
 
     fclose(mouseFile);

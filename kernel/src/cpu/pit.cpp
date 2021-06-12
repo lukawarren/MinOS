@@ -16,7 +16,7 @@ namespace PIT
             MODE_BINARY_16_BIT      // PIT channel will operate in binary mode
         );
         
-        SetFrequency(CHANNEL_0_DATA, 1000);
+        SetFrequency(CHANNEL_0_DATA, 600);
     }
 
     void SetFrequency(uint16_t channel, uint16_t herz)

@@ -77,15 +77,14 @@ IRQ%1:
 %macro ExceptionHandler 2
 global IRQException%1
 IRQException%1:
-
     ; Preserve registers
     pushad
+
+    ; Use kernel CR3
     mov eax, cr3
     push eax
     mov eax, [kernelCR3]
     mov cr3, eax
-    
-    ; Use kernel CR3
 
     ; Preserve segment registers
     ; (in case we were called from

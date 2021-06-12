@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "kstdlib.h"
+
 namespace Framebuffer
 {
     class GraphicsDevice
@@ -12,6 +14,8 @@ namespace Framebuffer
     public:
         GraphicsDevice() {}
         ~GraphicsDevice() {}
+
+        virtual void SwapBuffers() = 0;
 
         uint32_t m_Address = 0;
         uint32_t m_Width;

@@ -104,6 +104,7 @@ namespace Multitask
     static int      getpagesize();
     static int      getscreenwidth();
     static int      getscreenheight();
+    static int      swapscreenbuffer();
 
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
@@ -171,6 +172,10 @@ namespace Multitask
 
             case 24:
                 returnStatus = getscreenheight();
+            break;
+
+            case 25:
+                returnStatus = swapscreenbuffer();
             break;
 
             default:
@@ -350,7 +355,7 @@ namespace Multitask
 
             // (ignore flags, protection, length, and everything else for now)
 
-            const Filesystem::File* file = Filesystem::GetFile(kArgs->fd);
+            Filesystem::File* file = Filesystem::GetFile(kArgs->fd);
             
             // Map into memory
             uint32_t address = (uint32_t) task->m_PageFrame.AllocateMemory(file->m_Size, USER_PAGE);
@@ -406,11 +411,18 @@ namespace Multitask
 
     static int getscreenwidth()
     {
-        return Framebuffer::graphicsDevice.m_Width;
+        return Framebuffer::graphicsDevice->m_Width;
     }
     
     static int getscreenheight()
     {
-        return Framebuffer::graphicsDevice.m_Height;
+        return Framebuffer::graphicsDevice->m_Height;
     }
+
+    static int swapscreenbuffer()
+    {
+        Framebuffer::graphicsDevice->SwapBuffers();
+        return 0;
+    }
+
 }

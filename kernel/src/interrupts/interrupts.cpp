@@ -171,9 +171,9 @@ namespace Interrupts
         if (!bUserTask || Multitask::nTasks == 0)
         {
             using namespace Framebuffer;
-            for (uint32_t y = 0; y < graphicsDevice.m_Height; ++y)
-                for (uint32_t x = 0; x < graphicsDevice.m_Width; ++x)
-                    graphicsDevice.SetPixel(x, y, GetColour(0, 0, 255));
+            for (uint32_t y = 0; y < graphicsDevice->m_Height; ++y)
+                for (uint32_t x = 0; x < graphicsDevice->m_Width; ++x)
+                    graphicsDevice->SetPixel(x, y, GetColour(0, 0, 255));
 
             while (true) asm("hlt");
         }

@@ -48,6 +48,7 @@ namespace Multitask
     Task* GetCurrentTask();
     void RemoveCurrentTask();
     void RemoveTaskWithID(const uint32_t pid);
+    Task* GetTaskWithID(const uint32_t pid);
 
     extern uint32_t nTasks;
 

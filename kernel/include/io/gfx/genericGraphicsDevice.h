@@ -15,6 +15,8 @@ namespace Framebuffer
     public:
         GenericGraphicsDevice(const multiboot_info_t* pMultiboot);
         ~GenericGraphicsDevice() {}
+
+        void SwapBuffers() override {}
     };
 }
 

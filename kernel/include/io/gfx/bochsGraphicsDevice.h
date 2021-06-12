@@ -49,8 +49,15 @@ namespace Framebuffer
         uint16_t ReadRegister(const uint16_t index);
 
         void SetVideoMode(const uint16_t width, const uint16_t height, const uint16_t depth, const bool bUseLinearFramebuffer, const bool bClearVideoMemory);
-
         void SetWidthAndHeight(const uint32_t width, const uint32_t height);
+
+        void SwapBuffers() override;
+
+    private:
+        bool m_bUsingFirstBuffer;
+
+        void UseFirstBuffer();
+        void UseSecondBuffer();
     };
 }
 

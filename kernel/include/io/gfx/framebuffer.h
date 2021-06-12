@@ -13,7 +13,7 @@ namespace Framebuffer
     void Init(const multiboot_info_t* pMultiboot);
     uint32_t GetColour(const uint8_t r, const uint8_t g, const uint8_t b);
 
-    extern GraphicsDevice graphicsDevice;
+    extern GraphicsDevice* graphicsDevice;
 }
 
 #endif

@@ -74,3 +74,8 @@ void error(const char* file, unsigned int line, const char* expression)
     UART::WriteString(expression);
     UART::WriteString("\n");
 }
+
+void * operator new(size_t size)
+{
+   return (void*) Memory::kPageFrame.AllocateMemory(size, KERNEL_PAGE);
+}

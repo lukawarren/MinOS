@@ -5,6 +5,7 @@
 #include "memory/modules.h"
 #include "cpu/pit.h"
 #include "cpu/pic.h"
+#include "io/gfx/framebuffer.h"
 #include "kstdlib.h"
 
 namespace Multitask
@@ -220,7 +221,17 @@ namespace Multitask
     void RemoveTaskWithID(const uint32_t pid)
     {
         if (pid == GetCurrentTask()->m_PID) RemoveCurrentTask();
-        else assert(false);
+        else assert(false); // (not implemented yet, or ever really)
+    }
+
+    Task* GetTaskWithID(const uint32_t pid)
+    {
+        for (uint32_t i = 0; i < nTasks; ++i)
+        {
+            if (tasks[i].m_PID == pid) return &tasks[i];
+        }
+
+        return nullptr;
     }
 
 }

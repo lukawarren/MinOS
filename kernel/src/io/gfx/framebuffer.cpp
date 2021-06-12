@@ -10,7 +10,7 @@
 
 namespace Framebuffer
 {
-    GraphicsDevice graphicsDevice;
+    GraphicsDevice* graphicsDevice;
 
     void Init(const multiboot_info_t* pMultiboot)
     {
@@ -22,20 +22,17 @@ namespace Framebuffer
             if (device.classCode == PCI_CLASS_DISPLAY_CONTROLLER)
             {
                 UART::WriteString("[PCI] Bochs display controller found\n");
-                graphicsDevice = BochsGraphicsDevice(device);
+                graphicsDevice = new BochsGraphicsDevice(device);
                 bFoundBochsDevice = true;
             }
         }
 
-        if (!bFoundBochsDevice) graphicsDevice = GenericGraphicsDevice(pMultiboot);
-
-        // Map framebuffer into kernel
-        const uint32_t nPages = graphicsDevice.m_Size / PAGE_SIZE;
-        for (uint32_t i = 0; i < nPages; ++i)
-            Memory::kPageFrame.SetPage(graphicsDevice.m_Address + i*PAGE_SIZE, graphicsDevice.m_Address + i*PAGE_SIZE, KERNEL_PAGE);
+        if (!bFoundBochsDevice) graphicsDevice = new GenericGraphicsDevice(pMultiboot);
 
         // Install file
-        *Filesystem::GetFile(Filesystem::FileDescriptors::framebuffer) = Filesystem::DeviceFile(graphicsDevice.m_Size, (void*)graphicsDevice.m_Address, "/dev/fb", Filesystem::FileDescriptors::framebuffer);
+        *Filesystem::GetFile(Filesystem::FileDescriptors::framebuffer) = Filesystem::DeviceFile(graphicsDevice->m_Size, (void*)graphicsDevice->m_Address, "/dev/fb", Filesystem::FileDescriptors::framebuffer);
+    
+        UART::WriteString("[Framebuffer] Initialised\n");
     }
 
     uint32_t GetColour(const uint8_t r, const uint8_t g, const uint8_t b)

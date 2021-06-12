@@ -2,19 +2,27 @@
 #include "memory/memory.h"
 #include "cpu/cpu.h"
 #include "kstdlib.h"
+#include "filesystem/filesystem.h"
+#include "multitask/multitask.h"
+#include "io/uart.h"
 
 namespace Framebuffer
 {
     BochsGraphicsDevice::BochsGraphicsDevice(const PCI::Device& device) : GraphicsDevice()
     {
-        const uint16_t width = 1600;
-        const uint16_t height = 900;
+        const uint16_t width = 1024;
+        const uint16_t height = 768;
 
         // Get address from PCI device BAR 0
         m_Address = device.bars[0] & 0xfffffff0;
 
         // Set width and height as we please
         SetVideoMode(width, height, 32, true, true);
+
+        // Map into memory, remembering to double to size (for double buffering)...
+        const uint32_t nPages = Memory::RoundToNextPageSize(m_Size) / PAGE_SIZE * 2;
+        for (uint32_t i = 0; i < nPages; ++i)
+            Memory::kPageFrame.SetPage(m_Address + i*PAGE_SIZE, m_Address + i*PAGE_SIZE, KERNEL_PAGE);
     }
 
     void BochsGraphicsDevice::WriteReigster(const uint16_t index, const uint16_t data)
@@ -31,6 +39,7 @@ namespace Framebuffer
     
     void BochsGraphicsDevice::SetVideoMode(const uint16_t width, const uint16_t height, const uint16_t depth, const bool bUseLinearFramebuffer, const bool bClearVideoMemory)
     {
+        // Set physical stuff
         WriteReigster(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_DISABLED);
         WriteReigster(VBE_DISPI_INDEX_XRES, width);
         WriteReigster(VBE_DISPI_INDEX_YRES, height);
@@ -49,6 +58,31 @@ namespace Framebuffer
         m_Width = width;
         m_Height = height;
         m_Pitch = sizeof(uint32_t)*m_Width;
-        m_Size = m_Pitch*m_Height;
+        m_Size = m_Pitch*m_Height*2;
+
+        // Set virtual, double buffering stuff
+        WriteReigster(VBE_DISPI_INDEX_VIRT_WIDTH, width);
+        WriteReigster(VBE_DISPI_INDEX_VIRT_HEIGHT, height*2);
+        UseFirstBuffer();
+    }
+
+    void BochsGraphicsDevice::UseFirstBuffer()
+    {
+        WriteReigster(VBE_DISPI_INDEX_X_OFFSET, 0);
+        WriteReigster(VBE_DISPI_INDEX_Y_OFFSET, 0);
+        m_bUsingFirstBuffer = true;
+    }
+    
+    void BochsGraphicsDevice::UseSecondBuffer()
+    {
+        WriteReigster(VBE_DISPI_INDEX_X_OFFSET, 0);
+        WriteReigster(VBE_DISPI_INDEX_Y_OFFSET, (uint16_t)m_Height);
+        m_bUsingFirstBuffer = false;
+    }
+
+    void BochsGraphicsDevice::SwapBuffers()
+    {
+        if (m_bUsingFirstBuffer) UseSecondBuffer();
+        else UseFirstBuffer();
     }
 }
