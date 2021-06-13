@@ -35,18 +35,13 @@ namespace Graphics
 
         virtual uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const = 0;
 
-        virtual bool IsPixelSet(const uint32_t screenX __attribute__((unused)), const uint32_t screenY __attribute__((unused))) const
-        {
-            return true;
-        }
-
-        inline bool IsCoveredByRegion(const uint32_t x, const uint32_t y) const
+        virtual inline bool IsPixelSet(const uint32_t screenX __attribute__((unused)), const uint32_t screenY __attribute__((unused))) const
         {
             return
-                x >= m_X &&
-                y >= m_Y &&
-                x < m_X + m_Width &&
-                y < m_Y + m_Height;
+                screenX >= m_X &&
+                screenY >= m_Y &&
+                screenX < m_X + m_Width &&
+                screenY < m_Y + m_Height;
         }
         
     protected:

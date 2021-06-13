@@ -13,6 +13,11 @@ uint32_t Graphics::Text::GetPixel(const uint32_t screenX __attribute__((unused))
 
 bool Graphics::Text::IsPixelSet(const uint32_t screenX, const uint32_t screenY) const
 {
+    if (screenX < m_X) return false;
+    if (screenY < m_Y) return false;
+    if (screenX >= m_X + m_Width) return false;
+    if (screenY >= m_Y + m_Height) return false;
+    
     // Convert to local space
     const uint32_t x = screenX - m_X;
     const uint32_t y = screenY - m_Y;

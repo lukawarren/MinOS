@@ -91,15 +91,12 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
         for (uint32_t j = 0; j < width; ++j)
         {
             const uint32_t screenX = x + j;
-
-            if (screenX > screenWidth || screenY > screenHeight) continue;
-
             bool bDrew = false;
 
             // Work out widgets covered by region and redraw
             for (const Widget* widget : window->m_pWidgets)
             {
-                if (widget->IsCoveredByRegion(screenX, screenY) && widget->IsPixelSet(screenX, screenY))
+                if (widget->IsPixelSet(screenX, screenY))
                 {
                     pRowBuffer[screenX] = widget->GetPixel(screenX, screenY);
                     bDrew = true;
