@@ -19,8 +19,8 @@ namespace Framebuffer
         // Set width and height as we please
         SetVideoMode(width, height, 32, true, true);
 
-        // Map into memory, remembering to double to size (for double buffering)...
-        const uint32_t nPages = Memory::RoundToNextPageSize(m_Size) / PAGE_SIZE * 2;
+        // Map into memory
+        const uint32_t nPages = Memory::RoundToNextPageSize(m_Size) / PAGE_SIZE;
         for (uint32_t i = 0; i < nPages; ++i)
             Memory::kPageFrame.SetPage(m_Address + i*PAGE_SIZE, m_Address + i*PAGE_SIZE, KERNEL_PAGE);
     }

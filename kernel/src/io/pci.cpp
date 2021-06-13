@@ -25,7 +25,8 @@ namespace PCI
                     // Assert header is type 0 (straight forward device), with a single function
                     assert(headerType == 0);
 
-                    // Get class
+                    // Get details
+                    devices[nDevices].deviceID = GetDeviceID((uint8_t)bus, slot);
                     devices[nDevices].vendorID = GetVendor((uint8_t)bus, slot);
                     devices[nDevices].classCode = GetClassCode((uint8_t)bus, slot);
                     devices[nDevices].subclass = GetSubclass((uint8_t)bus, slot);
@@ -68,9 +69,14 @@ namespace PCI
         return CPU::inl(PCI_CONFIG_DATA);
     }
 
+    uint16_t GetDeviceID(const uint8_t bus, const uint8_t slot)
+    {
+        return (uint16_t) (ReadFromConfig(bus, slot, 0, PCI_HEADER_VENDOR_OFFSET) >> 16); // upper 16 bits
+    }
+
     uint16_t GetVendor(const uint8_t bus, const uint8_t slot)
     {
-        return (uint16_t) (ReadFromConfig(bus, slot, 0, PCI_HEADER_VENDOR_OFFSET) >> 16); // lower 16 bits
+        return (uint16_t) (ReadFromConfig(bus, slot, 0, PCI_HEADER_VENDOR_OFFSET)); // lower 16 bits
     }
 
     uint8_t GetHeaderType(const uint8_t bus, const uint8_t slot)

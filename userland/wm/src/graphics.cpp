@@ -63,24 +63,23 @@ void Graphics::Init()
     DrawRegion(0, 0, screenWidth, screenHeight);
 }
 
-void Graphics::WriteRow(const uint32_t y, const uint32_t* pData, const size_t length, const size_t offset)
+inline void Graphics::WriteRow(const uint32_t y, const uint32_t* pData, size_t length, const size_t offset)
 {
-    assert(y < screenHeight);
+    const uint32_t* dest = &pFramebuffer[y * screenWidth + offset];
+    //const uint32_t* bufferTwo = &pFramebuffer[y * screenWidth + offset + screenWidth*screenHeight];
 
-    auto FastCopy = [](uint32_t* pDest, const uint32_t* pSrc, const size_t count)
-    {
-        asm volatile
-        (
-            "rep movsl\n"
-            : "=S"(pSrc), "=D"(pDest)
-            : "S"(pSrc), "D"(pDest), "c"(count)
-            : "memory"
-        );
-    };
-
-    FastCopy(&pFramebuffer[y * screenWidth + offset],                               pData, length);
-    FastCopy(&pFramebuffer[y * screenWidth + offset] + screenWidth*screenHeight,    pData, length);
-    //memcpy(&pFramebuffer[y * screenWidth], pData, length);
+    asm volatile
+    (
+        "rep movsl\n"
+        : "+S"(pData), "+D"(dest), "+c"(length)::"memory"
+    );
+    /*
+    asm volatile
+    (
+        "rep movsl\n"
+        : "+S"(pData), "+D"(bufferTwo), "+c"(length)::"memory"
+    );
+    */
 }
 
 void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t width, const uint32_t height)
@@ -116,7 +115,8 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
         WriteRow(screenY, pRowBuffer + x, width, x);
     }
     
-    swapscreenbuffer();
+    //swapscreenbuffer();
+    //for (int i = 0; i < 0xfffffff; ++i) asm("nop");
 }
 
 void Graphics::Terminate()

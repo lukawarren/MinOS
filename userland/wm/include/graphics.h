@@ -18,7 +18,7 @@ namespace Graphics
     void DrawRegion(const uint32_t x, const uint32_t y, const uint32_t width, const uint32_t height);
     void Terminate();
 
-    void WriteRow(const uint32_t y, const uint32_t* pData, const size_t length, const size_t offset);
+    void WriteRow(const uint32_t y, const uint32_t* pData, size_t length, const size_t offset);
 
     extern uint32_t screenWidth;
     extern uint32_t screenHeight;

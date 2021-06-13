@@ -19,7 +19,9 @@ namespace Framebuffer
         // Search for Bochs VGA card 
         for (const auto device : PCI::devices)
         {
-            if (device.classCode == PCI_CLASS_DISPLAY_CONTROLLER)
+            if (device.classCode == PCI_CLASS_DISPLAY_CONTROLLER && 
+                ((device.vendorID == 0x1234 && device.deviceID == 0x1111) ||
+                (device.vendorID == 0x80ee && device.deviceID == 0xbeef)))
             {
                 UART::WriteString("[PCI] Bochs display controller found\n");
                 graphicsDevice = new BochsGraphicsDevice(device);

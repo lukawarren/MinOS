@@ -18,7 +18,21 @@ namespace Graphics
             m_Width(width), m_Height(height), m_X(x), m_Y(y) {}
 
         virtual ~Widget() {}
-        
+
+        inline void Redraw(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y)
+        {
+            m_Width = width;
+            m_Height = height;
+            m_X = x;
+            m_Y = y;
+        }
+
+        inline void Redraw(const unsigned int x, const unsigned int y)
+        {
+            m_X = x;
+            m_Y = y;
+        }
+
         virtual uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const = 0;
 
         virtual bool IsPixelSet(const uint32_t screenX __attribute__((unused)), const uint32_t screenY __attribute__((unused))) const
@@ -26,7 +40,7 @@ namespace Graphics
             return true;
         }
 
-        bool IsCoveredByRegion(const uint32_t x, const uint32_t y) const
+        inline bool IsCoveredByRegion(const uint32_t x, const uint32_t y) const
         {
             return
                 x >= m_X &&

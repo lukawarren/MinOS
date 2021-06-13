@@ -27,6 +27,7 @@ namespace PCI
 {
     struct Device
     {
+        uint16_t deviceID;
         uint16_t vendorID;
         uint8_t classCode;
         uint8_t subclass;
@@ -37,6 +38,7 @@ namespace PCI
     
     uint32_t ReadFromConfig(const uint8_t bus, const uint8_t slot, const uint8_t function, const uint8_t offset);
 
+    uint16_t GetDeviceID(const uint8_t bus, const uint8_t slot);
     uint16_t GetVendor(const uint8_t bus, const uint8_t slot);
     uint8_t  GetHeaderType(const uint8_t bus, const uint8_t slot);
     uint8_t  GetClassCode(const uint8_t bus, const uint8_t slot);
