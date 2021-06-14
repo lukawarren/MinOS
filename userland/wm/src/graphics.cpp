@@ -88,24 +88,24 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
     {
         const uint32_t screenY = y + k;
 
-        for (uint32_t j = 0; j < width; ++j)
-        {
-            const uint32_t screenX = x + j;
-            bool bDrew = false;
+        // Fill row with desktop
+        for (uint32_t j = 0; j < width; ++j) pRowBuffer[x +j] = 0xffff00ff;
 
-            // Work out widgets covered by region and redraw
-            for (const Widget* widget : window->m_pWidgets)
+        for (const Widget* widget : window->m_pWidgets)
+        {
+            // Cull invalid rows early
+            if (!widget->IsRowSet(screenY)) continue;
+            
+            for (uint32_t j = 0; j < width; ++j)
             {
+                const uint32_t screenX = x + j;
+
+                // If pixel is set, set pixel
                 if (widget->IsPixelSet(screenX, screenY))
                 {
-                    pRowBuffer[screenX] = widget->GetPixel(screenX, screenY);
-                    bDrew = true;
+                    pRowBuffer[screenX] = widget->GetPixelFromBitmap(screenX, screenY);
                 }
             }
-
-            // Oh... we're the desktop?
-            if (!bDrew)
-                pRowBuffer[screenX] = 0xffff00ff;
         }
 
         // Blit row onto framebuffer

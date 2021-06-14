@@ -23,6 +23,7 @@ namespace Graphics
 
         ~Panel() {}
 
+        void Redraw(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y) override;
         uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const override;
     
     private:
