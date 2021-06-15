@@ -17,14 +17,14 @@ namespace Graphics
     class Panel: public Widget
     {
     public:
-        Panel() {}
+        Panel(const uint32_t colour = cPanelBackground) : m_cPanelColour(colour) {}
 
-        Panel(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, const uint32_t colour = cPanelBackground);
+        Panel(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, const uint32_t colour = cPanelBackground) :
+            Widget(width, height, x, y), m_cPanelColour(colour) {}
 
         ~Panel() {}
-
-        void Redraw(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y) override;
-        uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const override;
+        
+        uint32_t GetPixel(const uint32_t x, const uint32_t y) const override;
     
     private:
         uint32_t m_cPanelColour;

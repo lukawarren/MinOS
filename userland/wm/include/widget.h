@@ -27,12 +27,35 @@ namespace Graphics
         }
     
         // Redrawing
-        virtual void Redraw(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y) = 0;
-
+        void FillBuffer()
+        {
+            if (m_pBitmap != nullptr) free(m_pBitmap);
+            m_pBitmap = (uint32_t*) malloc(sizeof(uint32_t) * m_Width * m_Height);
+                
+            for (uint32_t x = 0; x < m_Width; ++x)
+                for (uint32_t y = 0; y < m_Height; ++y)
+                    m_pBitmap[y * m_Width + x] = GetPixel(x, y);
+        }
+        
+        void Redraw(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y)
+        {
+            const bool bRedraw = (width != m_Width);
+            
+            m_Width = width;
+            m_Height = height;
+            m_X = x;
+            m_Y = y;
+            
+            // Resize and fill buffer if width changed
+            if (bRedraw) FillBuffer();
+        }
+        
         inline void Redraw(const unsigned int x, const unsigned int y)
         {
             m_X = x;
             m_Y = y;
+            
+            if (m_pBitmap == nullptr) FillBuffer();
         }
         
         // Culling
@@ -54,12 +77,13 @@ namespace Graphics
         }
         
         // Drawing
-        virtual uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const = 0;
-        
         inline uint32_t GetPixelFromBitmap(const uint32_t screenX, const uint32_t screenY) const
         {
             return m_pBitmap[(screenY-m_Y) * m_Width + (screenX-m_X)];
         }
+    
+    protected:
+        virtual uint32_t GetPixel(const uint32_t x, const uint32_t y) const = 0;
         
     public:
         unsigned int m_Width;

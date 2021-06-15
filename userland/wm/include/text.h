@@ -15,14 +15,14 @@ namespace Graphics
     {
     public:
         Text() {}
-
+        
+        Text(const char* text);
+        
         Text(const char* text, const unsigned int x, const unsigned int y);
 
         ~Text() {}
 
-        void Redraw(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y) override;
-
-        uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const override;
+        uint32_t GetPixel(const uint32_t x, const uint32_t y) const override;
 
         bool IsPixelSet(const uint32_t screenX, const uint32_t screenY) const override;
 

@@ -66,24 +66,16 @@ void Graphics::Init()
 inline void Graphics::WriteRow(const uint32_t y, const uint32_t* pData, size_t length, const size_t offset)
 {
     const uint32_t* dest = &pFramebuffer[y * screenWidth + offset];
-    //const uint32_t* bufferTwo = &pFramebuffer[y * screenWidth + offset + screenWidth*screenHeight];
-
     asm volatile
     (
         "rep movsl\n"
         : "+S"(pData), "+D"(dest), "+c"(length)::"memory"
     );
-    /*
-    asm volatile
-    (
-        "rep movsl\n"
-        : "+S"(pData), "+D"(bufferTwo), "+c"(length)::"memory"
-    );
-    */
 }
 
 void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t width, const uint32_t height)
 {
+    // For each row...
     for (uint32_t k = 0; k < height; ++k)
     {
         const uint32_t screenY = y + k;
@@ -96,6 +88,7 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
             // Cull invalid rows early
             if (!widget->IsRowSet(screenY)) continue;
             
+            // Copy set pixels from widget buffer into framebuffer
             for (uint32_t j = 0; j < width; ++j)
             {
                 const uint32_t screenX = x + j;
@@ -111,9 +104,6 @@ void Graphics::DrawRegion(const uint32_t x, const uint32_t y, const uint32_t wid
         // Blit row onto framebuffer
         WriteRow(screenY, pRowBuffer + x, width, x);
     }
-    
-    //swapscreenbuffer();
-    //for (int i = 0; i < 0xfffffff; ++i) asm("nop");
 }
 
 void Graphics::Terminate()

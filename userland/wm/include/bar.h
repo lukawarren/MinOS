@@ -14,12 +14,11 @@ namespace Graphics
     public:
         Bar() {}
 
-        Bar(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y);
+        Bar(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y) : Widget(width, height, x, y) {}
 
         ~Bar() {}
-
-        void Redraw(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y) override;
-        uint32_t GetPixel(const uint32_t screenX, const uint32_t screenY) const override;
+        
+        uint32_t GetPixel(const uint32_t x, const uint32_t y) const override;
     };
 }
 
