@@ -1,0 +1,44 @@
+#pragma once
+#ifndef GRPAHICS_H
+#define GRAPHICS_H
+
+#include <minlib.h>
+#include "window.h"
+#include "mouse.h"
+
+namespace Graphics
+{
+    class Compositor
+    {
+    public:
+        Compositor();
+        ~Compositor();
+        
+        void DrawRegion(const uint32_t x, const uint32_t y, const uint32_t width, const uint32_t height);
+        void DrawMouse(Input::Mouse& mouse);
+        
+    private:
+        inline void WriteRow(const uint32_t y, const uint32_t* pData, size_t length, const size_t offset)
+        {
+            const uint32_t* dest = &m_pFramebuffer[y * m_screenWidth + offset];
+            asm volatile
+            (
+                "rep movsl\n"
+                : "+S"(pData), "+D"(dest), "+c"(length)::"memory"
+            );
+        }
+        
+        Window* window;
+
+    public:
+        FILE*        m_fFramebuffer;
+        uint32_t*    m_pFramebuffer;
+        uint32_t     m_framebufferSize;
+        uint32_t*    m_pRowBuffer;
+    
+        uint32_t m_screenWidth;
+        uint32_t m_screenHeight;
+    };
+}
+
+#endif

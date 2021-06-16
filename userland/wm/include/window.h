@@ -2,10 +2,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdio.h>
-
+#include <minlib.h>
 #include "widget.h"
 
 namespace Graphics

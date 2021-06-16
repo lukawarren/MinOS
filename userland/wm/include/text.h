@@ -2,10 +2,7 @@
 #ifndef TEXT_H
 #define TEXT_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
-
+#include <minlib.h>
 #include "widget.h"
 #include "font.h"
 

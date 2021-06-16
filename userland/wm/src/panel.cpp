@@ -1,5 +1,4 @@
 #include "panel.h"
-#include "graphics.h"
 
 uint32_t Graphics::Panel::GetPixel(const uint32_t x, const uint32_t y) const
 {

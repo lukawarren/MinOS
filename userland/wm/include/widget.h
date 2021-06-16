@@ -2,10 +2,7 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <minlib.h>
 
 namespace Graphics
 {

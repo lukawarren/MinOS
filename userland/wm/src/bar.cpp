@@ -1,5 +1,4 @@
 #include "bar.h"
-#include "graphics.h"
 
 // Colours
 constexpr uint32_t cWindowBarShade     = Graphics::GetColour(150, 150, 150);

@@ -2,9 +2,7 @@
 #ifndef PANEL_H
 #define PANEL_H
 
-#include <stdint.h>
-#include <stddef.h>
-
+#include <minlib.h>
 #include "widget.h"
 
 namespace Graphics

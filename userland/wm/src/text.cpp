@@ -1,5 +1,4 @@
 #include "text.h"
-#include "graphics.h"
 
 Graphics::Text::Text(const char* text)
 {

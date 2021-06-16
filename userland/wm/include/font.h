@@ -1,7 +1,6 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <minlib.h>
 
 #define CHAR_HEIGHT 8
 #define CHAR_WIDTH 8
