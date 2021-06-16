@@ -1,10 +1,5 @@
-#include <stdint.h>
-#include <stddef.h>
-
+#include <minlib.h>
 #include "graphics.h"
-
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
 
 struct Mouse
 {
@@ -13,26 +8,6 @@ struct Mouse
 };
 
 Mouse mouse;
-
-void * operator new(size_t size)
-{
-   void* p = malloc(size);
-   return p;
-}
-
-void operator delete(void * p)
-{
-   free(p);
-}
-
-extern "C"
-{
-    extern void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
-    extern void* munmap(void* addr, size_t length);
-    extern int swapscreenbuffer();
-}
-
-int main();
 
 extern Graphics::Window* window;
 

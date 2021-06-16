@@ -1,21 +1,11 @@
 #include "graphics.h"
-#include <assert.h>
-
 #include "window.h"
 #include "widget.h"
 #include "panel.h"
 #include "text.h"
 #include "bar.h"
 
-extern "C"
-{
-    extern void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
-    extern void* munmap(void* addr, size_t length);
-
-    int getscreenwidth();
-    int getscreenheight();
-    int swapscreenbuffer();
-}
+#include <minlib.h>
 
 // Framebuffer
 static FILE* fFramebuffer;

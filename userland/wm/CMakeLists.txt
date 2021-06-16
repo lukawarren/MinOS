@@ -8,14 +8,16 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Stdlib
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../lib/i686-minos/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../lib/minlib/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../lib/i686-minos/lib)
+FILE(GLOB_RECURSE MINLIB_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/minlib/src/*.cpp)
 
 # Add source files
 FILE(GLOB_RECURSE C_SRCS src/*.c)
 FILE(GLOB_RECURSE CPP_SRCS src/*.cpp)
 FILE(GLOB_RECURSE ASM_SRCS src/*.S)
 
-ADD_EXECUTABLE(wm.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})
+ADD_EXECUTABLE(wm.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS} ${MINLIB_SRCS})
 target_link_libraries(wm.bin libm.a libc.a libg.a)
 
 # Make initramfs
