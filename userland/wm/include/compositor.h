@@ -17,6 +17,8 @@ namespace Graphics
         void DrawRegion(const uint32_t x, const uint32_t y, const uint32_t width, const uint32_t height);
         void DrawMouse(Input::Mouse& mouse);
         
+        void MoveWindow(Window* pWindow, const uint32_t x, const uint32_t y);
+        
     private:
         inline void WriteRow(const uint32_t y, const uint32_t* pData, size_t length, const size_t offset)
         {
