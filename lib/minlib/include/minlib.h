@@ -16,6 +16,8 @@
 #include "../../../kernel/include/multitask/mman.h"
 #pragma GCC diagnostic pop
 
+#include "vector.h"
+
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 

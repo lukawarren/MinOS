@@ -32,7 +32,7 @@ Graphics::Compositor::Compositor()
 
     printf("[Wm] Initialised\n");
     
-    window = new Window(800, 600, 0, 0, "bob");
+    m_vWindows.Push(new Window(800, 600, 0, 0, "bob"));
 
     // Redraw screen on both buffers
     DrawRegion(0, 0, m_screenWidth, m_screenHeight);
@@ -48,20 +48,25 @@ void Graphics::Compositor::DrawRegion(const uint32_t x, const uint32_t y, const 
         // Fill row with desktop
         for (uint32_t j = 0; j < width; ++j) m_pRowBuffer[x +j] = 0xffff00ff;
 
-        for (const Widget* widget : window->m_pWidgets)
+        for (uint32_t nWindow = 0; nWindow < m_vWindows.Length(); ++nWindow)
         {
-            // Cull invalid rows early
-            if (!widget->IsRowSet(screenY)) continue;
+            Window* window = m_vWindows[nWindow];
             
-            // Copy set pixels from widget buffer into framebuffer
-            for (uint32_t j = 0; j < width; ++j)
+            for (const Widget* widget : window->m_pWidgets)
             {
-                const uint32_t screenX = x + j;
-
-                // If pixel is set, set pixel
-                if (widget->IsPixelSet(screenX, screenY))
+                // Cull invalid rows early
+                if (!widget->IsRowSet(screenY)) continue;
+                
+                // Copy set pixels from widget buffer into framebuffer
+                for (uint32_t j = 0; j < width; ++j)
                 {
-                    m_pRowBuffer[screenX] = widget->GetPixelFromBitmap(screenX, screenY);
+                    const uint32_t screenX = x + j;
+
+                    // If pixel is set, set pixel
+                    if (widget->IsPixelSet(screenX, screenY))
+                    {
+                        m_pRowBuffer[screenX] = widget->GetPixelFromBitmap(screenX, screenY);
+                    }
                 }
             }
         }
@@ -74,13 +79,12 @@ void Graphics::Compositor::DrawRegion(const uint32_t x, const uint32_t y, const 
 void Graphics::Compositor::DrawMouse(Input::Mouse& mouse)
 {
     auto oldPosition = mouse.m_sPosition;
-    auto position = mouse.UpdatePosition(m_screenWidth - window->m_Width, m_screenHeight - window->m_Height);
+    auto position = mouse.UpdatePosition(m_screenWidth, m_screenHeight);
     
     if (oldPosition.x == position.x && oldPosition.y == position.y) return;
     
     // Draw over old position
     DrawRegion(oldPosition.x, oldPosition.y, MOUSE_BITMAP_WIDTH, MOUSE_BITMAP_HEIGHT);
-    MoveWindow(window, position.x, position.y);
     
     for (uint32_t x = 0; x < MOUSE_BITMAP_WIDTH; ++x)
     {

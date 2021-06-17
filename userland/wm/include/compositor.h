@@ -29,8 +29,6 @@ namespace Graphics
                 : "+S"(pData), "+D"(dest), "+c"(length)::"memory"
             );
         }
-        
-        Window* window;
 
     public:
         FILE*        m_fFramebuffer;
@@ -40,6 +38,8 @@ namespace Graphics
     
         uint32_t m_screenWidth;
         uint32_t m_screenHeight;
+    
+        Vector<Window> m_vWindows;
     };
 }
 

@@ -8,6 +8,7 @@ minos_toolchain.tar.gz
 toolchain/
 bochs/
 .vscode
+MinOS.geany
 bochs.sh
 
 build/
