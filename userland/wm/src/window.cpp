@@ -71,7 +71,6 @@ void Graphics::Window::Redraw()
 
 Graphics::Window::~Window()
 {
-    printf("balls!\n");
     for (Widget* w : m_pWidgets)
             delete w;
 }
