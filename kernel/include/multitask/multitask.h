@@ -5,7 +5,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "multitask/message.h"
 #include "memory/pageFrame.h"
+#include "kstdlib.h"
+
+#define MAX_MESSAGES (PAGE_SIZE / sizeof(Message))
 
 namespace Multitask
 {
@@ -33,12 +37,22 @@ namespace Multitask
             TaskType m_Type;
             uint32_t m_PID;
 
-            // Paeg frame - technically kernel tasks don't need one but hey-ho
+            // Page frame - technically kernel tasks don't need one but hey-ho
             Memory::PageFrame m_PageFrame;
 
             // Sbrk implementation
             void* m_pSbrkBuffer;
             uint32_t m_nSbrkBytesUsed;
+            
+            // Message queue
+            uint32_t m_nMessages = 0;
+
+            void AddMesage(const uint32_t sourcePID, uint8_t* pData);
+            void GetMessage(Message* pMessage);
+                        
+        private:
+            // Message queue
+            Message m_messages[MAX_MESSAGES];
     };
 
     void Init();

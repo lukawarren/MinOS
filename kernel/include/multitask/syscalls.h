@@ -177,10 +177,16 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 
 SYSCALL_ARGS_2(int, munmap, 20, void*, addr, size_t, length)
 SYSCALL_ARGS_3(int, mprotect, 21, void*, addr, size_t, len, int, prot);
+
 SYSCALL_ARGS_0(int, getpagesize, 22)
 SYSCALL_ARGS_0(int, getscreenwidth, 23)
 SYSCALL_ARGS_0(int, getscreenheight, 24)
 SYSCALL_ARGS_0(int, swapscreenbuffer, 25)
+
+#include "./message.h"
+SYSCALL_ARGS_0(int, block, 26)
+SYSCALL_ARGS_2(int, sendmessage, 27, Message*, message, int, pid)
+SYSCALL_ARGS_1(int, getmessage, 28, Message*, message)
 
 #ifdef __cplusplus
 }

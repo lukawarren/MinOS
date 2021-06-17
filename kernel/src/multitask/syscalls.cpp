@@ -105,6 +105,9 @@ namespace Multitask
     static int      getscreenwidth();
     static int      getscreenheight();
     static int      swapscreenbuffer();
+    //static int      block();
+    static int      sendmessage(Message* message, int pid);
+    static int      getmessage(Message* message);
 
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
@@ -176,6 +179,18 @@ namespace Multitask
 
             case 25:
                 returnStatus = swapscreenbuffer();
+            break;
+
+            case 26:
+                //returnStatus = block();
+            break;
+            
+            case 27:
+                returnStatus = sendmessage((Message*)sRegisters.ebx, (int)sRegisters.ecx);
+            break;
+            
+            case 28:
+                returnStatus = getmessage((Message*)sRegisters.ebx);
             break;
 
             default:
@@ -422,6 +437,32 @@ namespace Multitask
     static int swapscreenbuffer()
     {
         Framebuffer::graphicsDevice->SwapBuffers();
+        return 0;
+    }
+    
+    static int sendmessage(Message* message, int pid)
+    {
+        Task* task = Multitask::GetCurrentTask();
+        Message* pMessage = (Message*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)message);
+        
+        Task* destTask = Multitask::GetTaskWithID(pid);
+        assert(destTask != nullptr);
+        destTask->AddMesage(task->m_PID, pMessage->data);
+        
+        return 0;
+    }
+    
+    static int getmessage(Message* message)
+    {
+        Task* task = Multitask::GetCurrentTask();
+        Message* pMessage = (Message*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)message);
+        
+        if (task->m_nMessages)
+        {
+            Multitask::GetCurrentTask()->GetMessage(pMessage);
+            return 1;
+        }
+        
         return 0;
     }
 

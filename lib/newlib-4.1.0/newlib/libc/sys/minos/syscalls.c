@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 // "It just works"
+#define DEFINE_SYSCALLS
 #include "../../../../../kernel/include/multitask/syscalls.h"
 #include "../../../../../kernel/include/multitask/mman.h"
 

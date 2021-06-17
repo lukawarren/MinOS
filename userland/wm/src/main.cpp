@@ -29,7 +29,30 @@ int main()
 
         //compositor.DrawRegion(chosenX, chosenY, chosenEndX - chosenX, chosenEndY - chosenY);
         //Graphics::DrawRegion(0, 0, Graphics::screenWidth, Graphics::screenHeight);
-    
+        
+        Message message;
+        message.data[0] = 'b';
+        message.data[1] = 'o';
+        message.data[2] = 'b';
+        message.data[3] = '\0';
+        sendmessage(&message, getpid());
+        
+        message.data[0] = 'd';
+        message.data[1] = 'e';
+        message.data[2] = 'd';
+        message.data[3] = '\0';
+        sendmessage(&message, getpid());
+        
+        printf("-----------------\n");
+        
+        memset(&message, 0, sizeof(Message));
+        while (getmessage(&message))
+        {
+            printf("Message recieved from PID %lu: %s\n", message.sourcePID, (const char*)message.data);
+        }
+        
+        printf("-----------------\n");
+        
         compositor.DrawMouse(mouse);
     }
     

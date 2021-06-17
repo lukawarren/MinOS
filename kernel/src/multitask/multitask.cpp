@@ -107,6 +107,35 @@ namespace Multitask
         m_PageFrame = task.m_PageFrame;
         m_nSbrkBytesUsed = task.m_nSbrkBytesUsed;
         m_pSbrkBuffer = task.m_pSbrkBuffer;
+        memcpy(m_messages, (void*)task.m_messages, sizeof(m_messages));
+    }
+
+    void Task::AddMesage(const uint32_t sourcePID, uint8_t* pData)
+    {
+        if (m_nMessages > MAX_MESSAGES)
+        {
+            assert(false);
+            return;
+        }
+        
+        auto message = &m_messages[m_nMessages];
+        
+        message->sourcePID = sourcePID;
+        memcpy(message->data, pData, sizeof(message->data));
+        
+        m_nMessages++;
+    }
+    
+    void Task::GetMessage(Message* pMessage)
+    {
+        // Copy to destination
+        memcpy(pMessage, &m_messages[0], sizeof(Message));
+        
+        // Shift all messages down the line
+        for (uint32_t i = 0; i < m_nMessages; ++i)
+            memcpy(&m_messages[i], &m_messages[i+1], sizeof(Message));
+        
+        m_nMessages--;
     }
 
     void Init()
