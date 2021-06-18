@@ -68,10 +68,11 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
     PS2::Init();
     Mouse::Init();
     Keyboard::Init();
-
+    
     // Setup tasks
     Multitask::Init();
     Multitask::CreateTask("wm/wm.bin");
+    Multitask::CreateTask("notepad/notepad.bin");
 
     // Enable interrupts
     CPU::EnableInterrupts();

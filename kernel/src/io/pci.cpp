@@ -7,10 +7,12 @@
 namespace PCI
 {
     Device devices[32];
-    uint32_t nDevices = 0;
+    uint32_t nDevices;
 
     void Init()
     {
+        nDevices = 0;
+        
         // Probe the PCI bus with brute-force
         for (uint16_t bus = 0; bus < 256; ++bus)
         {
@@ -21,10 +23,10 @@ namespace PCI
                 {
                     // Get header type
                     const auto headerType = GetHeaderType((uint8_t)bus, slot);
-
+                    
                     // Assert header is type 0 (straight forward device), with a single function
                     assert(headerType == 0);
-
+                    
                     // Get details
                     devices[nDevices].deviceID = GetDeviceID((uint8_t)bus, slot);
                     devices[nDevices].vendorID = GetVendor((uint8_t)bus, slot);

@@ -11,7 +11,7 @@
 namespace Multitask
 {
     // Task malloc "slab" that neatly fills two pages
-    constexpr uint32_t maxTasks = PAGE_SIZE * 2 / sizeof(Task);
+    constexpr uint32_t maxTasks = PAGE_SIZE * 32 / sizeof(Task);
     static Task* tasks;
 
     // House keeping

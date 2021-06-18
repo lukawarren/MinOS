@@ -21,7 +21,7 @@ namespace Filesystem
             assert(pHeader->ConformsToMagic());
             assert(pHeader->IsFile());
 
-            // Get name, name size and data
+            // Get name size and data
             const uint32_t nameSize = pHeader->StringToDecimal(pHeader->nameSize, 6);
             void* pData = (void*)(pFile + sizeof(CPIO::sHeader) + nameSize);
 
@@ -30,6 +30,10 @@ namespace Filesystem
 
             // Add to filesystem
             pFiles[FileDescriptors::wm + count] = File(fileSize, pData, pHeader->GetName(), count + FileDescriptors::wm);
+
+            UART::WriteString("[initramfs] Found program ");
+            UART::WriteString(pHeader->GetName());
+            UART::WriteString("\n");
 
             // Move to next file
             pHeader = (CPIO::sHeader*)((uint32_t) pData + fileSize);
