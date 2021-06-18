@@ -6,6 +6,7 @@
 #include "cpu/pit.h"
 #include "cpu/pic.h"
 #include "io/gfx/framebuffer.h"
+#include "io/uart.h"
 #include "kstdlib.h"
 
 namespace Multitask
@@ -30,6 +31,7 @@ namespace Multitask
         m_Type = type;
         m_Entrypoint = entrypoint;
         m_PID = ++nPIDs;
+        m_bBlocked = false;
 
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 20 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
@@ -77,6 +79,12 @@ namespace Multitask
         // whilst using another task's stack, things'd get funky
         if (type == TaskType::USER) *--m_pStack = m_PageFrame.GetCR3();
         else  *--m_pStack = Memory::kPageFrame.GetCR3();
+        
+        UART::WriteString("Task ");
+        UART::WriteString(sName);
+        UART::WriteString(" created with PID ");
+        UART::WriteNumber(m_PID);
+        UART::WriteString("\n");
     }
 
     void Task::SwitchToTask()
@@ -124,6 +132,7 @@ namespace Multitask
         memcpy(message->data, pData, sizeof(message->data));
         
         m_nMessages++;
+        m_bBlocked = false;
     }
     
     void Task::GetMessage(Message* pMessage)
@@ -136,6 +145,17 @@ namespace Multitask
             memcpy(&m_messages[i], &m_messages[i+1], sizeof(Message));
         
         m_nMessages--;
+    }
+    
+    void Task::PopMessage()
+    {
+        m_nMessages--;
+    }
+    
+    void Task::Block()
+    {
+        m_bBlocked = true;
+        OnTaskSwitch(false);
     }
 
     void Init()
@@ -195,6 +215,14 @@ namespace Multitask
         else
         {
             tasks[nPreviousTask].SwitchFromTask();
+            
+            // Avoid blocked tasks
+            while (nTasks > 1 && tasks[nCurrentTask].m_bBlocked)
+            {
+                nCurrentTask++;
+                if (nCurrentTask >= nTasks) nCurrentTask = 0;
+            }
+            
             tasks[nCurrentTask].SwitchToTask();
 
             // Set the privilege change level for next time

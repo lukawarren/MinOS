@@ -17,6 +17,8 @@
 #pragma GCC diagnostic pop
 
 #include "vector.h"
+#include "event.h"
+#include "pair.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))

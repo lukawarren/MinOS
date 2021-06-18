@@ -156,7 +156,7 @@ preserveOldTask:
     ; we may or may not be in, depending
     ; on if we changed rings!)
     mov esp, [oldStack]
-
+    
     ; Iret stack frame
     push dword [iretStack+20]
     push dword [iretStack+16]
@@ -183,6 +183,10 @@ preserveOldTask:
     mov eax, [oldCR3]
     push eax
 
+; Global because it's called from
+; the block syscall
+global SaveOldStackESP
+SaveOldStackESP:
     ; Update the stack pointer,
     ; which we have a pointer to
     mov eax, [pSavedTaskStack]

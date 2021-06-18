@@ -187,6 +187,7 @@ SYSCALL_ARGS_0(int, swapscreenbuffer, 25)
 SYSCALL_ARGS_0(int, block, 26)
 SYSCALL_ARGS_2(int, sendmessage, 27, Message*, message, int, pid)
 SYSCALL_ARGS_1(int, getmessage, 28, Message*, message)
+SYSCALL_ARGS_0(int, popmessage, 29)
 
 #ifdef __cplusplus
 }
@@ -202,6 +203,8 @@ namespace Multitask
     {
         int OnSyscall(const Interrupts::StackFrameRegisters sRegisters);
         extern void IRQ80();
+        
+        extern bool bSaveTaskBeforeSwitching;
     }
 }
 #endif

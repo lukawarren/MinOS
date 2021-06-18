@@ -105,9 +105,10 @@ namespace Multitask
     static int      getscreenwidth();
     static int      getscreenheight();
     static int      swapscreenbuffer();
-    //static int      block();
+    static int      block();
     static int      sendmessage(Message* message, int pid);
     static int      getmessage(Message* message);
+    static int      popmessage();
 
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
@@ -180,17 +181,21 @@ namespace Multitask
             case 25:
                 returnStatus = swapscreenbuffer();
             break;
-
-            case 26:
-                //returnStatus = block();
-            break;
             
+            case 26:
+                returnStatus = block();
+            break;
+                
             case 27:
                 returnStatus = sendmessage((Message*)sRegisters.ebx, (int)sRegisters.ecx);
             break;
             
             case 28:
                 returnStatus = getmessage((Message*)sRegisters.ebx);
+            break;
+            
+            case 29:
+                returnStatus = popmessage();
             break;
 
             default:
@@ -203,6 +208,7 @@ namespace Multitask
                 RemoveCurrentTask();
                 OnTaskSwitch(false);
                 Interrupts::bSwitchTasks = true;
+                bSaveTaskBeforeSwitching = false;
             break;
         }
 
@@ -221,6 +227,7 @@ namespace Multitask
         RemoveCurrentTask();
         OnTaskSwitch(false);
         Interrupts::bSwitchTasks = true;
+        bSaveTaskBeforeSwitching = false;
     }
 
     static int close(int fd)
@@ -314,6 +321,7 @@ namespace Multitask
             RemoveCurrentTask();
             OnTaskSwitch(false);
             Interrupts::bSwitchTasks = true;
+            bSaveTaskBeforeSwitching = false;
         }
 
         return (caddr_t) oldAddress;
@@ -440,6 +448,14 @@ namespace Multitask
         return 0;
     }
     
+    static int block()
+    {
+        Multitask::GetCurrentTask()->Block();
+        Interrupts::bSwitchTasks = true;
+        bSaveTaskBeforeSwitching = true;
+        return 0;
+    }
+    
     static int sendmessage(Message* message, int pid)
     {
         Task* task = Multitask::GetCurrentTask();
@@ -463,6 +479,12 @@ namespace Multitask
             return 1;
         }
         
+        return 0;
+    }
+    
+    static int popmessage()
+    {
+        Multitask::GetCurrentTask()->PopMessage();
         return 0;
     }
 

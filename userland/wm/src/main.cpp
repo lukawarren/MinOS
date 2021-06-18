@@ -30,6 +30,16 @@ int main()
         //compositor.DrawRegion(chosenX, chosenY, chosenEndX - chosenX, chosenEndY - chosenY);
         //Graphics::DrawRegion(0, 0, Graphics::screenWidth, Graphics::screenHeight);
         
+        while (1)
+        {
+            auto bob = Event<>::GetMessage();
+            if (bob.m_first)
+            {
+                printf("Message recieved: %s\n", (const char*)bob.m_second.data);
+            } else goto drawMouse;
+        }
+    
+    drawMouse:
         compositor.DrawMouse(mouse);
     }
     

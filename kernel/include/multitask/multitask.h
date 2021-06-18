@@ -36,6 +36,7 @@ namespace Multitask
             uint32_t m_Entrypoint;
             TaskType m_Type;
             uint32_t m_PID;
+            bool m_bBlocked;
 
             // Page frame - technically kernel tasks don't need one but hey-ho
             Memory::PageFrame m_PageFrame;
@@ -49,6 +50,8 @@ namespace Multitask
 
             void AddMesage(const uint32_t sourcePID, uint8_t* pData);
             void GetMessage(Message* pMessage);
+            void PopMessage();
+            void Block();
                         
         private:
             // Message queue
