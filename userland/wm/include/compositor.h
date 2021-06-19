@@ -18,7 +18,8 @@ namespace Graphics
         void DrawMouse(Input::Mouse& mouse);
         
         void MoveWindow(Window* pWindow, const uint32_t x, const uint32_t y);
-        
+        Window* GetWindowForPID(const uint32_t pid) const;
+
     private:
         inline void WriteRow(const uint32_t y, const uint32_t* pData, size_t length, const size_t offset)
         {

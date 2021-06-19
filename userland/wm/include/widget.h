@@ -24,7 +24,7 @@ namespace Graphics
         }
     
         // Redrawing
-        void FillBuffer()
+        void Render()
         {
             if (m_pBitmap != nullptr) free(m_pBitmap);
             m_pBitmap = (uint32_t*) malloc(sizeof(uint32_t) * m_Width * m_Height);
@@ -34,38 +34,17 @@ namespace Graphics
                     m_pBitmap[y * m_Width + x] = GetPixel(x, y);
         }
         
-        void Redraw(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y)
-        {
-            const bool bRedraw = (width != m_Width);
-            
-            m_Width = width;
-            m_Height = height;
-            m_X = x;
-            m_Y = y;
-            
-            // Resize and fill buffer if width changed
-            if (bRedraw) FillBuffer();
-        }
-        
-        inline void Redraw(const unsigned int x, const unsigned int y)
-        {
-            m_X = x;
-            m_Y = y;
-            
-            if (m_pBitmap == nullptr) FillBuffer();
-        }
-        
         // Culling
-        inline bool IsRowSet(const uint32_t screenY) const
+        inline bool IsRowSet(const uint32_t windowSpaceY) const
         {
-            return screenY >= m_Y && screenY < m_Y + m_Height;
+            return windowSpaceY >= m_Y && windowSpaceY < m_Y + m_Height;
         }
 
-        virtual inline bool IsPixelSet(const uint32_t screenX, const uint32_t screenY __attribute((unused))) const
+        virtual inline bool IsPixelSet(const uint32_t windowSpaceX, const uint32_t windowSpaceY __attribute((unused))) const
         {
             // We already know the row is set, and if we don't, we can override the function,
             // so only check X bounds.
-            return screenX >= m_X && screenX < m_X + m_Width;
+            return windowSpaceX >= m_X && windowSpaceX < m_X + m_Width;
         }
         
         virtual inline bool AreRowsIdentical() const
@@ -74,9 +53,9 @@ namespace Graphics
         }
         
         // Drawing
-        inline uint32_t GetPixelFromBitmap(const uint32_t screenX, const uint32_t screenY) const
+        inline uint32_t GetPixelFromBitmap(const uint32_t windowSpaceX, const uint32_t windowSpaceY) const
         {
-            return m_pBitmap[(screenY-m_Y) * m_Width + (screenX-m_X)];
+            return m_pBitmap[(windowSpaceY-m_Y) * m_Width + (windowSpaceX-m_X)];
         }
     
     protected:
@@ -87,7 +66,7 @@ namespace Graphics
         unsigned int m_Height;
         unsigned int m_X;
         unsigned int m_Y;
-        
+
         uint32_t* m_pBitmap = nullptr;
 
     };

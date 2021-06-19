@@ -46,7 +46,7 @@ public:
         }
     }
     
-    T* operator[](unsigned int index)
+    T* operator[](unsigned int index) const
     {
         return m_pData[index];
     }  

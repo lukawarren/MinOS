@@ -8,6 +8,8 @@ minos_toolchain.tar.gz
 toolchain/
 bochs/
 .vscode
+.idea
+cmake-build-debug/
 MinOS.geany
 bochs.sh
 

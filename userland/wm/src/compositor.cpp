@@ -55,7 +55,7 @@ void Graphics::Compositor::DrawRegion(const uint32_t x, const uint32_t y, const 
                 auto widget = window->m_vWidgets[nWidget];
                 
                 // Cull invalid rows early
-                if (!widget->IsRowSet(screenY)) continue;
+                if (!widget->IsRowSet(screenY - window->m_Y)) continue;
                 
                 // Copy set pixels from widget buffer into framebuffer
                 for (uint32_t j = 0; j < width; ++j)
@@ -63,9 +63,9 @@ void Graphics::Compositor::DrawRegion(const uint32_t x, const uint32_t y, const 
                     const uint32_t screenX = x + j;
 
                     // If pixel is set, set pixel
-                    if (widget->IsPixelSet(screenX, screenY))
+                    if (widget->IsPixelSet(screenX - window->m_X, screenY - window->m_Y))
                     {
-                        m_pRowBuffer[screenX] = widget->GetPixelFromBitmap(screenX, screenY);
+                        m_pRowBuffer[screenX] = widget->GetPixelFromBitmap(screenX - window->m_X, screenY - window->m_Y);
                     }
                 }
             }
@@ -107,12 +107,11 @@ void Graphics::Compositor::MoveWindow(Window* pWindow, const uint32_t x, const u
     uint32_t oldX = pWindow->m_X;
     uint32_t oldY = pWindow->m_Y;
     uint32_t oldEndX = oldX + pWindow->m_Width;
-    uint32_t oldEndY = oldY + pWindow->m_Height;
+    uint32_t oldEndY = oldY + pWindow->m_Height + 20;
     
     // Move window
     pWindow->m_X = x;
     pWindow->m_Y = y;
-    pWindow->Redraw();
 
     // Work out region of change
     uint32_t chosenX = MIN(oldX, pWindow->m_X);
@@ -121,6 +120,16 @@ void Graphics::Compositor::MoveWindow(Window* pWindow, const uint32_t x, const u
     uint32_t chosenEndY = MAX(oldEndY, pWindow->m_Height + pWindow->m_Y);
 
     DrawRegion(chosenX, chosenY, chosenEndX - chosenX, chosenEndY - chosenY);
+}
+
+Graphics::Window* Graphics::Compositor::GetWindowForPID(const uint32_t pid) const
+{
+    for (uint32_t i = 0; i < m_vWindows.Length(); ++i)
+    {
+        if (m_vWindows[i]->m_PID == pid) return m_vWindows[i];
+    }
+
+    return nullptr;
 }
 
 Graphics::Compositor::~Compositor()
