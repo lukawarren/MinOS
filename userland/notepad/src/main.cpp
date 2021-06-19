@@ -1,10 +1,14 @@
 #include <minlib.h>
 #include "events.h"
 
+constexpr unsigned int nWidth = 600;
+constexpr unsigned int nHeight = 400;
+constexpr unsigned int nPadding = 5;
+
 int main()
 {
-    eWindowCreate(600, 400, "Notepad");
-    ePanelCreate(600-10, 400-10, 5, 5, 0xffffffff);
+    eWindowCreate(nWidth, nHeight, "Notepad");
+    ePanelCreate(nWidth-nPadding*2, nHeight-nPadding*2, nPadding, nPadding, 0xffaaaaaa);
 
     while(1) {}
     
