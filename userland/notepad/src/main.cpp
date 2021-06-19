@@ -3,10 +3,7 @@
 
 int main()
 {
-    {
-        sWindowManagerEvent event = sWindowManagerEvent { WINDOW_CREATE, eWindowCreate(300, 100, "Notepad") };
-        Event<sWindowManagerEvent>(event, 1);
-    }
+    eWindowCreate(300, 100, "Notepad");
     
     while(1) {}
     

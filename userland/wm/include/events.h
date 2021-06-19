@@ -7,6 +7,23 @@
 // Each message has the ID first, then the data, so that leaves
 // 27 bytes per event for data
 
+enum Events
+{
+    WINDOW_CREATE = 0
+};
+
+struct sWindowManagerEvent
+{
+    uint8_t id;
+    uint8_t data[27];
+    
+    sWindowManagerEvent(uint8_t _id, void* _data)
+    {
+        id = _id;
+        memcpy(data, _data, sizeof(data));
+    }
+} __attribute__((packed));
+
 struct eWindowCreate
 {
     uint32_t width;
@@ -18,18 +35,9 @@ struct eWindowCreate
         width = _width;
         height = _height;
         strcpy(sName, name);
+        
+        Event<sWindowManagerEvent>({WINDOW_CREATE, this}, 1);
     }
 } __attribute__((packed));
-
-struct sWindowManagerEvent
-{
-    uint8_t id;
-    eWindowCreate data;
-} __attribute__((packed));
-
-enum Events
-{
-    WINDOW_CREATE = 0
-};
 
 #endif

@@ -23,7 +23,7 @@ namespace Graphics
 
         const char* m_sTitle;
 
-        Widget* m_pWidgets[7];
+        Vector<Widget> m_vWidgets;
     };
 }
 

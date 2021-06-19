@@ -50,8 +50,10 @@ void Graphics::Compositor::DrawRegion(const uint32_t x, const uint32_t y, const 
         {
             Window* window = m_vWindows[nWindow];
             
-            for (const Widget* widget : window->m_pWidgets)
+            for (size_t nWidget = 0; nWidget < window->m_vWidgets.Length(); ++nWidget)
             {
+                auto widget = window->m_vWidgets[nWidget];
+                
                 // Cull invalid rows early
                 if (!widget->IsRowSet(screenY)) continue;
                 
