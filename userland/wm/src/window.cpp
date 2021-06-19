@@ -21,7 +21,7 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
     m_pWidgets[1] = new Panel();
 
     // Bar title
-    m_pWidgets[2] = new Text("Terminal");
+    m_pWidgets[2] = new Text(title);
 
     // Bar button
     m_pWidgets[3] = new Panel();

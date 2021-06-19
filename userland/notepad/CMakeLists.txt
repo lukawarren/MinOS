@@ -5,6 +5,7 @@ set_target_properties(${TARGET_NAME} PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
 
 # Includes
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../wm/include)
 
 # Stdlib
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../lib/i686-minos/include)

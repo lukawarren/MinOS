@@ -1,8 +1,7 @@
 #include <minlib.h>
 #include "compositor.h"
 #include "mouse.h"
-
-extern Graphics::Window* window;
+#include "events.h"
 
 int main()
 {
@@ -29,17 +28,32 @@ int main()
 
         //compositor.DrawRegion(chosenX, chosenY, chosenEndX - chosenX, chosenEndY - chosenY);
         //Graphics::DrawRegion(0, 0, Graphics::screenWidth, Graphics::screenHeight);
-        
-        while (1)
+
+        // Process all events
+        Pair<bool, Message> message;
+        while ((message = Event<>::GetMessage()).m_first)
         {
-            auto bob = Event<>::GetMessage();
-            if (bob.m_first)
+            auto event = reinterpret_cast<sWindowManagerEvent&>(message.m_second.data);
+            
+            switch (event.id)
             {
-                printf("Message recieved: %s\n", (const char*)bob.m_second.data);
-            } else goto drawMouse;
+                case WINDOW_CREATE:
+                {
+                    eWindowCreate createWindowEvent = event.data;
+                    
+                    auto window = new Graphics::Window(createWindowEvent.width, createWindowEvent.height, 0, 0, createWindowEvent.sName);
+                    compositor.m_vWindows.Push(window);
+                    compositor.DrawRegion(window->m_X, window->m_Y, window->m_Width, window->m_Height);
+                    
+                    break;
+                }
+                
+                default:
+                    printf("Unrecognised event with id %u\n", event.id);
+                break;
+            }
         }
-    
-    drawMouse:
+        
         compositor.DrawMouse(mouse);
     }
     

@@ -31,8 +31,6 @@ Graphics::Compositor::Compositor()
     m_pRowBuffer = (uint32_t*)malloc(sizeof(uint32_t) * m_screenWidth);
 
     printf("[Wm] Initialised\n");
-    
-    m_vWindows.Push(new Window(800, 600, 0, 0, "bob"));
 
     // Redraw screen on both buffers
     DrawRegion(0, 0, m_screenWidth, m_screenHeight);

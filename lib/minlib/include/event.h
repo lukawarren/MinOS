@@ -21,7 +21,7 @@ public:
     {
         // Send message
         Message message;
-        memcpy(message.data, data, sizeof(message.data));
+        memcpy(message.data, (void*)&data, sizeof(message.data));
         sendmessage(&message, pid);
         
         // Block and wait for ACK
