@@ -109,7 +109,8 @@ namespace Multitask
     static int      sendmessage(Message* message, int pid);
     static int      getmessage(Message* message);
     static int      popmessage();
-
+    static int      loadprogram(char const* path);
+    
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
         // Get syscall id
@@ -196,6 +197,10 @@ namespace Multitask
             
             case 29:
                 returnStatus = popmessage();
+            break;
+            
+            case 30:
+                returnStatus = loadprogram((const char*)sRegisters.ebx);
             break;
 
             default:
@@ -485,6 +490,14 @@ namespace Multitask
     static int popmessage()
     {
         Multitask::GetCurrentTask()->PopMessage();
+        return 0;
+    }
+    
+    static int loadprogram(char const* path)
+    {
+        Task* task = Multitask::GetCurrentTask();
+        char const* pMessage = (char const*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)path);
+        Multitask::CreateTask(pMessage);
         return 0;
     }
 
