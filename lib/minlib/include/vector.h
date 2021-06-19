@@ -46,6 +46,30 @@ public:
         }
     }
     
+    void Pop(T* element)
+    {
+        auto index = GetIndex(element);
+        
+        // Free memory
+        free(m_pData[index]);
+        
+        // Shift all elements above down by one
+        for (size_t i = index; i < Length(); ++i)
+            m_pData[i] = m_pData[i+1];
+        
+        m_nElements--;
+    }
+    
+    size_t GetIndex(T* element)
+    {
+        for (size_t i = 0; i < Length(); ++i)
+            if (m_pData[i] == element)
+                return i;
+        
+        assert(false);
+        return 0xdeadbeef;
+    }
+    
     T* operator[](unsigned int index) const
     {
         return m_pData[index];
@@ -55,6 +79,7 @@ public:
     
     ~Vector()
     {
+        for (size_t i = 0; i < Length(); ++i) free(m_pData[i]);
         free(m_pData);
     }
     

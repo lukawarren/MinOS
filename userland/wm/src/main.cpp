@@ -41,6 +41,25 @@ int main()
                     compositor.DrawRegion(window->m_X, window->m_Y, window->m_Width, window->m_Height);
                     break;
                 }
+                
+                case WINDOW_CLOSE:
+                {
+                    auto window = compositor.GetWindowForPID(pid);
+                    
+                    // Save dimensions
+                    auto x = window->m_X;
+                    auto y = window->m_Y;
+                    auto width = window->m_Width;
+                    auto height = window->m_Height;
+                    
+                    // Delete window
+                    compositor.m_vWindows.Pop(window);
+                    
+                    // Draw over newly empty space
+                    compositor.DrawRegion(x, y, width, height);
+                    
+                    break;
+                }
 
                 case PANEL_CREATE:
                 {

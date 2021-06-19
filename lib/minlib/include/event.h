@@ -17,12 +17,14 @@ class Event
 public:
     Event() {}
     
-    Event(const T& data, const uint32_t pid)
+    Event(const T& data, const uint32_t pid, bool bWaitForAck = true)
     {
         // Send message
         Message message;
         memcpy(message.data, (void*)&data, sizeof(message.data));
         sendmessage(&message, pid);
+        
+        if (!bWaitForAck) return;
         
         // Block and wait for ACK
         block();
