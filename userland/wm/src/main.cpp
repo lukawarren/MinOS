@@ -23,7 +23,14 @@ int main()
                 {
                     eWindowCreate* createWindowEvent = (eWindowCreate*) event.data;
                     
-                    auto window = new Graphics::Window(createWindowEvent->width, createWindowEvent->height, 0, 0, createWindowEvent->sName);
+                    auto window = new Graphics::Window
+                    (
+                        createWindowEvent->width, createWindowEvent->height,
+                        compositor.m_screenWidth / 2 - createWindowEvent->width / 2,
+                        compositor.m_screenHeight / 2 - createWindowEvent->height / 2,
+                        createWindowEvent->sName
+                    );
+                    
                     compositor.m_vWindows.Push(window);
                     compositor.DrawRegion(window->m_X, window->m_Y, window->m_Width, window->m_Height);
                     
@@ -37,6 +44,16 @@ int main()
         }
         
         compositor.DrawMouse(mouse);
+        
+        // Deal with events
+        for (uint32_t i = 0; i < compositor.m_vWindows.Length(); ++i)
+        {
+            auto window = compositor.m_vWindows[i];
+            auto updatedState = window->ShouldUpdate(mouse, compositor.m_screenWidth, compositor.m_screenHeight);
+            
+            if (updatedState.m_first)
+                compositor.MoveWindow(window, updatedState.m_second.m_first, updatedState.m_second.m_second);
+        }
     }
     
     return 0;

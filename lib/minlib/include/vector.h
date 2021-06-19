@@ -39,6 +39,7 @@ public:
             
             // Clean up old memory
             free(m_pData);
+            m_pData = newData;
             
             // Add new data
             Push(value);

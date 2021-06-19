@@ -12,6 +12,8 @@ namespace Mouse
     {
         int deltaX = 0;
         int deltaY = 0;
+        bool bLeftButton = false;
+        bool bRightButton = false;
     };
     static MouseData* pMouseData;
 
@@ -61,6 +63,8 @@ namespace Mouse
                 // It's the final byte, so update mouse
                 pMouseData->deltaX = mouseInterruptBuffer[1];
                 pMouseData->deltaY = data;
+                pMouseData->bLeftButton = mouseInterruptBuffer[0] & MOUSE_BYTE_LEFT_BUTTON;
+                pMouseData->bRightButton = mouseInterruptBuffer[0] & MOUSE_BYTE_RIGHT_BUTTON;
 
                 // Account for signed bits (we're talking a 9-bit signed value here, don't ask me why!)
                 if (pMouseData->deltaX && (mouseInterruptBuffer[0] & MOUSE_BYTE_X_SIGN_BIT)) pMouseData->deltaX |= 0xFFFFFF00;

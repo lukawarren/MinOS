@@ -13,9 +13,9 @@ namespace Graphics
     public:
         Text() {}
         
-        Text(const char* text);
+        Text(char const* text);
         
-        Text(const char* text, const unsigned int x, const unsigned int y);
+        Text(char const* text, const unsigned int x, const unsigned int y);
 
         ~Text() {}
 
@@ -24,7 +24,7 @@ namespace Graphics
         bool IsPixelSet(const uint32_t screenX, const uint32_t screenY) const override;
 
     private:
-        char const* m_Text;
+        char m_Text[32];
     };
 }
 

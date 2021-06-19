@@ -1,15 +1,15 @@
 #include "text.h"
 
-Graphics::Text::Text(const char* text)
+Graphics::Text::Text(char const* text)
 {
-    m_Text = text;
+    strcpy(m_Text, text);
     m_Width = strlen(text) * CHAR_WIDTH;
     m_Height = CHAR_HEIGHT;
 }
 
-Graphics::Text::Text(const char* text, const unsigned int x, const unsigned int y) : Widget(strlen(text) * CHAR_WIDTH, CHAR_HEIGHT, x, y)
+Graphics::Text::Text(char const* text, const unsigned int x, const unsigned int y) : Widget(strlen(text) * CHAR_WIDTH, CHAR_HEIGHT, x, y)
 {
-    m_Text = text;
+    strcpy(m_Text, text);
 }
 
 uint32_t Graphics::Text::GetPixel(const uint32_t, const uint32_t) const

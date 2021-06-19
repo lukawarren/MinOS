@@ -3,7 +3,7 @@
 
 int main()
 {
-    eWindowCreate(300, 100, "Notepad");
+    eWindowCreate(600, 400, "Notepad");
     
     while(1) {}
     

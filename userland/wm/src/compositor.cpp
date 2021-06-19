@@ -78,24 +78,25 @@ void Graphics::Compositor::DrawRegion(const uint32_t x, const uint32_t y, const 
 
 void Graphics::Compositor::DrawMouse(Input::Mouse& mouse)
 {
-    auto oldPosition = mouse.m_sPosition;
-    auto position = mouse.UpdatePosition(m_screenWidth, m_screenHeight);
+    auto oldState = mouse.m_sState;
+    auto state = mouse.UpdateState(m_screenWidth, m_screenHeight);
     
-    if (oldPosition.x == position.x && oldPosition.y == position.y) return;
+    if (oldState.x == state.x && oldState.y == state.y &&
+        oldState.bLeftButton == state.bLeftButton && oldState.bRightButton == state.bRightButton) return;
     
     // Draw over old position
-    DrawRegion(oldPosition.x, oldPosition.y, MOUSE_BITMAP_WIDTH, MOUSE_BITMAP_HEIGHT);
+    DrawRegion(oldState.x, oldState.y, MOUSE_BITMAP_WIDTH, MOUSE_BITMAP_HEIGHT);
     
     for (uint32_t x = 0; x < MOUSE_BITMAP_WIDTH; ++x)
     {
         for (uint32_t y = 0; y < MOUSE_BITMAP_HEIGHT; ++y)
         {
-            const uint32_t positionX = position.x + x;
-            const uint32_t positionY = position.y + y;
+            const uint32_t positionX = state.x + x;
+            const uint32_t positionY = state.y + y;
             
             if (positionX < m_screenWidth && positionY < m_screenHeight &&
                 MOUSE_BITMAP[y * MOUSE_BITMAP_WIDTH + x] == '1')
-                m_pFramebuffer[positionY * m_screenWidth + positionX] = 0xffffffff;
+                m_pFramebuffer[positionY * m_screenWidth + positionX] = state.bLeftButton ? 0xff999999 : 0xffffffff;
         }
     }
 }

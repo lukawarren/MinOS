@@ -27,6 +27,7 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
     m_vWidgets.Push(new Panel());
     m_vWidgets.Push(new Text("X"));
     
+    m_bDragged = false;
     Redraw();
 }
 
@@ -54,6 +55,33 @@ void Graphics::Window::Redraw()
         m_X + m_Width - nButtonWidth - nPadding + 6,    // End of window minus button's position, plus 6 padding for text
         m_Y + nBarHeight - nButtonHeight + 2            // (As above but with 2 padding for text)
     );
+}
+
+Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight)
+{
+    // If mouse is clicked and over bar, move
+    if (mouse.m_sState.bLeftButton &&
+        m_vWidgets[0]->IsPixelSet(mouse.m_sState.x, mouse.m_sState.y) &&
+        m_vWidgets[0]->IsRowSet(mouse.m_sState.y))
+    {
+        m_bDragged = true;
+    }
+    
+    else if (mouse.m_sState.bLeftButton == false) m_bDragged = false;
+    
+    if (m_bDragged)
+    {
+        return
+        {
+            true,
+            {
+                MIN((unsigned int) (mouse.m_sState.x), screenWidth - m_Width),
+                MIN((unsigned int) (mouse.m_sState.y), screenHeight - m_Height)
+            }
+        };
+    }
+    
+    return { false, { 0, 0 }};
 }
 
 Graphics::Window::~Window() {}

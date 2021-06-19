@@ -26,14 +26,16 @@ namespace Input
             Mouse(const int x, const int y);
             ~Mouse();
         
-            struct MousePosition
+            struct MouseState
             {
                 int x;
                 int y;
+                bool bLeftButton;
+                bool bRightButton;
             };
         
-            MousePosition UpdatePosition(int maxWidth, int maxHeight);
-            MousePosition m_sPosition;
+            MouseState UpdateState(int maxWidth, int maxHeight);
+            MouseState m_sState;
             
         private:
             FILE* m_pFile;
