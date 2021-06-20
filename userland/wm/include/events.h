@@ -14,13 +14,14 @@ enum Events
     WINDOW_CREATE = 0,
     WINDOW_CLOSE = 1,
     PANEL_CREATE = 2,
+    TEXT_CREATE = 3,
     EXIT = 3
 };
 
 struct sWindowManagerEvent
 {
     uint8_t id;
-    uint8_t data[27];
+    uint8_t data[251];
     
     sWindowManagerEvent(const uint8_t _id, const void* _data)
     {
@@ -65,6 +66,20 @@ struct ePanelCreate
         width(_width), height(_height), x(_x), y(_y), colour(_colour)
     {
         Event<sWindowManagerEvent>({PANEL_CREATE, this}, WINDOW_MANAGER_PID);
+    }
+} __attribute__((packed));
+
+struct eTextCreate
+{
+    uint32_t x;
+    uint32_t y;
+    uint32_t colour;
+    char text[239];
+
+    eTextCreate(char const* _text, const uint32_t _x, const uint32_t _y, const uint32_t _colour = 0xffffffff) : x(_x), y(_y), colour(_colour)
+    {
+        strncpy(text, _text, sizeof(text));
+        Event<sWindowManagerEvent>({TEXT_CREATE, this}, WINDOW_MANAGER_PID);
     }
 } __attribute__((packed));
 

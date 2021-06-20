@@ -3,6 +3,7 @@
 #include "mouse.h"
 #include "events.h"
 #include "panel.h"
+#include "text.h"
 
 int main()
 {
@@ -82,6 +83,27 @@ int main()
                     
                     window->AddWidget(panel);
                     compositor.DrawRegion(window->m_X + panel->m_X, window->m_Y + panel->m_Y, panel->m_Width, panel->m_Height);
+                    break;
+                }
+                
+                case TEXT_CREATE:
+                {
+                    auto window = compositor.GetWindowForPID(pid);
+                    if (window == nullptr) break;
+                    
+                    eTextCreate* createTextEvent = (eTextCreate*) event.data;
+
+                    auto text = new Graphics::Text
+                    (
+                        createTextEvent->text,
+                        createTextEvent->x,
+                        createTextEvent->y,
+                        createTextEvent->colour
+                    );
+                    
+                    window->AddWidget(text);
+                    compositor.DrawRegion(window->m_X + text->m_X, window->m_Y + text->m_Y, text->m_Width, text->m_Height);
+                    
                     break;
                 }
                 

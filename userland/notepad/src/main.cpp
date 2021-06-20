@@ -9,6 +9,10 @@ int main()
 {
     eWindowCreate(nWidth, nHeight, "Notepad");
     ePanelCreate(nWidth-nPadding*2, nHeight-nPadding*2, nPadding, nPadding, 0xffaaaaaa);
+    
+    eTextCreate("Hello and welcome to MinOS! This piece of text may not have been typed ", nPadding * 2, nPadding * 2);
+    eTextCreate("manually, but I am sure given enough time, the keyboard driver will see", nPadding * 2, nPadding * 4);
+    eTextCreate("to that :-)                                                            ", nPadding * 2, nPadding * 6);
 
     bool bRunning = true;
     while(bRunning)

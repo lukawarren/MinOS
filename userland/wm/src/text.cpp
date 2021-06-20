@@ -2,6 +2,7 @@
 
 Graphics::Text::Text(char const* text, const uint32_t colour)
 {
+    m_Text = (char*) malloc(sizeof(char) * strlen(text));
     strcpy(m_Text, text);
     m_Width = strlen(text) * CHAR_WIDTH;
     m_Height = CHAR_HEIGHT;
@@ -10,6 +11,7 @@ Graphics::Text::Text(char const* text, const uint32_t colour)
 
 Graphics::Text::Text(char const* text, const unsigned int x, const unsigned int y, const uint32_t colour) : Widget(strlen(text) * CHAR_WIDTH, CHAR_HEIGHT, x, y)
 {
+    m_Text = (char*) malloc(sizeof(char) * strlen(text));
     strcpy(m_Text, text);
     m_Colour = colour;
 }
@@ -39,3 +41,7 @@ bool Graphics::Text::IsPixelSet(const uint32_t windowSpaceX, const uint32_t wind
     return pBitmap[y % CHAR_HEIGHT] & mask;
 }
 
+Graphics::Text::~Text()
+{
+    free(m_Text);
+}

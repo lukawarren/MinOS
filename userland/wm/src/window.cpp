@@ -60,7 +60,7 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
     }
     
     // If mouse is clicked and over bar, move
-    else if (mouse.m_sState.bLeftButton &&
+    else if (!m_bSentExitRequest && mouse.m_sState.bLeftButton &&
         m_vWidgets[0]->IsPixelSet(mouse.m_sState.x - m_X, mouse.m_sState.y - m_Y) &&
         m_vWidgets[0]->IsRowSet(mouse.m_sState.y - m_Y))
     {
