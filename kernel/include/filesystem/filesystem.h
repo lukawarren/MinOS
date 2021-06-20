@@ -24,8 +24,10 @@ namespace Filesystem
         wm = 5,
         getpagesize = 6,
         notepad = 7,
+        
+        desktop = 8,
 
-        N_FILES = 8
+        N_FILES = 9
     };
 
     void Init();

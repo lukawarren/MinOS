@@ -104,6 +104,8 @@ namespace Memory
 
     void PageFrame::SetPage(const uint32_t physicalAddress, const uint32_t virtualAddress, const uint32_t flags, const bool bReflectInBitmap)
     {
+        assert((physicalAddress & 0xfff) == 0); // Assert page aligned
+        
         // Set page table and bitmap
         m_PageTables[GetPageTableIndex(virtualAddress)] = physicalAddress | flags;
         if (bReflectInBitmap) SetPageInBitmap(physicalAddress, true);

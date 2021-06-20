@@ -33,8 +33,8 @@ namespace Input
         m_pMouse[1] = 0;
         
         // Restrain to reasonable bounds
-        m_sState.x = MAX(MIN(m_sState.x, maxWidth),  0);
-        m_sState.y = MAX(MIN(m_sState.y, maxHeight), 0);
+        m_sState.x = MAX(MIN(m_sState.x, maxWidth - MOUSE_BITMAP_WIDTH),  0);
+        m_sState.y = MAX(MIN(m_sState.y, maxHeight - MOUSE_BITMAP_HEIGHT), 0);
         
         return m_sState;
     }

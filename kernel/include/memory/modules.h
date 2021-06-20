@@ -11,6 +11,7 @@ namespace Modules
 {
     void Init(const multiboot_info_t* pMultiboot);
     void PostInit();
+    void Free();
     
     uint32_t GetModule();
 }

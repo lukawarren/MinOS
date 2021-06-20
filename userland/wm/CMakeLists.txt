@@ -25,7 +25,7 @@ add_custom_target(initramfs ALL)
 add_custom_command(
   TARGET initramfs
   POST_BUILD
-  COMMAND cd build/userland && find . -type f -name '*.bin' | cpio --quiet -ov -H odc > ../../build/initramfs.cpio
+  COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/filesystem/* build/userland/wm && cd build/userland && find . -type f -name '*.b*' | cpio --quiet -ov -H odc > ../../build/initramfs.cpio
   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/"
   COMMENT "Building initramfs..."
 )

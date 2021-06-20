@@ -43,6 +43,17 @@ namespace Modules
         }
     }
 
+    void Free()
+    {
+        // De-alloc all memory
+        const uint32_t nModulePages = moduleSize / PAGE_SIZE;
+        for (uint32_t i = 0; i < nModulePages; ++i)
+        {
+            const uint32_t address = pGrubModule + i*PAGE_SIZE;
+            Memory::kPageFrame.ClearPage(address, address);
+        }
+    }
+
     uint32_t GetModule()
     {
         return (uint32_t)pGrubModule;

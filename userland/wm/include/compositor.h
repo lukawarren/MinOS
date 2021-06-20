@@ -5,6 +5,7 @@
 #include <minlib.h>
 #include "window.h"
 #include "mouse.h"
+#include "bitmap.h"
 
 namespace Graphics
 {
@@ -30,6 +31,8 @@ namespace Graphics
                 : "+S"(pData), "+D"(dest), "+c"(length)::"memory"
             );
         }
+
+        Bitmap m_bDesktop;
 
     public:
         FILE*        m_fFramebuffer;

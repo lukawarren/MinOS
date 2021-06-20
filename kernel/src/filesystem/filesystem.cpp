@@ -28,10 +28,14 @@ namespace Filesystem
             // Get size of data
             const uint32_t fileSize = pHeader->StringToDecimal(pHeader->fileSize, 11);
 
-            // Add to filesystem
-            pFiles[FileDescriptors::wm + count] = File(fileSize, pData, pHeader->GetName(), count + FileDescriptors::wm);
+            // Allocate data so it's along page boundary
+            void* fileData = Memory::kPageFrame.AllocateMemory(fileSize, KERNEL_PAGE);
+            memcpy(fileData, pData, fileSize);
 
-            UART::WriteString("[initramfs] Found program ");
+            // Add to filesystem
+            pFiles[FileDescriptors::wm + count] = File(fileSize, fileData, pHeader->GetName(), count + FileDescriptors::wm);
+
+            UART::WriteString("[initramfs] Found file ");
             UART::WriteString(pHeader->GetName());
             UART::WriteString("\n");
 

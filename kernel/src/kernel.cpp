@@ -61,6 +61,9 @@ extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 
     // Setup filesystem
     Filesystem::Init();
+    
+    // Free modules, as filesystem has its own copy of all files
+    Modules::Free();
 
     // Setup devices
     PCI::Init();

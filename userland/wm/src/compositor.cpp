@@ -6,7 +6,7 @@
 #include "text.h"
 #include "bar.h"
 
-Graphics::Compositor::Compositor()
+Graphics::Compositor::Compositor() : m_bDesktop("wm/desktop.bmp")
 {
     // Get screen dimensions
     m_screenWidth = getscreenwidth();
@@ -44,7 +44,7 @@ void Graphics::Compositor::DrawRegion(const uint32_t x, const uint32_t y, const 
         const uint32_t screenY = y + k;
 
         // Fill row with desktop
-        for (uint32_t j = 0; j < width; ++j) m_pRowBuffer[x +j] = 0xffff00ff;
+        for (uint32_t j = 0; j < width; ++j) m_pRowBuffer[x +j] = m_bDesktop.m_pImage[screenY * m_screenWidth + x + j];
 
         for (uint32_t nWindow = 0; nWindow < m_vWindows.Length(); ++nWindow)
         {
@@ -118,6 +118,13 @@ void Graphics::Compositor::MoveWindow(Window* pWindow, const uint32_t x, const u
     uint32_t chosenY = MIN(oldY, pWindow->m_Y);
     uint32_t chosenEndX = MAX(oldEndX, pWindow->m_Width + pWindow->m_X);
     uint32_t chosenEndY = MAX(oldEndY, pWindow->m_Height + pWindow->m_Y);
+
+    // Confine to reasonable bounds
+    chosenX = MIN(chosenX, m_screenWidth);
+    
+    chosenX = MIN(chosenX, m_screenHeight);
+    chosenEndX = MIN(chosenEndX, m_screenWidth);
+    chosenEndY = MIN(chosenEndY, m_screenHeight);
 
     DrawRegion(chosenX, chosenY, chosenEndX - chosenX, chosenEndY - chosenY);
 }
