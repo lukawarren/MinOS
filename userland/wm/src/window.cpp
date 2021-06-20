@@ -40,6 +40,7 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
     ));
 
     m_bDragged = false;
+    m_bSentExitRequest = false;
 
     for (size_t i = 0; i < m_vWidgets.Length(); ++i)
         m_vWidgets[i]->Render();
@@ -50,15 +51,16 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
 Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight)
 {
     // If mouse is clicked and over quit, send quit event
-    if (mouse.m_sState.bLeftButton &&
+    if (!m_bSentExitRequest && mouse.m_sState.bLeftButton &&
         m_vWidgets[3]->IsPixelSet(mouse.m_sState.x - m_X, mouse.m_sState.y - m_Y) &&
         m_vWidgets[3]->IsRowSet(mouse.m_sState.y - m_Y))
     {
         eExit { m_PID };
+        m_bSentExitRequest = true;
     }
     
     // If mouse is clicked and over bar, move
-    if (mouse.m_sState.bLeftButton &&
+    else if (mouse.m_sState.bLeftButton &&
         m_vWidgets[0]->IsPixelSet(mouse.m_sState.x - m_X, mouse.m_sState.y - m_Y) &&
         m_vWidgets[0]->IsRowSet(mouse.m_sState.y - m_Y))
     {

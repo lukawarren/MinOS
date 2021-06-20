@@ -32,6 +32,7 @@ namespace Graphics
     
     private:
         bool m_bDragged;
+        bool m_bSentExitRequest;
     };
 }
 

@@ -47,6 +47,7 @@ int main()
                 case WINDOW_CLOSE:
                 {
                     auto window = compositor.GetWindowForPID(pid);
+                    if (window ==  nullptr) break;
                     
                     // Save dimensions
                     auto x = window->m_X;
@@ -65,6 +66,9 @@ int main()
 
                 case PANEL_CREATE:
                 {
+                    auto window = compositor.GetWindowForPID(pid);
+                    if (window == nullptr) break;
+                    
                     ePanelCreate* createPanelEvent = (ePanelCreate*) event.data;
 
                     auto panel = new Graphics::Panel
@@ -75,12 +79,14 @@ int main()
                         createPanelEvent->y,
                         createPanelEvent->colour
                     );
-
-                    auto window = compositor.GetWindowForPID(pid);
+                    
                     window->AddWidget(panel);
                     compositor.DrawRegion(window->m_X + panel->m_X, window->m_Y + panel->m_Y, panel->m_Width, panel->m_Height);
                     break;
                 }
+                
+                case 65: // ACK
+                break;
                 
                 default:
                     printf("Unrecognised event with id %u\n", event.id);

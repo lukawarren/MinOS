@@ -74,10 +74,7 @@ struct eExit
     
     eExit(const uint32_t pid = 0, const uint32_t _exitCode = 0) : exitCode(_exitCode)
     {
-        if (pid == 0)
-            Event<sWindowManagerEvent>({EXIT, this}, WINDOW_MANAGER_PID, false);
-        else
-            Event<sWindowManagerEvent>({EXIT, this}, pid, false);
+        Event<sWindowManagerEvent>({EXIT, this}, pid == 0 ? WINDOW_MANAGER_PID : pid, false);
     }
 } __attribute__((packed));
 

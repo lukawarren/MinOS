@@ -25,6 +25,10 @@ int main()
             {
                 case EXIT:
                     bRunning = false;
+                    printf("[Notepad] Exiting...\n");
+                break;
+                
+                case 65: // ACK
                 break;
                 
                 default:
@@ -33,7 +37,7 @@ int main()
             }
         }
         
-        block();
+        if (bRunning) block();
     }
     
     eWindowClose();
