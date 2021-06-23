@@ -33,6 +33,10 @@ int main()
                     printf("[Notepad] Exiting...\n");
                 break;
                 
+                case WIDGET_UPDATE: // Button pressed
+                    bRunning = false;
+                break;
+                
                 case 65: // ACK
                 break;
                 

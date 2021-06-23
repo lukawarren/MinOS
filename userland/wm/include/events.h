@@ -12,12 +12,13 @@
 
 enum Events
 {
-    WINDOW_CREATE = 0,
-    WINDOW_CLOSE = 1,
-    PANEL_CREATE = 2,
-    TEXT_CREATE = 3,
-    BUTTON_CREATE = 4,
-    EXIT = 3
+    WINDOW_CREATE,
+    WINDOW_CLOSE,
+    PANEL_CREATE,
+    TEXT_CREATE,
+    BUTTON_CREATE,
+    WIDGET_UPDATE,
+    EXIT
 };
 
 struct sWindowManagerEvent
@@ -98,6 +99,16 @@ struct eButtonCreate
     {
         strncpy(text, _text, sizeof(text));
         Event<sWindowManagerEvent>({BUTTON_CREATE, this}, WINDOW_MANAGER_PID);
+    }
+} __attribute__((packed));
+
+struct eWidgetUpdate
+{
+    uint32_t id;
+    
+    eWidgetUpdate(const uint32_t pid, const uint32_t _id) : id(_id)
+    {
+        Event<sWindowManagerEvent>({WIDGET_UPDATE, this}, pid, false);
     }
 } __attribute__((packed));
 

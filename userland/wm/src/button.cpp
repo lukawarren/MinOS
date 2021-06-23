@@ -29,7 +29,8 @@ bool Graphics::Button::ShouldUpdate(const Input::Mouse& mouse, const uint32_t wi
     
     if (mouseX >= widgetX && mouseY >= widgetY &&
         mouseX < widgetX + m_Width &&
-        mouseY < widgetY + m_Height)
+        mouseY < widgetY + m_Height &&
+        mouse.m_sState.bLeftButton)
     {
         // When first hovered over
         if (!m_bActive)

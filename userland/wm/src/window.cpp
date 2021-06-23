@@ -75,8 +75,12 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
     {
         if (m_vWidgets[i]->ShouldUpdate(mouse, m_X, m_Y))
         {
+            // Redraw widget after dealing with events
             m_vWidgets[i]->Render();
             bRedrawWindow = true;
+            
+            // Dispatch event
+            eWidgetUpdate { m_PID, i };
         }
     }
     
