@@ -68,10 +68,21 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
     }
 
     else if (mouse.m_sState.bLeftButton == false) m_bDragged = false;
+
+    // For every button, dispatch click events too
+    bool bRedrawWindow = false;
+    for (size_t i = 0; i < m_vWidgets.Length(); ++i)
+    {
+        if (m_vWidgets[i]->ShouldUpdate(mouse, m_X, m_Y))
+        {
+            m_vWidgets[i]->Render();
+            bRedrawWindow = true;
+        }
+    }
     
     if (m_bDragged)
     {
-        return
+        return // return coords to move to
         {
             true,
             {
@@ -79,6 +90,11 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
                 MIN((unsigned int) (mouse.m_sState.y), screenHeight - m_Height)
             }
         };
+    }
+    
+    else if (bRedrawWindow)
+    {
+        return { true, { m_X, m_Y } };
     }
     
     return { false, { 0, 0 }};

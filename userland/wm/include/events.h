@@ -3,6 +3,7 @@
 #define EVENTS_H
 
 #include <minlib.h>
+#include "text.h"
 
 #define WINDOW_MANAGER_PID 1
 
@@ -15,6 +16,7 @@ enum Events
     WINDOW_CLOSE = 1,
     PANEL_CREATE = 2,
     TEXT_CREATE = 3,
+    BUTTON_CREATE = 4,
     EXIT = 3
 };
 
@@ -80,6 +82,22 @@ struct eTextCreate
     {
         strncpy(text, _text, sizeof(text));
         Event<sWindowManagerEvent>({TEXT_CREATE, this}, WINDOW_MANAGER_PID);
+    }
+} __attribute__((packed));
+
+struct eButtonCreate
+{
+    uint32_t x;
+    uint32_t y;
+    uint32_t width;
+    uint32_t height;
+    char text[239];
+
+    eButtonCreate(char const* _text, const uint32_t _x, const uint32_t _y, const uint32_t _width = 0, const uint32_t _height = 24) : 
+        x(_x), y(_y), width(_width != 0 ? _width : strlen(_text) * CHAR_WIDTH + 10), height(_height)
+    {
+        strncpy(text, _text, sizeof(text));
+        Event<sWindowManagerEvent>({BUTTON_CREATE, this}, WINDOW_MANAGER_PID);
     }
 } __attribute__((packed));
 

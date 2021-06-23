@@ -23,9 +23,10 @@ namespace Graphics
 
         bool IsPixelSet(const uint32_t windowSpaceX, const uint32_t windowSpaceY) const override;
 
+        uint32_t m_Colour;
+
     private:
         char* m_Text;
-        uint32_t m_Colour;
     };
 }
 

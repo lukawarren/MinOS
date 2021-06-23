@@ -4,6 +4,7 @@
 #include "events.h"
 #include "panel.h"
 #include "text.h"
+#include "button.h"
 
 int main()
 {
@@ -104,6 +105,27 @@ int main()
                     window->AddWidget(text);
                     compositor.DrawRegion(window->m_X + text->m_X, window->m_Y + text->m_Y, text->m_Width, text->m_Height);
                     
+                    break;
+                }
+                
+                case BUTTON_CREATE:
+                {
+                    auto window = compositor.GetWindowForPID(pid);
+                    if (window == nullptr) break;
+                    
+                    eButtonCreate* createButtonEvent = (eButtonCreate*) event.data;
+
+                    auto button = new Graphics::Button
+                    (
+                        createButtonEvent->text,
+                        createButtonEvent->x,
+                        createButtonEvent->y,
+                        createButtonEvent->width,
+                        createButtonEvent->height
+                    );
+                    
+                    window->AddWidget(button);
+                    compositor.DrawRegion(window->m_X + button->m_X, window->m_Y + button->m_Y, button->m_Width, button->m_Height);
                     break;
                 }
                 

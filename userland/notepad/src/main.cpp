@@ -13,6 +13,7 @@ int main()
     eTextCreate("Hello and welcome to MinOS! This piece of text may not have been typed ", nPadding * 2, nPadding * 2);
     eTextCreate("manually, but I am sure given enough time, the keyboard driver will see", nPadding * 2, nPadding * 4);
     eTextCreate("to that :-)                                                            ", nPadding * 2, nPadding * 6);
+    eButtonCreate("Close window... with style", 10, nHeight - 34);
 
     bool bRunning = true;
     while(bRunning)

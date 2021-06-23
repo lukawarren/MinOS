@@ -3,6 +3,7 @@
 #define WIDGET_H
 
 #include <minlib.h>
+#include "mouse.h"
 
 namespace Graphics
 {
@@ -56,6 +57,12 @@ namespace Graphics
         inline uint32_t GetPixelFromBitmap(const uint32_t windowSpaceX, const uint32_t windowSpaceY) const
         {
             return m_pBitmap[(windowSpaceY-m_Y) * m_Width + (windowSpaceX-m_X)];
+        }
+        
+        // Input
+        virtual bool ShouldUpdate(const Input::Mouse&, const uint32_t, const uint32_t)
+        {
+            return false;
         }
     
     protected:
