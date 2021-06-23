@@ -46,6 +46,7 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
         m_vWidgets[i]->Render();
 
     m_Height += nBarHeight;
+    m_nBaseWidgets = m_vWidgets.Length();
 }
 
 Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight)
@@ -80,7 +81,7 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
             bRedrawWindow = true;
             
             // Dispatch event
-            eWidgetUpdate { m_PID, i };
+            eWidgetUpdate { m_PID, i - m_nBaseWidgets};
         }
     }
     

@@ -11,7 +11,7 @@ int main()
     Graphics::Compositor compositor;
     Input::Mouse mouse = Input::Mouse(compositor.m_screenWidth / 2, compositor.m_screenHeight / 2);
     
-    loadprogram("notepad/notepad.bin");
+    loadprogram("launcher/launcher.bin");
     
     while (1)
     {

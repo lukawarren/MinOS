@@ -104,11 +104,11 @@ struct eButtonCreate
 
 struct eWidgetUpdate
 {
-    uint32_t id;
+    uint32_t index;
     
-    eWidgetUpdate(const uint32_t pid, const uint32_t _id) : id(_id)
+    eWidgetUpdate(const uint32_t pid, const uint32_t _index) : index(_index)
     {
-        Event<sWindowManagerEvent>({WIDGET_UPDATE, this}, pid, false);
+        Event<sWindowManagerEvent>({WIDGET_UPDATE, this}, pid);
     }
 } __attribute__((packed));
 

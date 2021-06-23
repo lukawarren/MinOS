@@ -33,6 +33,7 @@ namespace Graphics
     private:
         bool m_bDragged;
         bool m_bSentExitRequest;
+        uint32_t m_nBaseWidgets;
     };
 }
 

@@ -467,7 +467,14 @@ namespace Multitask
         Message* pMessage = (Message*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)message);
         
         Task* destTask = Multitask::GetTaskWithID(pid);
-        assert(destTask != nullptr);
+        if (destTask == nullptr)
+        {
+            assert(false);
+            UART::WriteString("[Syscall] Erroneous message from process ");
+            UART::WriteString(task->m_sName);
+            UART::WriteNumber(message->data[0]);
+            UART::WriteString("\n");
+        }
         destTask->AddMesage(task->m_PID, pMessage->data);
         
         return 0;

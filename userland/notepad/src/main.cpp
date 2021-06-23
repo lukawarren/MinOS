@@ -37,9 +37,6 @@ int main()
                     bRunning = false;
                 break;
                 
-                case 65: // ACK
-                break;
-                
                 default:
                     printf("[Notepad] Unrecognised event with id %u\n", event.id);
                 break;
