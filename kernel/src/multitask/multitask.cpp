@@ -134,9 +134,6 @@ namespace Multitask
         
         m_nMessages++;
         m_bBlocked = false;
-        UART::WriteString("[Multitask] Unblocked ");
-        UART::WriteString(m_sName);
-        UART::WriteString("\n");
     }
     
     void Task::GetMessage(Message* pMessage)

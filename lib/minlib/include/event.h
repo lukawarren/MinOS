@@ -43,8 +43,7 @@ public:
         // Send ACK
         Message ackMessage;
         strcpy((char*)ackMessage.data, EVENT_ACK);
-        sendmessage(&ackMessage, srcMessage.sourcePID);        printf("blocking - PID %d\n", getpid());
-        
+        sendmessage(&ackMessage, srcMessage.sourcePID);
         
         return Pair(true, srcMessage);
     }
