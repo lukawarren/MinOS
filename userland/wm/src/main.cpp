@@ -12,7 +12,9 @@ int main()
     Input::Mouse mouse = Input::Mouse(compositor.m_screenWidth / 2, compositor.m_screenHeight / 2);
     
     loadprogram("launcher/launcher.bin");
+    //loadprogram("notepad/notepad.bin");
     
+    Graphics::Window* pActiveWindow = nullptr;
     while (1)
     {
         // Process all events
@@ -34,15 +36,17 @@ int main()
                     
                     auto window = new Graphics::Window
                     (
-                        createWindowEvent->width, createWindowEvent->height,
-                        compositor.m_screenWidth / 2 - createWindowEvent->width / 2,
-                        compositor.m_screenHeight / 2 - createWindowEvent->height / 2,
+                        createWindowEvent->width,
+                        createWindowEvent->height,
+                        createWindowEvent->x,
+                        createWindowEvent->y,
                         createWindowEvent->sName,
                         pid
                     );
                     
                     compositor.m_vWindows.Push(window);
                     compositor.DrawRegion(window->m_X, window->m_Y, window->m_Width, window->m_Height);
+                    pActiveWindow = window;
                     break;
                 }
                 
@@ -58,6 +62,7 @@ int main()
                     auto height = window->m_Height;
                     
                     // Delete window
+                    if (window == pActiveWindow) pActiveWindow = nullptr;
                     compositor.m_vWindows.Pop(window);
                     
                     // Draw over newly empty space
@@ -129,25 +134,37 @@ int main()
                     break;
                 }
                 
-                case 65: // ACK
-                break;
-                
                 default:
-                    printf("Unrecognised event with id %u\n", event.id);
+                    printf("[Wm] Unrecognised event with id %u\n", event.id);
+                    exit(-1);
                 break;
             }
         }
         
-        compositor.DrawMouse(mouse);
+        compositor.UpdateAndDrawMouse(mouse);
+        
+        // De-active active window when mouse lifted (if any)
+        if (pActiveWindow && mouse.m_sState.bLeftButton == false && pActiveWindow->IsHoveredOver(mouse) == false)
+            pActiveWindow = nullptr;
+        
+        // Find active window if mouse not down (if any)
+        if (!pActiveWindow && mouse.m_sState.bLeftButton == false)
+        {
+            for (uint32_t i = 0; i < compositor.m_vWindows.Length() && !pActiveWindow; ++i)
+            {
+                const auto window = compositor.m_vWindows[i];
+                if (window->IsHoveredOver(mouse))
+                    pActiveWindow = window;
+            }
+        }
         
         // Deal with events
-        for (uint32_t i = 0; i < compositor.m_vWindows.Length(); ++i)
+        if (pActiveWindow != nullptr)
         {
-            auto window = compositor.m_vWindows[i];
-            auto updatedState = window->ShouldUpdate(mouse, compositor.m_screenWidth, compositor.m_screenHeight);
+            auto updatedState = pActiveWindow->ShouldUpdate(mouse, compositor.m_screenWidth, compositor.m_screenHeight);
             
             if (updatedState.m_first)
-                compositor.MoveWindow(window, updatedState.m_second.m_first, updatedState.m_second.m_second);
+                compositor.MoveWindow(pActiveWindow, updatedState.m_second.m_first, updatedState.m_second.m_second);
         }
     }
     

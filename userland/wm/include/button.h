@@ -19,7 +19,7 @@ namespace Graphics
         
         uint32_t GetPixel(const uint32_t x, const uint32_t y) const override;
         
-        virtual bool ShouldUpdate(const Input::Mouse& mouse, const uint32_t windowX, const uint32_t windowY) override;
+        virtual Pair<bool, bool> ShouldUpdate(const Input::Mouse& mouse, const uint32_t windowX, const uint32_t windowY) override;
         
         bool m_bActive = false;
         

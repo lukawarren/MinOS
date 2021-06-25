@@ -19,7 +19,7 @@ uint32_t Graphics::Button::GetPixel(const uint32_t x, const uint32_t y) const
     return m_bActive ? cPanelLeadingEdge : cPanelBackground;
 }
 
-bool Graphics::Button::ShouldUpdate(const Input::Mouse& mouse, const uint32_t windowX, const uint32_t windowY)
+Pair<bool, bool> Graphics::Button::ShouldUpdate(const Input::Mouse& mouse, const uint32_t windowX, const uint32_t windowY)
 {
     const unsigned int mouseX = (unsigned int)(mouse.m_sState.x);
     const unsigned int mouseY = (unsigned int)(mouse.m_sState.y);
@@ -36,7 +36,7 @@ bool Graphics::Button::ShouldUpdate(const Input::Mouse& mouse, const uint32_t wi
         if (!m_bActive)
         {
             m_bActive = true;
-            return true;
+            return { true, true };
         }
     }
     
@@ -44,8 +44,8 @@ bool Graphics::Button::ShouldUpdate(const Input::Mouse& mouse, const uint32_t wi
     else if (m_bActive)
     {
         m_bActive = false;
-        return true;
+        return { true, false };
     }
     
-    return false;
+    return { false, false };
 }

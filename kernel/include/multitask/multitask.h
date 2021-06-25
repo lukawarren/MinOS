@@ -9,7 +9,7 @@
 #include "memory/pageFrame.h"
 #include "kstdlib.h"
 
-#define MAX_MESSAGES (PAGE_SIZE / sizeof(Message))
+#define MAX_MESSAGES (PAGE_SIZE * 10 / sizeof(Message))
 
 namespace Multitask
 {
@@ -50,12 +50,14 @@ namespace Multitask
 
             void AddMesage(const uint32_t sourcePID, uint8_t* pData);
             void GetMessage(Message* pMessage);
-            void PopMessage();
+            void RemoveMessage(const uint32_t filter);
             void Block();
-                        
+            void Unblock();
+            bool HasMessages() const;
+            
         private:
             // Message queue
-            Message m_messages[MAX_MESSAGES];
+            Message* m_messages;
     };
 
     void Init();

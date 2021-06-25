@@ -49,10 +49,19 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
     m_nBaseWidgets = m_vWidgets.Length();
 }
 
+bool Graphics::Window::IsHoveredOver(const Input::Mouse& mouse) const
+{
+    return
+        (unsigned int) mouse.m_sState.x >= m_X &&
+        (unsigned int) mouse.m_sState.y >= m_Y &&
+        (unsigned int) mouse.m_sState.x < m_X + m_Width &&
+        (unsigned int) mouse.m_sState.y < m_Y + m_Height;
+}
+
 Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight)
 {
-    // If mouse is clicked and over quit, send quit event
-    if (!m_bSentExitRequest && mouse.m_sState.bLeftButton &&
+    // If mouse is clicked and over quit (and we're not getting dragged!), send quit event
+    if (!m_bSentExitRequest && mouse.m_sState.bLeftButton && !m_bDragged &&
         m_vWidgets[3]->IsPixelSet(mouse.m_sState.x - m_X, mouse.m_sState.y - m_Y) &&
         m_vWidgets[3]->IsRowSet(mouse.m_sState.y - m_Y))
     {
@@ -61,38 +70,46 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
     }
     
     // If mouse is clicked and over bar, move
-    else if (!m_bSentExitRequest && mouse.m_sState.bLeftButton &&
+    else if (!m_bSentExitRequest && 
+    mouse.m_sState.bLeftButton &&
         m_vWidgets[0]->IsPixelSet(mouse.m_sState.x - m_X, mouse.m_sState.y - m_Y) &&
-        m_vWidgets[0]->IsRowSet(mouse.m_sState.y - m_Y))
+        m_vWidgets[0]->IsRowSet(mouse.m_sState.y - m_Y)
+        && !m_bDragged)
     {
         m_bDragged = true;
+        m_dragOffsetX = m_X - mouse.m_sState.x;
+        m_dragOffsetY = m_Y - mouse.m_sState.y;
     }
 
     else if (mouse.m_sState.bLeftButton == false) m_bDragged = false;
 
     // For every button, dispatch click events too
     bool bRedrawWindow = false;
-    for (size_t i = 0; i < m_vWidgets.Length(); ++i)
+    if (!m_bDragged)
     {
-        if (m_vWidgets[i]->ShouldUpdate(mouse, m_X, m_Y))
+        for (size_t i = 0; i < m_vWidgets.Length(); ++i)
         {
-            // Redraw widget after dealing with events
-            m_vWidgets[i]->Render();
-            bRedrawWindow = true;
-            
-            // Dispatch event
-            eWidgetUpdate { m_PID, i - m_nBaseWidgets};
+            auto update = m_vWidgets[i]->ShouldUpdate(mouse, m_X, m_Y);
+            if (update.m_first)
+            {
+                // Redraw widget after dealing with events
+                m_vWidgets[i]->Render();
+                bRedrawWindow = true;
+                
+                // Dispatch event if need be
+                if (update.m_second) eWidgetUpdate { m_PID, i - m_nBaseWidgets};
+            }
         }
     }
     
     if (m_bDragged)
-    {
+    { 
         return // return coords to move to
         {
             true,
             {
-                MIN((unsigned int) (mouse.m_sState.x), screenWidth - m_Width),
-                MIN((unsigned int) (mouse.m_sState.y), screenHeight - m_Height)
+                MIN((unsigned int) MAX(mouse.m_sState.x + m_dragOffsetX, 0), screenWidth - m_Width),
+                MIN((unsigned int) MAX(mouse.m_sState.y + m_dragOffsetY, 0), screenHeight - m_Height)
             }
         };
     }

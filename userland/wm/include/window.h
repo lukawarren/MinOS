@@ -15,6 +15,7 @@ namespace Graphics
         Window(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, char const* title, const uint32_t pid);
         ~Window();
 
+        bool IsHoveredOver(const Input::Mouse& mouse) const;
         Pair<bool, Pair<uint32_t, uint32_t>> ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight);
 
         void AddWidget(Widget* pWidget);
@@ -34,6 +35,9 @@ namespace Graphics
         bool m_bDragged;
         bool m_bSentExitRequest;
         uint32_t m_nBaseWidgets;
+        
+        int m_dragOffsetX;
+        int m_dragOffsetY;
     };
 }
 

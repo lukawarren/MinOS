@@ -7,7 +7,7 @@ constexpr unsigned int nPadding = 5;
 
 int main()
 {
-    eWindowCreate(nWidth, nHeight, "Launcher");
+    eWindowCreate(nWidth, nHeight, 0, 0, "Launcher");
     eButtonCreate("Notepad", nPadding, nPadding, nWidth - nPadding * 2);
     eButtonCreate("Launcher", nPadding, nPadding + 30, nWidth - nPadding * 2);
 
@@ -26,7 +26,6 @@ int main()
             {
                 case EXIT:
                     bRunning = false;
-                    printf("close\n");
                 break;
                 
                 case WIDGET_UPDATE:
@@ -41,6 +40,7 @@ int main()
                 
                 default:
                     printf("[Launcher] Unrecognised event with id %u\n", event.id);
+                    exit(-1);
                 break;
             }
         }

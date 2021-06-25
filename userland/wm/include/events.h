@@ -40,13 +40,25 @@ struct eWindowCreate
 {
     uint32_t width;
     uint32_t height;
-    char sName[19];
+    uint32_t x;
+    uint32_t y;
+    char sName[128];
     
     eWindowCreate(const uint32_t _width, const  uint32_t _height, const char* name) : width(_width), height(_height)
+    {
+        x = getscreenwidth() / 2 - width / 2;
+        y = getscreenheight() / 2 - height / 2;
+        strcpy(sName, name);
+        Event<sWindowManagerEvent>({WINDOW_CREATE, this}, WINDOW_MANAGER_PID);
+    }
+    
+    eWindowCreate(const uint32_t _width, const  uint32_t _height, const uint32_t _x, const uint32_t _y, const char* name) :
+        width(_width), height(_height), x(_x), y(_y)
     {
         strcpy(sName, name);
         Event<sWindowManagerEvent>({WINDOW_CREATE, this}, WINDOW_MANAGER_PID);
     }
+    
 } __attribute__((packed));
 
 struct eWindowClose
@@ -118,7 +130,7 @@ struct eExit
     
     eExit(const uint32_t pid = 0, const uint32_t _exitCode = 0) : exitCode(_exitCode)
     {
-        Event<sWindowManagerEvent>({EXIT, this}, pid == 0 ? WINDOW_MANAGER_PID : pid, false);
+        Event<sWindowManagerEvent>({EXIT, this}, pid == 0 ? WINDOW_MANAGER_PID : pid);
     }
 } __attribute__((packed));
 

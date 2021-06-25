@@ -16,7 +16,7 @@ namespace Graphics
         ~Compositor();
         
         void DrawRegion(const uint32_t x, const uint32_t y, const uint32_t width, const uint32_t height);
-        void DrawMouse(Input::Mouse& mouse);
+        void UpdateAndDrawMouse(Input::Mouse& mouse);
         
         void MoveWindow(Window* pWindow, const uint32_t x, const uint32_t y);
         Window* GetWindowForPID(const uint32_t pid) const;

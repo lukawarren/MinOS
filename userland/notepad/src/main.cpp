@@ -39,6 +39,7 @@ int main()
                 
                 default:
                     printf("[Notepad] Unrecognised event with id %u\n", event.id);
+                    exit(-1);
                 break;
             }
         }

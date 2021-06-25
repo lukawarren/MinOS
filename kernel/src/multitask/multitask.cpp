@@ -73,6 +73,7 @@ namespace Multitask
             m_PageFrame = Memory::PageFrame(stackBeginInMemory, stackSize);
             m_pSbrkBuffer = nullptr;
             m_nSbrkBytesUsed = 0;
+            m_messages = (Message*) m_PageFrame.AllocateMemory(MAX_MESSAGES * sizeof(Message), KERNEL_PAGE);
         }
 
         // CR3 on stack as if we swtitched to it in C code,
@@ -115,7 +116,7 @@ namespace Multitask
         m_PageFrame = task.m_PageFrame;
         m_nSbrkBytesUsed = task.m_nSbrkBytesUsed;
         m_pSbrkBuffer = task.m_pSbrkBuffer;
-        memcpy(m_messages, (void*)task.m_messages, sizeof(m_messages));
+        memcpy(m_messages, task.m_messages, sizeof(m_messages));
     }
 
     void Task::AddMesage(const uint32_t sourcePID, uint8_t* pData)
@@ -133,10 +134,15 @@ namespace Multitask
         
         m_nMessages++;
         m_bBlocked = false;
+        UART::WriteString("[Multitask] Unblocked ");
+        UART::WriteString(m_sName);
+        UART::WriteString("\n");
     }
     
     void Task::GetMessage(Message* pMessage)
     {
+        assert(m_nMessages > 0);
+        
         // Copy to destination
         memcpy(pMessage, &m_messages[0], sizeof(Message));
         
@@ -147,15 +153,51 @@ namespace Multitask
         m_nMessages--;
     }
     
-    void Task::PopMessage()
+    void Task::RemoveMessage(uint32_t filter)
     {
-        m_nMessages--;
+        assert(m_nMessages > 0);
+        
+        const uint8_t bytes[4] =
+        {
+            uint8_t(filter >> 24),
+            uint8_t(filter >> 16),
+            uint8_t(filter >> 8),
+            uint8_t(filter)
+        };
+        
+        // Find first event satisfying first four bytes and remove it
+        for (uint32_t i = 0; i < m_nMessages; ++i)
+        {
+            if (m_messages[i].data[0] == bytes[0] && m_messages[i].data[1] == bytes[1] &&
+                m_messages[i].data[2] == bytes[2] && m_messages[i].data[3] == bytes[3])
+            {
+                // Shift events down by one
+                for (uint32_t j = i; j < m_nMessages; ++j)
+                {
+                    memcpy(&m_messages[j], &m_messages[j+1], sizeof(Message));
+                }
+                
+                m_nMessages--;
+                return;
+            }
+        }
     }
     
     void Task::Block()
     {
         m_bBlocked = true;
         OnTaskSwitch(false);
+    }
+    
+    void Task::Unblock()
+    {
+        m_bBlocked = false;
+        OnTaskSwitch(false);
+    }
+    
+    bool Task::HasMessages() const
+    {
+        return m_nMessages > 0;
     }
 
     void Init()
@@ -230,7 +272,7 @@ namespace Multitask
             else bPrivilegeChange = true;
         }
 
-        // Save previous task then advance current taks by 1 (or loop back around)
+        // Save previous task then advance current task by 1 (or loop back around)
         nPreviousTask = nCurrentTask;
         nCurrentTask++;
         if (nCurrentTask >= nTasks) nCurrentTask = 0;

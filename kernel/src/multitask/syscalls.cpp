@@ -108,8 +108,9 @@ namespace Multitask
     static int      block();
     static int      sendmessage(Message* message, int pid);
     static int      getmessage(Message* message);
-    static int      popmessage();
+    static int      removemessage(uint32_t filter);
     static int      loadprogram(char const* path);
+    static int      unblock(int pid);
     
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
@@ -196,11 +197,15 @@ namespace Multitask
             break;
             
             case 29:
-                returnStatus = popmessage();
+                returnStatus = removemessage((uint32_t)sRegisters.ebx);
             break;
             
             case 30:
                 returnStatus = loadprogram((const char*)sRegisters.ebx);
+            break;
+
+            case 31:
+                returnStatus = unblock((int)sRegisters.ebx);
             break;
 
             default:
@@ -455,9 +460,15 @@ namespace Multitask
     
     static int block()
     {
-        Multitask::GetCurrentTask()->Block();
-        Interrupts::bSwitchTasks = true;
-        bSaveTaskBeforeSwitching = true;
+        auto task = Multitask::GetCurrentTask();
+        
+        if (!task->HasMessages())
+        {
+            Multitask::GetCurrentTask()->Block();
+            Interrupts::bSwitchTasks = true;
+            bSaveTaskBeforeSwitching = true;
+        }
+        
         return 0;
     }
     
@@ -494,9 +505,9 @@ namespace Multitask
         return 0;
     }
     
-    static int popmessage()
+    static int removemessage(uint32_t filter)
     {
-        Multitask::GetCurrentTask()->PopMessage();
+        Multitask::GetCurrentTask()->RemoveMessage(filter);
         return 0;
     }
     
@@ -508,4 +519,11 @@ namespace Multitask
         return 0;
     }
 
+    static int unblock(int pid)
+    {
+        Multitask::GetTaskWithID(pid)->Unblock();
+        Interrupts::bSwitchTasks = true;
+        bSaveTaskBeforeSwitching = true;
+        return 0;
+    }
 }

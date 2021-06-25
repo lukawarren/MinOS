@@ -76,7 +76,7 @@ void Graphics::Compositor::DrawRegion(const uint32_t x, const uint32_t y, const 
     }
 }
 
-void Graphics::Compositor::DrawMouse(Input::Mouse& mouse)
+void Graphics::Compositor::UpdateAndDrawMouse(Input::Mouse& mouse)
 {
     auto oldState = mouse.m_sState;
     auto state = mouse.UpdateState(m_screenWidth, m_screenHeight);

@@ -60,9 +60,9 @@ namespace Graphics
         }
         
         // Input
-        virtual bool ShouldUpdate(const Input::Mouse&, const uint32_t, const uint32_t)
+        virtual Pair<bool, bool> ShouldUpdate(const Input::Mouse&, const uint32_t, const uint32_t)
         {
-            return false;
+            return { false, false };
         }
     
     protected:
