@@ -145,8 +145,12 @@ int main()
         
         // De-active active window when mouse lifted (if any)
         if (pActiveWindow && mouse.m_sState.bLeftButton == false && pActiveWindow->IsHoveredOver(mouse) == false)
+        {
+            auto region = pActiveWindow->Unhighlight();
+            compositor.DrawRegion(pActiveWindow->m_X, pActiveWindow->m_Y, region.m_first, region.m_second);
             pActiveWindow = nullptr;
-        
+        }
+
         // Find active window if mouse not down (if any)
         if (!pActiveWindow && mouse.m_sState.bLeftButton == false)
         {
@@ -154,7 +158,11 @@ int main()
             {
                 const auto window = compositor.m_vWindows[i];
                 if (window->IsHoveredOver(mouse))
+                {
                     pActiveWindow = window;
+                    auto region = pActiveWindow->Highlight();
+                    compositor.DrawRegion(pActiveWindow->m_X, pActiveWindow->m_Y, region.m_first, region.m_second);
+                }
             }
         }
         

@@ -20,6 +20,9 @@ namespace Graphics
 
         void AddWidget(Widget* pWidget);
 
+        Pair<uint32_t, uint32_t> Highlight();
+        Pair<uint32_t, uint32_t> Unhighlight();
+
         unsigned int m_Width;
         unsigned int m_Height;
         unsigned int m_X;

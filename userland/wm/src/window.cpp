@@ -129,4 +129,18 @@ void Graphics::Window::AddWidget(Widget* pWidget)
     pWidget->Render();
 }
 
+Pair<uint32_t, uint32_t> Graphics::Window::Highlight()
+{
+    ((Bar*)m_vWidgets[0])->SetColour(0xffdddddd);
+    m_vWidgets[0]->Render();
+    return { m_vWidgets[0]->m_Width, m_vWidgets[0]->m_Height };
+}
+
+Pair<uint32_t, uint32_t> Graphics::Window::Unhighlight()
+{
+    ((Bar*)m_vWidgets[0])->SetColour(0xffffffff);
+    m_vWidgets[0]->Render();
+    return { m_vWidgets[0]->m_Width, m_vWidgets[0]->m_Height };
+}
+
 Graphics::Window::~Window() {}
