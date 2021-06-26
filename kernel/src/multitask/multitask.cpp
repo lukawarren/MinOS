@@ -81,7 +81,7 @@ namespace Multitask
         if (type == TaskType::USER) *--m_pStack = m_PageFrame.GetCR3();
         else  *--m_pStack = Memory::kPageFrame.GetCR3();
         
-        UART::WriteString("Task ");
+        UART::WriteString("[Multitask] Task ");
         UART::WriteString(sName);
         UART::WriteString(" created with PID ");
         UART::WriteNumber(m_PID);

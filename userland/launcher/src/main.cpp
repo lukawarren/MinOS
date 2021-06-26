@@ -49,5 +49,6 @@ int main()
     }
     
     eWindowClose();
+    loadprogram("launcher/launcher.bin");
     return 0;
 }

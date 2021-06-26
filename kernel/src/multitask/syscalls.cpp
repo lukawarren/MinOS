@@ -231,7 +231,8 @@ namespace Multitask
         UART::WriteString("[Syscall] Task ");
         UART::WriteString(GetCurrentTask()->m_sName);
         UART::WriteString(" exited with code ");
-        UART::WriteNumber(status);
+        if (status < 0) UART::WriteString("-");
+        UART::WriteNumber((unsigned int)status);
         UART::WriteString("\n");
 
         RemoveCurrentTask();
@@ -242,7 +243,7 @@ namespace Multitask
 
     static int close(int fd)
     {
-        assert(fd == STDOUT || fd == STDIN || fd == STDERR || fd == Filesystem::FileDescriptors::framebuffer || fd == Filesystem::FileDescriptors::mouse);
+        assert(fd == STDOUT || fd == STDIN || fd == STDERR || fd == Filesystem::FileDescriptors::framebuffer || fd == Filesystem::FileDescriptors::mouse || fd == 5); // 5 = desktop.bmp
         return 0;
     }
 
@@ -405,11 +406,11 @@ namespace Multitask
     static int munmap(void* addr, size_t length)
     {
         Task* task = Multitask::GetCurrentTask();
-
-        // TODO: Decide if to reflect in kernel? Seems to work but you never know!
+        
         const uint32_t virtualAddress = (uint32_t) addr;
         const uint32_t physicalAddress = task->m_PageFrame.VirtualToPhysicalAddress(virtualAddress);
 
+        // Reflection in the kernel is handled within the page frame allocator itself (see mmap for files above)
         task->m_PageFrame.FreeMemory(physicalAddress, virtualAddress, length);
         return 0;
     }
@@ -483,6 +484,7 @@ namespace Multitask
             assert(false);
             UART::WriteString("[Syscall] Erroneous message from process ");
             UART::WriteString(task->m_sName);
+            UART::WriteString(": ");
             UART::WriteNumber(message->data[0]);
             UART::WriteString("\n");
         }

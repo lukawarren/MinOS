@@ -120,7 +120,16 @@ namespace Memory
     void PageFrame::ClearPage(const uint32_t physicalAddress, const uint32_t virtualAddress)
     {
         m_PageTables[GetPageTableIndex(virtualAddress)] = PD_PRESENT(0);
-        SetPageInBitmap(physicalAddress, false);
+        
+        /*
+            Normally we're fine to reflect our new-found freedom in the bitmap, but in cases
+            of block devices (i.e. munmap'ing a block device), no such bitmap entry exists,
+            and so we would do well to check if the bitmap actually has an entry before
+            sullying not only our bitmap, but the kernel's too!
+        */
+        if (IsPageSet(physicalAddress))
+            SetPageInBitmap(physicalAddress, false);
+        
         CPU::FlushTLB();
     }
 

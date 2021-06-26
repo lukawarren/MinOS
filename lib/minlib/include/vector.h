@@ -51,7 +51,7 @@ public:
         auto index = GetIndex(element);
         
         // Free memory
-        free(m_pData[index]);
+        delete m_pData[index];
         
         // Shift all elements above down by one
         for (size_t i = index; i < Length(); ++i)
@@ -79,7 +79,7 @@ public:
     
     ~Vector()
     {
-        for (size_t i = 0; i < Length(); ++i) free(m_pData[i]);
+        for (size_t i = 0; i < Length(); ++i) delete m_pData[i];
         free(m_pData);
     }
     

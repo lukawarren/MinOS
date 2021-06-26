@@ -20,15 +20,8 @@ namespace Filesystem
 
         framebuffer = 3,
         mouse = 4,
-
-        wm = 5,
-        getpagesize = 6,
-        notepad = 7,
-        launcher = 8,
         
-        desktop = 9,
-
-        N_FILES = 10
+        MAX_FILES = 100
     };
 
     void Init();

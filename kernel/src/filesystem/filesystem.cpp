@@ -6,7 +6,7 @@
 
 namespace Filesystem
 {
-    static File pFiles[FileDescriptors::N_FILES];
+    static File pFiles[FileDescriptors::MAX_FILES];
 
     void Init()
     {
@@ -14,7 +14,7 @@ namespace Filesystem
         uint32_t pFile = Modules::GetModule();
         CPIO::sHeader* pHeader = (CPIO::sHeader*)pFile;
 
-        int count = 0;
+        int count = 1;
         while (pHeader->IsTerminator() == false)
         {
             // Check magic
@@ -33,9 +33,11 @@ namespace Filesystem
             memcpy(fileData, pData, fileSize);
 
             // Add to filesystem
-            pFiles[FileDescriptors::wm + count] = File(fileSize, fileData, pHeader->GetName(), count + FileDescriptors::wm);
+            pFiles[FileDescriptors::mouse + count] = File(fileSize, fileData, pHeader->GetName(), count + FileDescriptors::mouse);
 
             UART::WriteString("[initramfs] Found file ");
+            UART::WriteNumber(FileDescriptors::mouse + count);
+            UART::WriteString(": ");
             UART::WriteString(pHeader->GetName());
             UART::WriteString("\n");
 
@@ -48,13 +50,13 @@ namespace Filesystem
 
     File* GetFile(const FileDescriptor fd)
     {
-        assert(fd < FileDescriptors::N_FILES);
+        assert(fd < FileDescriptors::MAX_FILES);
         return &pFiles[fd];
     }
 
     File* GetFile(char const* sName)
     {
-        for (unsigned int i = 0; i < FileDescriptors::N_FILES; ++i)
+        for (unsigned int i = 0; i < FileDescriptors::MAX_FILES; ++i)
         {
             if (strcmp(pFiles[i].m_sName, sName))
                 return &pFiles[i];
