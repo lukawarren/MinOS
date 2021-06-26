@@ -22,4 +22,6 @@ void error(const char* file, unsigned int line, const char* expression);
 
 void * operator new(size_t size);
 
+extern "C" void __cxa_pure_virtual();
+
 #endif

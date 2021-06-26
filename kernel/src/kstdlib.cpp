@@ -79,3 +79,8 @@ void * operator new(size_t size)
 {
    return (void*) Memory::kPageFrame.AllocateMemory(size, KERNEL_PAGE);
 }
+
+extern "C" void __cxa_pure_virtual()
+{
+    UART::WriteString("[Stdlib] __cxa_pure_virtual exception\n");
+}

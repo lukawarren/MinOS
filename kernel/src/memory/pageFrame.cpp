@@ -4,6 +4,7 @@
 #include "memory/memory.h"
 #include "cpu/cpu.h"
 #include "kstdlib.h"
+#include "io/uart.h"
 
 namespace Memory
 {
@@ -188,9 +189,11 @@ namespace Memory
                     // but luckily it can be skipped, which is faster anyway
                     if (bitmap + 1 != 0)
                     {
+                        const uint32_t unsulliedBitmap = bitmap; // Don't want self-modifying tom-foolery!
+
                         // Find if N consecutive bits set: "bitmap & (bitmap >> 1)" for 2 pages, "bitmap & (bitmap >> 1) & (bitmap >> 2)" for 3, etc
-                        for (uint32_t nConsecutivePages = 2; (nConsecutivePages <= neededPages && bitmap); ++nConsecutivePages)
-                            bitmap &= (bitmap >> (nConsecutivePages-1));
+                        for (uint32_t nConsecutivePages = 1; nConsecutivePages < neededPages; ++nConsecutivePages)
+                            bitmap &= (unsulliedBitmap >> nConsecutivePages);
 
                         // If not, too bad!
                         if (bitmap == 0) continue;
@@ -246,7 +249,7 @@ namespace Memory
                 }
                 
             }
-
+            
             assert(false); // Panic!
             return (void*) 0;
         }

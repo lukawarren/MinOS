@@ -33,11 +33,11 @@ public:
             // Else allocate new memory (doubling the size)
             T** newData = (T**) malloc(sizeof(T*) * m_nElements * 2);
             m_nMaxElements = m_nElements * 2;
-            
+
             // Copy everything over
             memcpy(newData, m_pData, sizeof(T*) * m_nElements);
             
-            // Clean up old memory
+            // Clean up old memory (but not the underlying owned objects)
             free(m_pData);
             m_pData = newData;
             
