@@ -14,7 +14,7 @@ namespace Filesystem
         uint32_t pFile = Modules::GetModule();
         CPIO::sHeader* pHeader = (CPIO::sHeader*)pFile;
 
-        int count = 1;
+        int count = 0;
         while (pHeader->IsTerminator() == false)
         {
             // Check magic
@@ -33,7 +33,7 @@ namespace Filesystem
             memcpy(fileData, pData, fileSize);
 
             // Add to filesystem
-            pFiles[FileDescriptors::mouse + count] = File(fileSize, fileData, pHeader->GetName(), count + FileDescriptors::mouse);
+            pFiles[FileDescriptors::initramfs + count] = File(fileSize, fileData, pHeader->GetName(), count + FileDescriptors::initramfs);
 
             UART::WriteString("[initramfs] Found file ");
             UART::WriteNumber(FileDescriptors::mouse + count);

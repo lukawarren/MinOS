@@ -241,9 +241,8 @@ namespace Multitask
         bSaveTaskBeforeSwitching = false;
     }
 
-    static int close(int fd)
+    static int close(int)
     {
-        assert(fd == STDOUT || fd == STDIN || fd == STDERR || fd == Filesystem::FileDescriptors::framebuffer || fd == Filesystem::FileDescriptors::mouse || fd == 5); // 5 = desktop.bmp
         return 0;
     }
 

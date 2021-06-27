@@ -20,6 +20,8 @@ namespace Filesystem
 
         framebuffer = 3,
         mouse = 4,
+        keyboard = 5,
+        initramfs = 6,
         
         MAX_FILES = 100
     };

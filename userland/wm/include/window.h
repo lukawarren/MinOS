@@ -5,6 +5,7 @@
 #include <minlib.h>
 #include "widget.h"
 #include "mouse.h"
+#include "keyboard.h"
 
 namespace Graphics
 {
@@ -16,7 +17,7 @@ namespace Graphics
         ~Window();
 
         bool IsHoveredOver(const Input::Mouse& mouse) const;
-        Pair<bool, Pair<uint32_t, uint32_t>> ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight);
+        Pair<bool, Pair<uint32_t, uint32_t>> ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight, const Input::Keyboard& keyboard);
 
         void AddWidget(Widget* pWidget);
         Widget* GetWidgetFromUserIndex(const uint32_t index);

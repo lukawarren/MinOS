@@ -7,6 +7,8 @@
 
 #include "io/ps2.h"
 
+#define KEYBOARD_SCANCODE_KEY_RELEASE 0x80
+
 namespace Keyboard
 {
     void Init();

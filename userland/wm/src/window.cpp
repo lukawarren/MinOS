@@ -58,7 +58,7 @@ bool Graphics::Window::IsHoveredOver(const Input::Mouse& mouse) const
         (unsigned int) mouse.m_sState.y < m_Y + m_Height;
 }
 
-Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight)
+Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight, const Input::Keyboard& keyboard)
 {
     // If mouse is clicked and over quit (and we're not getting dragged!), send quit event
     if (!m_bSentExitRequest && mouse.m_sState.bLeftButton && !m_bDragged &&
@@ -102,6 +102,16 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
         }
     }
     
+    // For every key, dispatch events if needed
+    for (uint8_t scancode = 0; scancode < 128; ++scancode)
+    {
+        if (keyboard.m_buffer[scancode] && !keyboard.m_oldBuffer[scancode])
+            eKeyDown { m_PID, scancode };
+        
+        else if (!keyboard.m_buffer[scancode] && keyboard.m_oldBuffer[scancode])
+            eKeyUp { m_PID, scancode };
+    }
+    
     if (m_bDragged)
     { 
         return // return coords to move to
@@ -136,7 +146,7 @@ Graphics::Widget* Graphics::Window::GetWidgetFromUserIndex(const uint32_t index)
 
 Pair<uint32_t, uint32_t> Graphics::Window::Highlight()
 {
-    ((Bar*)m_vWidgets[0])->SetColour(0xffdddddd);
+    ((Bar*)m_vWidgets[0])->SetColour(0xffaaaaff);
     m_vWidgets[0]->Render();
     return { m_vWidgets[0]->m_Width, m_vWidgets[0]->m_Height };
 }

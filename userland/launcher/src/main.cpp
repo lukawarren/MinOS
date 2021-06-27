@@ -40,6 +40,12 @@ int main()
                     break;
                 }
                 
+                case KEY_DOWN:
+                break;
+                
+                case KEY_UP:
+                break;
+                
                 default:
                     printf("[Launcher] Unrecognised event with id %u\n", event.id);
                     exit(-1);

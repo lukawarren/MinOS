@@ -50,6 +50,17 @@ int main()
                     bRunning = false;
                 break;
                 
+                case KEY_DOWN:
+                {
+                    vSnake.Push(new Pair<unsigned int, unsigned int>{3, 0});
+                    DrawFrame();
+                    break;
+                }
+                
+                case KEY_UP:
+                
+                break;
+                
                 default:
                     printf("[Snake] Unrecognised event with id %u\n", event.id);
                     exit(-1);

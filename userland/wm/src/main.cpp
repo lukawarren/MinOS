@@ -1,6 +1,7 @@
 #include <minlib.h>
 #include "compositor.h"
 #include "mouse.h"
+#include "keyboard.h"
 #include "events.h"
 #include "panel.h"
 #include "text.h"
@@ -10,6 +11,7 @@ int main()
 {
     Graphics::Compositor compositor;
     Input::Mouse mouse = Input::Mouse(compositor.m_screenWidth / 2, compositor.m_screenHeight / 2);
+    Input::Keyboard keyboard;
     
     loadprogram("launcher/launcher.bin");
     //loadprogram("notepad/notepad.bin");
@@ -157,6 +159,7 @@ int main()
             }
         }
         
+        keyboard.Poll();
         compositor.UpdateAndDrawMouse(mouse);
         
         // De-active active window when mouse lifted (if any)
@@ -185,7 +188,7 @@ int main()
         // Deal with events
         if (pActiveWindow != nullptr)
         {
-            auto updatedState = pActiveWindow->ShouldUpdate(mouse, compositor.m_screenWidth, compositor.m_screenHeight);
+            auto updatedState = pActiveWindow->ShouldUpdate(mouse, compositor.m_screenWidth, compositor.m_screenHeight, keyboard);
             
             if (updatedState.m_first)
                 compositor.MoveWindow(pActiveWindow, updatedState.m_second.m_first, updatedState.m_second.m_second);

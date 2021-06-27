@@ -20,7 +20,9 @@ enum Events
     BUTTON_CREATE,
     WIDGET_UPDATE,
     PANEL_SET_COLOUR,
-    EXIT
+    EXIT,
+    KEY_DOWN,
+    KEY_UP
 };
 
 struct sWindowManagerEvent
@@ -144,6 +146,26 @@ struct eExit
     eExit(const uint32_t pid = 0, const uint32_t _exitCode = 0) : exitCode(_exitCode)
     {
         Event<sWindowManagerEvent>({EXIT, this}, pid == 0 ? WINDOW_MANAGER_PID : pid);
+    }
+} __attribute__((packed));
+
+struct eKeyDown
+{
+    uint8_t scancode;
+    
+    eKeyDown(const uint32_t pid, const uint8_t _scancode) : scancode(_scancode)
+    {
+        Event<sWindowManagerEvent>({KEY_DOWN, this}, pid);
+    }
+} __attribute__((packed));
+
+struct eKeyUp
+{
+    uint8_t scancode;
+    
+    eKeyUp(const uint32_t pid, const uint8_t _scancode) : scancode(_scancode)
+    {
+        Event<sWindowManagerEvent>({KEY_UP, this}, pid);
     }
 } __attribute__((packed));
 

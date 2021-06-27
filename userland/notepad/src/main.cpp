@@ -37,6 +37,12 @@ int main()
                     bRunning = false;
                 break;
                 
+                case KEY_DOWN:
+                break;
+                
+                case KEY_UP:
+                break;
+                
                 default:
                     printf("[Notepad] Unrecognised event with id %u\n", event.id);
                     exit(-1);
@@ -44,7 +50,7 @@ int main()
             }
         }
         
-        if (bRunning) block();
+        //if (bRunning) block();
     }
     
     eWindowClose();
