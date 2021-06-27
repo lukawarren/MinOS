@@ -134,6 +134,22 @@ int main()
                     break;
                 }
                 
+                case PANEL_SET_COLOUR:
+                {
+                    auto window = compositor.GetWindowForPID(pid);
+                    if (window == nullptr) break;
+                    
+                    ePanelColour* panelColourEvent = (ePanelColour*) event.data;
+
+                    // TODO: Sanity check
+                    auto panel = ((Graphics::Panel*) window->GetWidgetFromUserIndex(panelColourEvent->index));
+                    panel->SetColour(panelColourEvent->colour);
+                    panel->Render();
+                    compositor.DrawRegion(window->m_X + panel->m_X, window->m_Y + panel->m_Y, panel->m_Width, panel->m_Height);
+                    
+                    break;
+                }
+                
                 default:
                     printf("[Wm] Unrecognised event with id %u\n", event.id);
                     exit(-1);

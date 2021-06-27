@@ -4,6 +4,7 @@
 
 #include <minlib.h>
 #include "text.h"
+#include "panel.h"
 
 #define WINDOW_MANAGER_PID 1
 
@@ -18,6 +19,7 @@ enum Events
     TEXT_CREATE,
     BUTTON_CREATE,
     WIDGET_UPDATE,
+    PANEL_SET_COLOUR,
     EXIT
 };
 
@@ -77,7 +79,7 @@ struct ePanelCreate
     uint32_t y;
     uint32_t colour;
 
-    ePanelCreate(const uint32_t _width, const uint32_t _height, const uint32_t _x, const uint32_t _y, const uint32_t _colour) :
+    ePanelCreate(const uint32_t _width, const uint32_t _height, const uint32_t _x, const uint32_t _y, const uint32_t _colour = Graphics::cPanelBackground) :
         width(_width), height(_height), x(_x), y(_y), colour(_colour)
     {
         Event<sWindowManagerEvent>({PANEL_CREATE, this}, WINDOW_MANAGER_PID);
@@ -121,6 +123,17 @@ struct eWidgetUpdate
     eWidgetUpdate(const uint32_t pid, const uint32_t _index) : index(_index)
     {
         Event<sWindowManagerEvent>({WIDGET_UPDATE, this}, pid);
+    }
+} __attribute__((packed));
+
+struct ePanelColour
+{
+    uint32_t index;
+    uint32_t colour;
+    
+    ePanelColour(const uint32_t _index, const uint32_t _colour) : index(_index), colour(_colour)
+    {
+        Event<sWindowManagerEvent>({PANEL_SET_COLOUR, this}, WINDOW_MANAGER_PID);
     }
 } __attribute__((packed));
 

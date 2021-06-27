@@ -19,6 +19,7 @@ namespace Graphics
         Pair<bool, Pair<uint32_t, uint32_t>> ShouldUpdate(const Input::Mouse& mouse, const uint32_t screenWidth, const uint32_t screenHeight);
 
         void AddWidget(Widget* pWidget);
+        Widget* GetWidgetFromUserIndex(const uint32_t index);
 
         Pair<uint32_t, uint32_t> Highlight();
         Pair<uint32_t, uint32_t> Unhighlight();

@@ -14,3 +14,8 @@ uint32_t Graphics::Panel::GetPixel(const uint32_t x, const uint32_t y) const
 
     return m_cPanelColour;
 }
+
+void Graphics::Panel::SetColour(const uint32_t colour)
+{
+    m_cPanelColour = colour;
+}

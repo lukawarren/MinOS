@@ -129,6 +129,11 @@ void Graphics::Window::AddWidget(Widget* pWidget)
     pWidget->Render();
 }
 
+Graphics::Widget* Graphics::Window::GetWidgetFromUserIndex(const uint32_t index)
+{
+    return m_vWidgets[index + m_nBaseWidgets];
+}
+
 Pair<uint32_t, uint32_t> Graphics::Window::Highlight()
 {
     ((Bar*)m_vWidgets[0])->SetColour(0xffdddddd);
