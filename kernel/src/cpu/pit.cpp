@@ -41,5 +41,10 @@ namespace PIT
     {
         SetFrequency(timerChannel, frequency);
     }
+    
+    uint32_t GetDelayInMicroseconds()
+    {
+        return 1000000 / frequency;
+    }
 
 }

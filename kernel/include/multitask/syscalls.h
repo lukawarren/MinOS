@@ -184,6 +184,7 @@ SYSCALL_ARGS_0(int, getscreenheight, 24)
 SYSCALL_ARGS_0(int, swapscreenbuffer, 25)
 
 #include "./message.h"
+// MinOS
 SYSCALL_ARGS_0(int, block, 26)
 SYSCALL_ARGS_2(int, sendmessage, 27, Message*, message, int, pid)
 SYSCALL_ARGS_1(int, getmessage, 28, Message*, message)
@@ -192,6 +193,9 @@ SYSCALL_ARGS_1(int, loadprogram, 30, char const*, path)
 SYSCALL_ARGS_1(int, unblock, 31, int, pid)
 SYSCALL_ARGS_1(int, blockuntil, 32, uint32_t, filter)
 SYSCALL_ARGS_3(int, sendmessageuntil, 33, Message*, message, int, pid, uint32_t, filter)
+
+// Back to POSIX
+SYSCALL_ARGS_1(int, usleep, 34, useconds_t, usec)
 
 #ifdef __cplusplus
 }

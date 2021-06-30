@@ -36,9 +36,14 @@ namespace Multitask
             uint32_t m_Entrypoint;
             TaskType m_Type;
             uint32_t m_PID;
+            
+            // Events
             bool m_bBlocked;
             bool m_bBlockedFilter;
             uint32_t m_blockedFilter;
+
+            // Sleeping
+            uint32_t m_nMicroseconds;
 
             // Page frame - technically kernel tasks don't need one but hey-ho
             Memory::PageFrame m_PageFrame;
@@ -58,6 +63,8 @@ namespace Multitask
             void Unblock();
             bool HasMessages() const;
             bool HasMessage(const uint32_t filter) const;
+            
+            void SleepForMicroseconds(const uint32_t microseconds);
             
         private:
             // Message queue

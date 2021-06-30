@@ -38,6 +38,7 @@ namespace PIT
     void Init();
     void SetFrequency(uint16_t channel, uint16_t herz);
     void Reset();
+    uint32_t GetDelayInMicroseconds();
 }
 
 #endif

@@ -113,6 +113,7 @@ namespace Multitask
     static int      unblock(int pid);
     static int      blockuntil(uint32_t filter);
     static int      sendmessageuntil(Message* message, int pid, uint32_t filter);
+    static int      usleep(useconds_t usec);
     
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
@@ -216,6 +217,10 @@ namespace Multitask
 
             case 33:
                 returnStatus = sendmessageuntil((Message*)sRegisters.ebx, (int)sRegisters.ecx, sRegisters.edx);
+            break;
+            
+            case 34:
+                returnStatus = usleep((useconds_t)sRegisters.ebx);
             break;
 
             default:
@@ -551,6 +556,12 @@ namespace Multitask
     {
         sendmessage(message, pid);
         blockuntil(filter);
+        return 0;
+    }
+    
+    static int usleep(useconds_t usec)
+    {
+        Multitask::GetCurrentTask()->SleepForMicroseconds((uint32_t)usec);
         return 0;
     }
 }

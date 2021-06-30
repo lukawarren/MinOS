@@ -80,6 +80,7 @@ int main()
         {   
             AdvanceSnake();
             DrawFrame();
+            usleep(100000);
         } else block();
     }
     

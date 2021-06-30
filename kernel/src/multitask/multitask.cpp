@@ -32,6 +32,7 @@ namespace Multitask
         m_Entrypoint = entrypoint;
         m_PID = ++nPIDs;
         m_bBlocked = false;
+        m_nMicroseconds = 0;
 
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 20 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
@@ -122,6 +123,7 @@ namespace Multitask
         m_bBlockedFilter = task.m_bBlockedFilter;
         m_blockedFilter = task.m_blockedFilter;
         m_nMessages = task.m_nMessages;
+        m_nMicroseconds = task.m_nMicroseconds;
     }
 
     void Task::AddMesage(const uint32_t sourcePID, uint8_t* pData)
@@ -239,6 +241,11 @@ namespace Multitask
         return false;
     }
 
+    void Task::SleepForMicroseconds(const uint32_t microseconds)
+    {
+        m_nMicroseconds = microseconds;
+    }
+
     void Init()
     {
         // Create malloc "slab"
@@ -283,6 +290,18 @@ namespace Multitask
     {
         assert(nTasks > 0);
 
+        if (bPIT)
+        {
+            // Decrease sleeping tasks' duration by a length equal to the PIT's delay
+            const auto delay = PIT::GetDelayInMicroseconds();
+            for (uint32_t i = 0; i < nTasks; ++i)
+            {
+                // Avoid underflows
+                if (tasks[i].m_nMicroseconds >= delay) tasks[i].m_nMicroseconds -= delay;
+                else tasks[i].m_nMicroseconds = 0;
+            }
+        }
+
         // If we came from kernel, no need to save previous "task"
         if (bCameFromKernel)
         {
@@ -298,7 +317,7 @@ namespace Multitask
             tasks[nPreviousTask].SwitchFromTask();
             
             // Avoid blocked tasks
-            while (nTasks > 1 && tasks[nCurrentTask].m_bBlocked)
+            while (nTasks > 1 && (tasks[nCurrentTask].m_bBlocked || tasks[nCurrentTask].m_nMicroseconds))
             {
                 nCurrentTask++;
                 if (nCurrentTask >= nTasks) nCurrentTask = 0;
