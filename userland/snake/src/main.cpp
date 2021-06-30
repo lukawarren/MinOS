@@ -3,26 +3,36 @@
 #include "keyboard.h"
 
 // Dimensions
-constexpr unsigned int nWidth = 300;
-constexpr unsigned int nHeight = 300;
-constexpr unsigned int nTilesPerDimension = 10;
+constexpr unsigned int nWidth = 600;
+constexpr unsigned int nHeight = 600;
+constexpr unsigned int nTilesPerDimension = 20;
 constexpr unsigned int nTileSize = nWidth / nTilesPerDimension;
 
 // Colours
 constexpr unsigned int cEmpty = Graphics::cPanelBackground;
 constexpr unsigned int cSnake = 0xffff0000;
+constexpr unsigned int cHead =  0xff00ff00;
+constexpr unsigned int cFood =  0xffffff00;
 
 // Snake
 Vector<Pair<unsigned int, unsigned int>> vSnake;
-Vector<Pair<unsigned int, unsigned int>> vDirtyTiles;
 enum Direction { UP, DOWN, LEFT, RIGHT } eDirection;
 unsigned int nSegments = 0;
+
+// Drawing
+Pair<unsigned int, unsigned int> lastTile;
+bool bDrawLastTile;
+bool bDrewInitialSnake;
+
+// Food
+Vector<Pair<unsigned int, unsigned int>> vFood;
 
 // Routines
 void HandleInput(uint8_t scancode);
 bool GameOver();
 void AdvanceSnake();
 void DrawFrame();
+void SpawnFood();
 
 int main()
 {           
@@ -37,9 +47,11 @@ int main()
     vSnake.Push(new Pair<unsigned int, unsigned int>{0, 0});
     vSnake.Push(new Pair<unsigned int, unsigned int>{1, 0});
     vSnake.Push(new Pair<unsigned int, unsigned int>{2, 0});
+    bDrewInitialSnake = false;
     eDirection = RIGHT;
     nSegments = 3;
- 
+    
+    SpawnFood();
     DrawFrame();
  
     bool bRunning = true;
@@ -81,7 +93,7 @@ int main()
             AdvanceSnake();
             DrawFrame();
             usleep(100000);
-        } else block();
+        } else usleep(1000);
     }
     
     eWindowClose();
@@ -93,13 +105,13 @@ void HandleInput(uint8_t scancode)
     if (scancode == Input::Keyboard::Code::W)
         eDirection = Direction::UP;
     
-    if (scancode == Input::Keyboard::Code::A)
+    else if (scancode == Input::Keyboard::Code::A)
         eDirection = Direction::LEFT;
         
-    if (scancode == Input::Keyboard::Code::S)
+    else if (scancode == Input::Keyboard::Code::S)
         eDirection = Direction::DOWN;
         
-    if (scancode == Input::Keyboard::Code::D)
+    else if (scancode == Input::Keyboard::Code::D)
         eDirection = Direction::RIGHT;
 }
 
@@ -108,6 +120,12 @@ bool GameOver()
     auto headX = vSnake[nSegments-1]->m_first;
     auto headY = vSnake[nSegments-1]->m_second;
     
+    // Check for self-collision
+    for (size_t i = 0; i < vSnake.Length()-1; ++i)
+        if (vSnake[i]->m_first == headX && vSnake[i]->m_second == headY)
+            return true;
+    
+    // Check for going outside of bounds
     switch (eDirection)
     {
         case Direction::LEFT:
@@ -129,6 +147,7 @@ void AdvanceSnake()
     auto headX = vSnake[nSegments-1]->m_first;
     auto headY = vSnake[nSegments-1]->m_second;
     
+    // Advance snake
     switch (eDirection)
     {
         case Direction::LEFT:
@@ -148,19 +167,72 @@ void AdvanceSnake()
         break;
     }
     
-    auto dirtyTile = *vSnake[0];
-    vDirtyTiles.Push(&dirtyTile);
+    // If our head's colliding with food, don't shrink
+    for (unsigned int i = 0; i < vFood.Length(); ++i)
+    {
+        if (vFood[i]->m_first == headX && vFood[i]->m_second == headY)
+        {
+            // Destroy old food, make new one
+            vFood.Pop(vFood[i]);
+            SpawnFood();
+            
+            // Increase segments and avoid dirtying tile
+            bDrawLastTile = false;
+            nSegments++;
+            return;
+        }
+    }
+    
+    // Pop last segment off snake
+    lastTile = *vSnake[0];
     vSnake.Pop(vSnake[0]);
+    bDrawLastTile = true;
 }
 
 void DrawFrame()
 {    
-    // Reset non-snake colours for dirty tiles
-    for (unsigned int i = 0; i < vDirtyTiles.Length(); ++i)
-        ePanelColour(vDirtyTiles[i]->m_second * nTilesPerDimension + vDirtyTiles[i]->m_first, cEmpty);
-    vDirtyTiles.Clear();
+    // Reset non-snake colour for dirty tile
+    if (bDrawLastTile)
+        ePanelColour(lastTile.m_second * nTilesPerDimension + lastTile.m_first, cEmpty);
+
+    if (!bDrewInitialSnake)
+    {
+        // Draw all of snake...
+        for (unsigned int i = 0; i < vSnake.Length(); ++i)
+            ePanelColour(vSnake[i]->m_second * nTilesPerDimension + vSnake[i]->m_first, i == vSnake.Length() -1 ? cHead : cSnake);
+            
+        bDrewInitialSnake = true;
+    }
+    else
+    {
+        // ...or just the head and the old one
+        auto headX = vSnake[nSegments-1]->m_first;
+        auto headY = vSnake[nSegments-1]->m_second;
+        ePanelColour(headY * nTilesPerDimension + headX, cHead);
+        
+        auto oldHeadX = vSnake[nSegments-2]->m_first;
+        auto oldHeadY = vSnake[nSegments-2]->m_second;
+        ePanelColour(oldHeadY * nTilesPerDimension + oldHeadX, cSnake);
+        
+    }
     
-    // Set snake colors
-    for (unsigned int i = 0; i < vSnake.Length(); ++i)
-        ePanelColour(vSnake[i]->m_second * nTilesPerDimension + vSnake[i]->m_first, i == vSnake.Length() -1 ? 0xffffff00 : cSnake);
+    // Set food colors
+    for (unsigned int i = 0; i < vFood.Length(); ++i)
+        ePanelColour(vFood[i]->m_second * nTilesPerDimension + vFood[i]->m_first, cFood);
+}
+
+void SpawnFood()
+{
+    const auto IsSnakeTile = [&](const Pair<unsigned int, unsigned int>* tile)
+    {
+        for (unsigned int i = 0; i < vSnake.Length(); ++i)
+            if (vSnake[i]->m_first == tile->m_first && vSnake[i]->m_second == tile->m_second)
+                return true;
+            
+        return false;  
+    };
+    
+    auto coord = new Pair<unsigned int, unsigned int> { rand() % nTilesPerDimension, rand() % nTilesPerDimension };
+    while (IsSnakeTile(coord)) *coord = { rand() % nTilesPerDimension, rand() % nTilesPerDimension };
+    vFood.Push(coord);
 }

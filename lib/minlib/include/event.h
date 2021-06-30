@@ -32,7 +32,7 @@ public:
         else sendmessage(&message, pid);
     }
     
-    static Pair<bool, Message> GetMessage(bool bBlocked = false)
+    static Pair<bool, Message> GetMessage()
     {
         // Get message
         Message srcMessage;
@@ -41,16 +41,16 @@ public:
             // Return if no message is to be found
             return Pair(false, Message {});
         }
-        
-        if (bBlocked)
-        {
-            // Send ACK
-            Message ackMessage;
-            strcpy((char*)ackMessage.data, EVENT_ACK);
-            sendmessage(&ackMessage, srcMessage.sourcePID);
-        }
     
         return Pair(true, srcMessage);
+    }
+    
+    static void Ack(Pair<bool, Message> message)
+    {
+        // Send ACK
+        Message ackMessage;
+        strcpy((char*)ackMessage.data, EVENT_ACK);
+        sendmessage(&ackMessage, message.m_second.sourcePID);
     }
     
     ~Event() {}

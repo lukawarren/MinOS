@@ -23,7 +23,7 @@ namespace Input
                 S = 31,
                 A = 30,
                 D = 32,
-                SPACE = 57
+                Space = 57
             };
             
         private:

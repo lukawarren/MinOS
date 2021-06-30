@@ -244,6 +244,7 @@ namespace Multitask
     void Task::SleepForMicroseconds(const uint32_t microseconds)
     {
         m_nMicroseconds = microseconds;
+        OnTaskSwitch(false);
     }
 
     void Init()

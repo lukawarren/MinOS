@@ -562,6 +562,8 @@ namespace Multitask
     static int usleep(useconds_t usec)
     {
         Multitask::GetCurrentTask()->SleepForMicroseconds((uint32_t)usec);
+        Interrupts::bSwitchTasks = true;
+        bSaveTaskBeforeSwitching = true;
         return 0;
     }
 }
