@@ -32,7 +32,6 @@ namespace Multitask
         m_Entrypoint = entrypoint;
         m_PID = ++nPIDs;
         m_bBlocked = false;
-        m_bYielded = false;
 
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 20 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
@@ -123,8 +122,6 @@ namespace Multitask
         m_bBlockedFilter = task.m_bBlockedFilter;
         m_blockedFilter = task.m_blockedFilter;
         m_nMessages = task.m_nMessages;
-        m_yieldPID = task.m_yieldPID;
-        m_bYielded = task.m_bYielded;
     }
 
     void Task::AddMesage(const uint32_t sourcePID, uint8_t* pData)
@@ -162,14 +159,6 @@ namespace Multitask
             memcpy(&m_messages[i], &m_messages[i+1], sizeof(Message));
         
         m_nMessages--;
-        
-        // Check for yields
-        if (m_nMessages == 0)
-        {
-            for (uint32_t t = 0; t < nTasks; ++t)
-                if (tasks[t].m_bYielded && tasks[t].m_yieldPID == m_PID)
-                   tasks[t].m_bYielded = false;
-        }
     }
     
     void Task::RemoveMessage(uint32_t filter)
@@ -197,15 +186,6 @@ namespace Multitask
                 }
                 
                 m_nMessages--;
-                
-                // Check for yields
-                if (m_nMessages == 0)
-                {
-                    for (uint32_t t = 0; t < nTasks; ++t)
-                        if (tasks[t].m_bYielded && tasks[t].m_yieldPID == m_PID)
-                            tasks[t].m_bYielded = false;
-                }
-                
                 return;
             }
         }
@@ -226,13 +206,6 @@ namespace Multitask
         m_bBlocked = true;
         m_bBlockedFilter = true;
         m_blockedFilter = filter;
-        OnTaskSwitch(false);
-    }
-    
-    void Task::Yield(const uint32_t pid)
-    {
-        m_yieldPID = pid;
-        m_bYielded = true;
         OnTaskSwitch(false);
     }
     
@@ -325,7 +298,7 @@ namespace Multitask
             tasks[nPreviousTask].SwitchFromTask();
             
             // Avoid blocked tasks
-            while (nTasks > 1 && (tasks[nCurrentTask].m_bBlocked || tasks[nCurrentTask].m_bYielded))
+            while (nTasks > 1 && tasks[nCurrentTask].m_bBlocked)
             {
                 nCurrentTask++;
                 if (nCurrentTask >= nTasks) nCurrentTask = 0;

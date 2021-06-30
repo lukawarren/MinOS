@@ -192,7 +192,6 @@ SYSCALL_ARGS_1(int, loadprogram, 30, char const*, path)
 SYSCALL_ARGS_1(int, unblock, 31, int, pid)
 SYSCALL_ARGS_1(int, blockuntil, 32, uint32_t, filter)
 SYSCALL_ARGS_3(int, sendmessageuntil, 33, Message*, message, int, pid, uint32_t, filter)
-SYSCALL_ARGS_1(int, yield, 34, int, pid)
 
 #ifdef __cplusplus
 }
