@@ -18,19 +18,21 @@ class Event
 public:
     Event() {}
     
-    Event(const T& data, const uint32_t pid)
+    Event(const T& data, const uint32_t pid, bool bBlock = true)
     {
-        // Send message
+        // Send message and block until ACK
         Message message;
         memcpy(message.data, (void*)&data, sizeof(message.data));
-        sendmessage(&message, pid);
         
-        // Block and wait for ACK
-        block();
-        removemessage(EVENT_ACK_FILTER);
+        if (bBlock)
+        {
+            sendmessageuntil(&message, pid, EVENT_ACK_FILTER);
+            removemessage(EVENT_ACK_FILTER);
+        }
+        else sendmessage(&message, pid);
     }
     
-    static Pair<bool, Message> GetMessage()
+    static Pair<bool, Message> GetMessage(bool bBlocked = false)
     {
         // Get message
         Message srcMessage;
@@ -40,11 +42,14 @@ public:
             return Pair(false, Message {});
         }
         
-        // Send ACK
-        Message ackMessage;
-        strcpy((char*)ackMessage.data, EVENT_ACK);
-        sendmessage(&ackMessage, srcMessage.sourcePID);
-        
+        if (bBlocked)
+        {
+            // Send ACK
+            Message ackMessage;
+            strcpy((char*)ackMessage.data, EVENT_ACK);
+            sendmessage(&ackMessage, srcMessage.sourcePID);
+        }
+    
         return Pair(true, srcMessage);
     }
     

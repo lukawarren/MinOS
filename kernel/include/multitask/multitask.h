@@ -37,6 +37,10 @@ namespace Multitask
             TaskType m_Type;
             uint32_t m_PID;
             bool m_bBlocked;
+            bool m_bBlockedFilter;
+            uint32_t m_blockedFilter;
+            uint32_t m_yieldPID;
+            bool m_bYielded;
 
             // Page frame - technically kernel tasks don't need one but hey-ho
             Memory::PageFrame m_PageFrame;
@@ -52,8 +56,11 @@ namespace Multitask
             void GetMessage(Message* pMessage);
             void RemoveMessage(const uint32_t filter);
             void Block();
+            void Block(const uint32_t filter);
+            void Yield(const uint32_t pid);
             void Unblock();
             bool HasMessages() const;
+            bool HasMessage(const uint32_t filter) const;
             
         private:
             // Message queue

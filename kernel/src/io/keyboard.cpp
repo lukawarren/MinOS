@@ -35,7 +35,7 @@ namespace Keyboard
         
         // Place into buffer
         if (scancode & KEYBOARD_SCANCODE_KEY_RELEASE)
-            pBuffer[scancode & (~scancode)] = 0;
+            pBuffer[scancode & (~KEYBOARD_SCANCODE_KEY_RELEASE)] = 0;
         else
             pBuffer[scancode] = 1;
     }

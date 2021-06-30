@@ -70,6 +70,12 @@ public:
         return 0xdeadbeef;
     }
     
+    void Clear()
+    {
+        for (size_t i = 0; i < Length(); ++i) delete m_pData[i];
+        m_nElements = 0;
+    }
+    
     T* operator[](unsigned int index) const
     {
         return m_pData[index];

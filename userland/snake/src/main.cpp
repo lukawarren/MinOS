@@ -14,6 +14,7 @@ constexpr unsigned int cSnake = 0xffff0000;
 
 // Snake
 Vector<Pair<unsigned int, unsigned int>> vSnake;
+Vector<Pair<unsigned int, unsigned int>> vDirtyTiles;
 enum Direction { UP, DOWN, LEFT, RIGHT } eDirection;
 unsigned int nSegments = 0;
 
@@ -28,8 +29,8 @@ int main()
     eWindowCreate(nWidth, nHeight, "Snake");
     
     // Init grid
-    for (unsigned int x = 0; x < nTilesPerDimension; ++x)
-        for (unsigned int y = 0; y < nTilesPerDimension; ++y)
+    for (unsigned int y = 0; y < nTilesPerDimension; ++y)
+        for (unsigned int x = 0; x < nTilesPerDimension; ++x)
             ePanelCreate(nTileSize, nTileSize, nTileSize*x, nTileSize*y, cEmpty);
     
     // Init snake
@@ -51,7 +52,7 @@ int main()
             auto event = reinterpret_cast<sWindowManagerEvent&>(message.m_second.data);
             const uint32_t pid = message.m_second.sourcePID;
             if (pid != WINDOW_MANAGER_PID) continue;
-
+            
             switch (event.id)
             {
                 case EXIT:
@@ -66,7 +67,6 @@ int main()
                 }
                 
                 case KEY_UP:
-                
                 break;
                 
                 default:
@@ -147,27 +147,19 @@ void AdvanceSnake()
         break;
     }
     
+    auto dirtyTile = *vSnake[0];
+    vDirtyTiles.Push(&dirtyTile);
     vSnake.Pop(vSnake[0]);
 }
 
 void DrawFrame()
 {    
-    const auto IsSnakeTile = [&](const unsigned int x, const unsigned int y)
-    {
-        for (unsigned int i = 0; i < vSnake.Length(); ++i)
-            if (vSnake[i]->m_first == x && vSnake[i]->m_second == y)
-                return true;
-        
-        return false;
-    };
+    // Reset non-snake colours for dirty tiles
+    for (unsigned int i = 0; i < vDirtyTiles.Length(); ++i)
+        ePanelColour(vDirtyTiles[i]->m_second * nTilesPerDimension + vDirtyTiles[i]->m_first, cEmpty);
+    vDirtyTiles.Clear();
     
-    // Reset non-snake colours
-    for (unsigned int x = 0; x < nTilesPerDimension; ++x)
-        for (unsigned int y = 0; y < nTilesPerDimension; ++y)
-            if (!IsSnakeTile(x, y))
-                ePanelColour(y * nTilesPerDimension + x, cEmpty);
-    
-    // Set snake colors: "x * width + y" because (insert excuse here)
+    // Set snake colors
     for (unsigned int i = 0; i < vSnake.Length(); ++i)
-        ePanelColour(vSnake[i]->m_first * nTilesPerDimension + vSnake[i]->m_second, cSnake);
+        ePanelColour(vSnake[i]->m_second * nTilesPerDimension + vSnake[i]->m_first, i == vSnake.Length() -1 ? 0xffffff00 : cSnake);
 }

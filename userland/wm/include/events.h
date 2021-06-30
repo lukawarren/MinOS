@@ -124,7 +124,7 @@ struct eWidgetUpdate
     
     eWidgetUpdate(const uint32_t pid, const uint32_t _index) : index(_index)
     {
-        Event<sWindowManagerEvent>({WIDGET_UPDATE, this}, pid);
+        Event<sWindowManagerEvent>({WIDGET_UPDATE, this}, pid, false);
     }
 } __attribute__((packed));
 
@@ -145,7 +145,7 @@ struct eExit
     
     eExit(const uint32_t pid = 0, const uint32_t _exitCode = 0) : exitCode(_exitCode)
     {
-        Event<sWindowManagerEvent>({EXIT, this}, pid == 0 ? WINDOW_MANAGER_PID : pid);
+        Event<sWindowManagerEvent>({EXIT, this}, pid == 0 ? WINDOW_MANAGER_PID : pid, pid == 0);
     }
 } __attribute__((packed));
 
@@ -155,7 +155,7 @@ struct eKeyDown
     
     eKeyDown(const uint32_t pid, const uint8_t _scancode) : scancode(_scancode)
     {
-        Event<sWindowManagerEvent>({KEY_DOWN, this}, pid);
+        Event<sWindowManagerEvent>({KEY_DOWN, this}, pid, false);
     }
 } __attribute__((packed));
 
@@ -165,7 +165,7 @@ struct eKeyUp
     
     eKeyUp(const uint32_t pid, const uint8_t _scancode) : scancode(_scancode)
     {
-        Event<sWindowManagerEvent>({KEY_UP, this}, pid);
+        Event<sWindowManagerEvent>({KEY_UP, this}, pid, false);
     }
 } __attribute__((packed));
 

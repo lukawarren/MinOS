@@ -32,6 +32,7 @@ namespace Multitask
         m_Entrypoint = entrypoint;
         m_PID = ++nPIDs;
         m_bBlocked = false;
+        m_bYielded = false;
 
         // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 20 to ensure alignment
         const uint32_t stackSize = PAGE_SIZE * 32;
@@ -117,6 +118,13 @@ namespace Multitask
         m_nSbrkBytesUsed = task.m_nSbrkBytesUsed;
         m_pSbrkBuffer = task.m_pSbrkBuffer;
         memcpy(m_messages, task.m_messages, sizeof(m_messages));
+        m_PID = task.m_PID;
+        m_bBlocked = task.m_bBlocked;
+        m_bBlockedFilter = task.m_bBlockedFilter;
+        m_blockedFilter = task.m_blockedFilter;
+        m_nMessages = task.m_nMessages;
+        m_yieldPID = task.m_yieldPID;
+        m_bYielded = task.m_bYielded;
     }
 
     void Task::AddMesage(const uint32_t sourcePID, uint8_t* pData)
@@ -127,13 +135,19 @@ namespace Multitask
             return;
         }
         
+        // Add message
         auto message = &m_messages[m_nMessages];
-        
         message->sourcePID = sourcePID;
         memcpy(message->data, pData, sizeof(message->data));
-        
         m_nMessages++;
-        m_bBlocked = false;
+        
+        // Unblock if need be
+        if (m_bBlockedFilter == false) m_bBlocked = false;
+        else if (HasMessage(m_blockedFilter))
+        {
+            m_bBlocked = false;
+            m_bBlockedFilter = false;
+        }
     }
     
     void Task::GetMessage(Message* pMessage)
@@ -148,6 +162,14 @@ namespace Multitask
             memcpy(&m_messages[i], &m_messages[i+1], sizeof(Message));
         
         m_nMessages--;
+        
+        // Check for yields
+        if (m_nMessages == 0)
+        {
+            for (uint32_t t = 0; t < nTasks; ++t)
+                if (tasks[t].m_bYielded && tasks[t].m_yieldPID == m_PID)
+                   tasks[t].m_bYielded = false;
+        }
     }
     
     void Task::RemoveMessage(uint32_t filter)
@@ -175,14 +197,42 @@ namespace Multitask
                 }
                 
                 m_nMessages--;
+                
+                // Check for yields
+                if (m_nMessages == 0)
+                {
+                    for (uint32_t t = 0; t < nTasks; ++t)
+                        if (tasks[t].m_bYielded && tasks[t].m_yieldPID == m_PID)
+                            tasks[t].m_bYielded = false;
+                }
+                
                 return;
             }
         }
+        
+        assert(false);
+        while(1) {}
     }
     
     void Task::Block()
     {
         m_bBlocked = true;
+        m_bBlockedFilter = false;
+        OnTaskSwitch(false);
+    }
+    
+    void Task::Block(const uint32_t filter)
+    {
+        m_bBlocked = true;
+        m_bBlockedFilter = true;
+        m_blockedFilter = filter;
+        OnTaskSwitch(false);
+    }
+    
+    void Task::Yield(const uint32_t pid)
+    {
+        m_yieldPID = pid;
+        m_bYielded = true;
         OnTaskSwitch(false);
     }
     
@@ -195,6 +245,25 @@ namespace Multitask
     bool Task::HasMessages() const
     {
         return m_nMessages > 0;
+    }
+    
+    bool Task::HasMessage(const uint32_t filter) const
+    {
+        const uint8_t bytes[4] =
+        {
+            uint8_t(filter >> 24),
+            uint8_t(filter >> 16),
+            uint8_t(filter >> 8),
+            uint8_t(filter)
+        };
+        
+        // Find first event satisfying first four bytes
+        for (uint32_t i = 0; i < m_nMessages; ++i)
+            if (m_messages[i].data[0] == bytes[0] && m_messages[i].data[1] == bytes[1] &&
+                m_messages[i].data[2] == bytes[2] && m_messages[i].data[3] == bytes[3])
+                return true;
+        
+        return false;
     }
 
     void Init()
@@ -256,7 +325,7 @@ namespace Multitask
             tasks[nPreviousTask].SwitchFromTask();
             
             // Avoid blocked tasks
-            while (nTasks > 1 && tasks[nCurrentTask].m_bBlocked)
+            while (nTasks > 1 && (tasks[nCurrentTask].m_bBlocked || tasks[nCurrentTask].m_bYielded))
             {
                 nCurrentTask++;
                 if (nCurrentTask >= nTasks) nCurrentTask = 0;

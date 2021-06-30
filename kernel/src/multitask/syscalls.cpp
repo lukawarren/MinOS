@@ -111,6 +111,9 @@ namespace Multitask
     static int      removemessage(uint32_t filter);
     static int      loadprogram(char const* path);
     static int      unblock(int pid);
+    static int      blockuntil(uint32_t filter);
+    static int      sendmessageuntil(Message* message, int pid, uint32_t filter);
+    static int      yield(int pid);
     
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
@@ -206,6 +209,18 @@ namespace Multitask
 
             case 31:
                 returnStatus = unblock((int)sRegisters.ebx);
+            break;
+
+            case 32:
+                returnStatus = blockuntil(sRegisters.ebx);
+            break;
+
+            case 33:
+                returnStatus = sendmessageuntil((Message*)sRegisters.ebx, (int)sRegisters.ecx, sRegisters.edx);
+            break;
+            
+            case 34:
+                returnStatus = yield((int)sRegisters.ebx);
             break;
 
             default:
@@ -464,7 +479,7 @@ namespace Multitask
         
         if (!task->HasMessages())
         {
-            Multitask::GetCurrentTask()->Block();
+            task->Block();
             Interrupts::bSwitchTasks = true;
             bSaveTaskBeforeSwitching = true;
         }
@@ -525,6 +540,38 @@ namespace Multitask
         Multitask::GetTaskWithID(pid)->Unblock();
         Interrupts::bSwitchTasks = true;
         bSaveTaskBeforeSwitching = true;
+        return 0;
+    }
+    
+    static int blockuntil(uint32_t filter)
+    {
+        auto task = Multitask::GetCurrentTask();
+        task->Block(filter);
+        Interrupts::bSwitchTasks = true;
+        bSaveTaskBeforeSwitching = true;
+        return 0;
+    }
+    
+    static int sendmessageuntil(Message* message, int pid, uint32_t filter)
+    {
+        sendmessage(message, pid);
+        blockuntil(filter);
+        return 0;
+    }
+    
+    static int yield(int pid)
+    {
+        auto targetTask = Multitask::GetTaskWithID(pid);
+        if (targetTask->HasMessages())
+        {
+            auto task = Multitask::GetCurrentTask();
+            assert(targetTask->m_bYielded == false);
+            
+            task->Yield(pid);
+            Interrupts::bSwitchTasks = true;
+            bSaveTaskBeforeSwitching = true;
+        }
+        
         return 0;
     }
 }

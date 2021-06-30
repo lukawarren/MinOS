@@ -21,7 +21,7 @@ int main()
     {
         // Process all events
         Pair<bool, Message> message;
-        while ((message = Event<>::GetMessage()).m_first)
+        while ((message = Event<>::GetMessage(true)).m_first)
         {
             auto event = reinterpret_cast<sWindowManagerEvent&>(message.m_second.data);
             const uint32_t pid = message.m_second.sourcePID;
@@ -69,7 +69,6 @@ int main()
                     
                     // Draw over newly empty space
                     compositor.DrawRegion(x, y, width, height);
-                    
                     break;
                 }
 
