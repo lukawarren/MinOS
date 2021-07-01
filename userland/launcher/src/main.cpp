@@ -12,49 +12,38 @@ int main()
     eButtonCreate("Launcher", nPadding, nPadding + 30, nWidth - nPadding * 2);
     eButtonCreate("Snake", nPadding, nPadding + 60, nWidth - nPadding * 2);
 
-    bool bRunning = true;
-    while(bRunning)
+    EventLoop<sWindowManagerEvent>([&](const sWindowManagerEvent event, const bool)
     {
-        // Get all events
-        Pair<bool, Message> message;
-        while ((message = Event<>::GetMessage()).m_first)
+        switch (event.id)
         {
-            auto event = reinterpret_cast<sWindowManagerEvent&>(message.m_second.data);
-            const uint32_t pid = message.m_second.sourcePID;
-            if (pid != WINDOW_MANAGER_PID) continue;
-
-            switch (event.id)
+            case EXIT:
+                return false;
+            
+            case WIDGET_UPDATE:
             {
-                case EXIT:
-                    bRunning = false;
-                break;
+                eWidgetUpdate* updateWidgetEvent = (eWidgetUpdate*) event.data;
                 
-                case WIDGET_UPDATE:
-                {
-                    eWidgetUpdate* updateWidgetEvent = (eWidgetUpdate*) event.data;
-                    
-                    if (updateWidgetEvent->index == 0) loadprogram("notepad/notepad.bin");
-                    else if (updateWidgetEvent->index == 1) loadprogram("launcher/launcher.bin");
-                    else loadprogram("snake/snake.bin");
-                    
-                    break;
-                }
+                if (updateWidgetEvent->index == 0) loadprogram("notepad/notepad.bin");
+                else if (updateWidgetEvent->index == 1) loadprogram("launcher/launcher.bin");
+                else loadprogram("snake/snake.bin");
                 
-                case KEY_DOWN:
-                break;
-                
-                case KEY_UP:
-                break;
-                
-                default:
-                    printf("[Launcher] Unrecognised event with id %u\n", event.id);
-                    exit(-1);
                 break;
             }
+            
+            case KEY_DOWN:
+            break;
+            
+            case KEY_UP:
+            break;
+            
+            default:
+                printf("[Launcher] Unrecognised event with id %u\n", event.id);
+                exit(-1);
+            break;
         }
         
-        if (bRunning) block();
-    }
+        return true;
+    });
     
     eWindowClose();
     return 0;

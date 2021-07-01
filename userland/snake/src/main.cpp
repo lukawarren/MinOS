@@ -54,22 +54,15 @@ int main()
     SpawnFood();
     DrawFrame();
  
-    bool bRunning = true;
-    while(bRunning)
+    EventLoop<sWindowManagerEvent>([&](const sWindowManagerEvent event, const bool bEvent)
     {
-        // Get all events
-        Pair<bool, Message> message;
-        while ((message = Event<>::GetMessage()).m_first)
+        // Deal with events
+        if (bEvent)
         {
-            auto event = reinterpret_cast<sWindowManagerEvent&>(message.m_second.data);
-            const uint32_t pid = message.m_second.sourcePID;
-            if (pid != WINDOW_MANAGER_PID) continue;
-            
             switch (event.id)
             {
                 case EXIT:
-                    bRunning = false;
-                break;
+                    return false;
                 
                 case KEY_DOWN:
                 {
@@ -88,13 +81,16 @@ int main()
             }
         }
         
+        // Progress game
         if (!GameOver())
         {   
             AdvanceSnake();
             DrawFrame();
             usleep(100000);
         } else usleep(1000);
-    }
+        
+        return true;
+    }, false);
     
     eWindowClose();
     return 0;

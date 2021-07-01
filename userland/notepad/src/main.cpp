@@ -15,43 +15,30 @@ int main()
     eTextCreate("to that :-)                                                            ", nPadding * 2, nPadding * 6);
     eButtonCreate("Close window... with style", 10, nHeight - 34);
 
-    bool bRunning = true;
-    while(bRunning)
+    EventLoop<sWindowManagerEvent>([&](const sWindowManagerEvent event, const bool)
     {
-        // Get all events
-        Pair<bool, Message> message;
-        while ((message = Event<>::GetMessage()).m_first)
+        switch (event.id)
         {
-            auto event = reinterpret_cast<sWindowManagerEvent&>(message.m_second.data);
-            const uint32_t pid = message.m_second.sourcePID;
-            if (pid != WINDOW_MANAGER_PID) continue;
-
-            switch (event.id)
-            {
-                case EXIT:
-                    bRunning = false;
-                    printf("[Notepad] Exiting...\n");
-                break;
+            case EXIT:
+                return false;
                 
-                case WIDGET_UPDATE: // Button pressed
-                    bRunning = false;
-                break;
-                
-                case KEY_DOWN:
-                break;
-                
-                case KEY_UP:
-                break;
-                
-                default:
-                    printf("[Notepad] Unrecognised event with id %u\n", event.id);
-                    exit(-1);
-                break;
-            }
+            case WIDGET_UPDATE: // Button pressed
+                return false;
+            
+            case KEY_DOWN:
+            break;
+            
+            case KEY_UP:
+            break;
+            
+            default:
+                printf("[Notepad] Unrecognised event with id %u\n", event.id);
+                exit(-1);
+            break;
         }
         
-        //if (bRunning) block();
-    }
+        return true;
+    });
     
     eWindowClose();
     return 0;
