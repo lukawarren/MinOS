@@ -15,6 +15,10 @@ constexpr uint32_t nPadding = 5;
 Graphics::Window::Window(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, char const* title, const uint32_t pid):
     m_Width(width), m_Height(height), m_X(x), m_Y(y), m_sTitle(title), m_PID(pid)
 {
+    // Add space for window frame
+    m_Width += nPadding * 2;
+    m_Height += nPadding * 2;
+    
     // Bar
     m_vWidgets.Push(new Bar(m_Width, nBarHeight, 0, 0));
 
@@ -44,7 +48,7 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
 
     for (size_t i = 0; i < m_vWidgets.Length(); ++i)
         m_vWidgets[i]->Render();
-
+        
     m_Height += nBarHeight;
     m_nBaseWidgets = m_vWidgets.Length();
 }
@@ -134,7 +138,8 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
 
 void Graphics::Window::AddWidget(Widget* pWidget)
 {
-    pWidget->m_Y += nBarHeight;
+    pWidget->m_X += nPadding;
+    pWidget->m_Y += nBarHeight + nPadding;
     m_vWidgets.Push(pWidget);
     pWidget->Render();
 }

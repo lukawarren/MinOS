@@ -3,12 +3,11 @@
 
 constexpr unsigned int nWidth = 600;
 constexpr unsigned int nHeight = 400;
-constexpr unsigned int nPadding = 5;
 
 int main()
 {
     eWindowCreate(nWidth, nHeight, "Notepad");
-    eTextAreaCreate(nPadding, nPadding, nWidth - nPadding*2, nHeight - nPadding*2);
+    eTextAreaCreate(0, 0, nWidth, nHeight);
     
     EventLoop<sWindowManagerEvent>([&](const sWindowManagerEvent event, const bool)
     {

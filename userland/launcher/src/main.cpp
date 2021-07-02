@@ -2,15 +2,14 @@
 #include "events.h"
 
 constexpr unsigned int nWidth = 300;
-constexpr unsigned int nHeight = 100;
-constexpr unsigned int nPadding = 5;
+constexpr unsigned int nHeight = 90;
 
 int main()
 {
     eWindowCreate(nWidth, nHeight, 0, 0, "Launcher");
-    eButtonCreate("Notepad", nPadding, nPadding, nWidth - nPadding * 2);
-    eButtonCreate("Launcher", nPadding, nPadding + 30, nWidth - nPadding * 2);
-    eButtonCreate("Snake", nPadding, nPadding + 60, nWidth - nPadding * 2);
+    eButtonCreate("Notepad", 0, 0, nWidth);
+    eButtonCreate("Launcher", 0, 30, nWidth);
+    eButtonCreate("Snake", 0, 60, nWidth);
 
     EventLoop<sWindowManagerEvent>([&](const sWindowManagerEvent event, const bool)
     {
