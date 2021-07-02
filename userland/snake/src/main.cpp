@@ -82,13 +82,17 @@ int main()
         }
         
         // Progress game
+        static int nFrame = 0;
         if (!GameOver())
         {   
-            AdvanceSnake();
-            DrawFrame();
-            usleep(100000);
-        } else usleep(1000);
+            if (++nFrame % 50 == 0)
+            {
+                AdvanceSnake();
+                DrawFrame();
+            }
+        }
         
+        usleep(1000);
         return true;
     }, false);
     
@@ -98,16 +102,16 @@ int main()
 
 void HandleInput(uint8_t scancode)
 {
-    if (scancode == Input::Keyboard::Code::W)
+    if (scancode == Input::Keyboard::Code::W && eDirection != Direction::DOWN)
         eDirection = Direction::UP;
     
-    else if (scancode == Input::Keyboard::Code::A)
+    else if (scancode == Input::Keyboard::Code::A && eDirection != Direction::RIGHT)
         eDirection = Direction::LEFT;
         
-    else if (scancode == Input::Keyboard::Code::S)
+    else if (scancode == Input::Keyboard::Code::S && eDirection != Direction::UP)
         eDirection = Direction::DOWN;
         
-    else if (scancode == Input::Keyboard::Code::D)
+    else if (scancode == Input::Keyboard::Code::D && eDirection != Direction::LEFT)
         eDirection = Direction::RIGHT;
 }
 
