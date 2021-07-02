@@ -106,7 +106,7 @@ Pair<bool, Pair<uint32_t, uint32_t>> Graphics::Window::ShouldUpdate(const Input:
     for (uint8_t scancode = 0; scancode < 128; ++scancode)
     {
         if (keyboard.m_buffer[scancode] && !keyboard.m_oldBuffer[scancode])
-            eKeyDown { m_PID, scancode };
+            eKeyDown { m_PID, scancode, keyboard.ScancodeToCharacter(scancode) };
         
         else if (!keyboard.m_buffer[scancode] && keyboard.m_oldBuffer[scancode])
             eKeyUp { m_PID, scancode };

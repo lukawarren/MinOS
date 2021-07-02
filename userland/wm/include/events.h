@@ -152,8 +152,9 @@ struct eExit
 struct eKeyDown
 {
     uint8_t scancode;
+    char character;
     
-    eKeyDown(const uint32_t pid, const uint8_t _scancode) : scancode(_scancode)
+    eKeyDown(const uint32_t pid, const uint8_t _scancode, const char _character) : scancode(_scancode), character(_character)
     {
         Event<sWindowManagerEvent>({KEY_DOWN, this}, pid, false);
     }

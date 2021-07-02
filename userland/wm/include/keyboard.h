@@ -13,9 +13,11 @@ namespace Input
             ~Keyboard();
         
             void Poll();
+            char ScancodeToCharacter(const uint8_t scancode) const;
             
             uint8_t m_buffer[128];
             uint8_t m_oldBuffer[128];
+            bool m_bShift;
             
             enum Code
             {
@@ -23,6 +25,9 @@ namespace Input
                 S = 31,
                 A = 30,
                 D = 32,
+                Shift = 42,
+                Comma = 51,
+                FullStop = 52,
                 Space = 57
             };
             
