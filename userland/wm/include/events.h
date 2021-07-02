@@ -18,6 +18,7 @@ enum Events
     PANEL_CREATE,
     TEXT_CREATE,
     BUTTON_CREATE,
+    TEXT_AREA_CREATE,
     WIDGET_UPDATE,
     PANEL_SET_COLOUR,
     EXIT,
@@ -115,6 +116,21 @@ struct eButtonCreate
     {
         strncpy(text, _text, sizeof(text));
         Event<sWindowManagerEvent>({BUTTON_CREATE, this}, WINDOW_MANAGER_PID);
+    }
+} __attribute__((packed));
+
+struct eTextAreaCreate
+{
+    uint32_t x;
+    uint32_t y;
+    uint32_t width;
+    uint32_t height;
+    uint32_t colour;
+
+    eTextAreaCreate(const uint32_t _x, const uint32_t _y, const uint32_t _width, const uint32_t _height, const uint32_t _colour = 0xffffffff) :
+        x(_x), y(_y), width(_width), height(_height), colour(_colour)
+    {
+        Event<sWindowManagerEvent>({TEXT_AREA_CREATE, this}, WINDOW_MANAGER_PID);
     }
 } __attribute__((packed));
 

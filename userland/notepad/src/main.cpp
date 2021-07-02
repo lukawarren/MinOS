@@ -8,9 +8,7 @@ constexpr unsigned int nPadding = 5;
 int main()
 {
     eWindowCreate(nWidth, nHeight, "Notepad");
-    ePanelCreate(nWidth-nPadding*2, nHeight-nPadding*2, nPadding, nPadding, 0xffaaaaaa);
-    
-    int nChar = 0;
+    eTextAreaCreate(nPadding, nPadding, nWidth - nPadding*2, nHeight - nPadding*2);
     
     EventLoop<sWindowManagerEvent>([&](const sWindowManagerEvent event, const bool)
     {
@@ -18,20 +16,9 @@ int main()
         {
             case EXIT:
                 return false;
-                
-            case WIDGET_UPDATE: // Button pressed
-                return false;
             
             case KEY_DOWN:
-            {    
-                eKeyDown* keyEvent = (eKeyDown*) event.data;
-                if (keyEvent->character == '\0') break;
-                char text[2] = " ";
-                text[0] = keyEvent->character;
-                eTextCreate(text, nChar * CHAR_WIDTH + nPadding, nPadding);
-                nChar++;
-                break;
-            }
+            break;
             
             case KEY_UP:
             break;

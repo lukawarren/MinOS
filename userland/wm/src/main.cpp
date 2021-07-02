@@ -6,6 +6,7 @@
 #include "panel.h"
 #include "text.h"
 #include "button.h"
+#include "textArea.h"
 
 int main()
 {
@@ -14,7 +15,7 @@ int main()
     Input::Keyboard keyboard;
     
     loadprogram("launcher/launcher.bin");
-    //loadprogram("notepad/notepad.bin");
+    loadprogram("notepad/notepad.bin");
     
     Graphics::Window* pActiveWindow = nullptr;
     while (1)
@@ -132,6 +133,27 @@ int main()
                     
                     window->AddWidget(button);
                     compositor.DrawRegion(window->m_X + button->m_X, window->m_Y + button->m_Y, button->m_Width, button->m_Height);
+                    break;
+                }
+                
+                case TEXT_AREA_CREATE:
+                {
+                    auto window = compositor.GetWindowForPID(pid);
+                    if (window == nullptr) break;
+                    
+                    eTextAreaCreate* createTextAreaEvent = (eTextAreaCreate*) event.data;
+
+                    auto textArea = new Graphics::TextArea
+                    (
+                        createTextAreaEvent->x,
+                        createTextAreaEvent->y,
+                        createTextAreaEvent->width,
+                        createTextAreaEvent->height,
+                        createTextAreaEvent->colour
+                    );
+                    
+                    window->AddWidget(textArea);
+                    compositor.DrawRegion(window->m_X + textArea->m_X, window->m_Y + textArea->m_Y, textArea->m_Width, textArea->m_Height);
                     break;
                 }
                 
