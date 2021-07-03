@@ -18,6 +18,9 @@ namespace Graphics
         uint32_t GetPixel(const uint32_t x, const uint32_t y) const override;
         Pair<bool, bool> ShouldUpdate(const Input::Mouse& mouse, const uint32_t windowX, const uint32_t windowY) override;
 
+        void AddRow(char const* text);
+        void SetRow(const uint32_t row, char const* text);
+
     private:
         uint32_t m_colour;
         Panel m_scrollbar;

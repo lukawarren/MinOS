@@ -19,29 +19,6 @@ namespace Graphics
     {
         m_nLinesPerView = height / lineHeight;
         m_nColumnsPerRow = (width - scrollbarWidth) / CHAR_WIDTH - padding;
-        
-        const auto AddLine = [&](const char* string)
-        {
-            m_vLines.Push(new String(string));
-            m_bScrollbar = m_vLines.Length() > m_nLinesPerView;
-        };
-        
-        for (int i = 0; i < 10; ++i)
-        {
-            AddLine("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras hendrerit");
-            AddLine("neque eget eros elementum placerat. Etiam blandit tellus sapien, vitae");
-            AddLine("tempus ligula imperdiet eget. Aenean accumsan pharetra est, rutrum");
-            AddLine("sodales nisl vestibulum vel. Fusce lacinia tortor sit amet eleifend");
-            AddLine("semper. Morbi placerat ipsum a tellus venenatis, vitae dapibus magna");
-            AddLine("porttitor. Sed dignissim eros sapien, in fringilla odio molestie in.");
-            AddLine("Aenean nec euismod nibh. Etiam nibh augue, condimentum eget dui eget,");
-            AddLine("posuere lobortis quam. Phasellus a tristique tellus. In egestas mi a");
-            AddLine("dignissim sodales. Donec vel mollis felis. Maecenas at dictum mi, in");
-            AddLine("tristique lorem. Donec et enim mauris. Proin sit amet lorem turpis. Duis");
-            AddLine("vehicula nisi eu ex tempor, at consequat magna euismod.");
-            AddLine("");
-            AddLine("");
-        }
         m_nLine = 0;
     }
 
@@ -103,6 +80,17 @@ namespace Graphics
     char TextArea::GetCharacterFromText(const uint32_t row, const uint32_t column) const
     {
         return (*m_vLines[row])[column];
+    }
+    
+    void TextArea::AddRow(char const* text)
+    {
+        m_vLines.Push(new String(text));
+        m_bScrollbar = m_vLines.Length() > m_nLinesPerView;
+    }
+    
+    void TextArea::SetRow(const uint32_t row, char const* text)
+    {
+        m_vLines.Replace(m_vLines[row], new String(text));
     }
 
     TextArea::~TextArea() {}

@@ -157,6 +157,32 @@ int main()
                     break;
                 }
                 
+                case TEXT_AREA_ADD_ROW:
+                {
+                    auto window = compositor.GetWindowForPID(pid);
+                    if (window == nullptr) break;
+                    
+                    eTextAreaAddRow* createRowEvent = (eTextAreaAddRow*) event.data;
+                    auto widget = (Graphics::TextArea*)window->GetWidgetFromUserIndex(createRowEvent->index);
+                    widget->AddRow(createRowEvent->text);
+                    widget->Render();
+                    compositor.DrawRegion(window->m_X + widget->m_X, window->m_Y + widget->m_Y, widget->m_Width, widget->m_Height);
+                    break;
+                }
+                
+                case TEXT_AREA_SET_ROW:
+                {
+                    auto window = compositor.GetWindowForPID(pid);
+                    if (window == nullptr) break;
+                    
+                    eTextAreaSetRow* setRowEvent = (eTextAreaSetRow*) event.data;
+                    auto widget = (Graphics::TextArea*)window->GetWidgetFromUserIndex(setRowEvent->index);
+                    widget->SetRow(setRowEvent->row, setRowEvent->text);
+                    widget->Render();
+                    compositor.DrawRegion(window->m_X + widget->m_X, window->m_Y + widget->m_Y, widget->m_Width, widget->m_Height);
+                    break;
+                }
+                
                 case PANEL_SET_COLOUR:
                 {
                     auto window = compositor.GetWindowForPID(pid);

@@ -21,6 +21,8 @@ enum Events
     TEXT_AREA_CREATE,
     WIDGET_UPDATE,
     PANEL_SET_COLOUR,
+    TEXT_AREA_ADD_ROW,
+    TEXT_AREA_SET_ROW,
     EXIT,
     KEY_DOWN,
     KEY_UP
@@ -152,6 +154,31 @@ struct ePanelColour
     ePanelColour(const uint32_t _index, const uint32_t _colour) : index(_index), colour(_colour)
     {
         Event<sWindowManagerEvent>({PANEL_SET_COLOUR, this}, WINDOW_MANAGER_PID);
+    }
+} __attribute__((packed));
+
+struct eTextAreaAddRow
+{
+    uint32_t index;
+    char text[251];
+    
+    eTextAreaAddRow(const uint32_t _index, char const* _text) : index(_index)
+    {
+        strncpy(text, _text, sizeof(text));
+        Event<sWindowManagerEvent>({TEXT_AREA_ADD_ROW, this}, WINDOW_MANAGER_PID);
+    }
+} __attribute__((packed));
+
+struct eTextAreaSetRow
+{
+    uint32_t index;
+    uint32_t row;
+    char text[247];
+    
+    eTextAreaSetRow(const uint32_t _index, char const* _text) : index(_index)
+    {
+        strncpy(text, _text, sizeof(text));
+        Event<sWindowManagerEvent>({TEXT_AREA_SET_ROW, this}, WINDOW_MANAGER_PID);
     }
 } __attribute__((packed));
 

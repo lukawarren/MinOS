@@ -60,6 +60,17 @@ public:
         m_nElements--;
     }
     
+    void Replace(T* element, T* newElement)
+    {
+        auto index = GetIndex(element);
+        
+        // Free memory
+        delete m_pData[index];
+        
+        // Set new elements in its place
+        m_pData[index] = newElement;
+    }
+    
     size_t GetIndex(T* element)
     {
         for (size_t i = 0; i < Length(); ++i)
