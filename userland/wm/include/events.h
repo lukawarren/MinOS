@@ -160,9 +160,10 @@ struct ePanelColour
 struct eTextAreaAddRow
 {
     uint32_t index;
-    char text[251];
+    char text[200];
+    bool bRefresh;
     
-    eTextAreaAddRow(const uint32_t _index, char const* _text) : index(_index)
+    eTextAreaAddRow(const uint32_t _index, char const* _text, bool _bRefresh = true) : index(_index), bRefresh(_bRefresh)
     {
         strncpy(text, _text, sizeof(text));
         Event<sWindowManagerEvent>({TEXT_AREA_ADD_ROW, this}, WINDOW_MANAGER_PID);
@@ -173,7 +174,7 @@ struct eTextAreaSetRow
 {
     uint32_t index;
     uint32_t row;
-    char text[247];
+    char text[200];
     
     eTextAreaSetRow(const uint32_t _index, char const* _text) : index(_index)
     {
