@@ -12,7 +12,7 @@ namespace Graphics
     class TextArea: public Widget
     {
     public:
-        TextArea(const unsigned int x, const unsigned int y, const unsigned int width, const unsigned height, const uint32_t colour = 0xffffffff);
+        TextArea(const unsigned int x, const unsigned int y, const unsigned int width, const unsigned height, const uint32_t colour = 0xff000000);
         ~TextArea();
 
         uint32_t GetPixel(const uint32_t x, const uint32_t y) const override;

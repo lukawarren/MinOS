@@ -101,7 +101,7 @@ struct eTextCreate
     uint32_t colour;
     char text[239];
 
-    eTextCreate(char const* _text, const uint32_t _x, const uint32_t _y, const uint32_t _colour = 0xffffffff) : x(_x), y(_y), colour(_colour)
+    eTextCreate(char const* _text, const uint32_t _x, const uint32_t _y, const uint32_t _colour = 0xff000000) : x(_x), y(_y), colour(_colour)
     {
         strncpy(text, _text, sizeof(text));
         Event<sWindowManagerEvent>({TEXT_CREATE, this}, WINDOW_MANAGER_PID);
@@ -132,7 +132,7 @@ struct eTextAreaCreate
     uint32_t height;
     uint32_t colour;
 
-    eTextAreaCreate(const uint32_t _x, const uint32_t _y, const uint32_t _width, const uint32_t _height, const uint32_t _colour = 0xffffffff) :
+    eTextAreaCreate(const uint32_t _x, const uint32_t _y, const uint32_t _width, const uint32_t _height, const uint32_t _colour = 0xff000000) :
         x(_x), y(_y), width(_width), height(_height), colour(_colour)
     {
         Event<sWindowManagerEvent>({TEXT_AREA_CREATE, this}, WINDOW_MANAGER_PID);

@@ -50,7 +50,7 @@ namespace Memory
             uint32_t GetCR3();
 
             void FreeAllPages();
-            uint32_t GetUsedPages();
+            uint32_t GetUsedPages() const;
 
             template<typename T>
             T GetValueAtVirtualAddress(uint32_t address)

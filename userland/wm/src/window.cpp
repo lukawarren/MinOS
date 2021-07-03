@@ -29,7 +29,7 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
     if (m_bDecorated)
     {
         // Bar title
-        m_vWidgets.Push(new Text(title, nPadding, nBarHeight/2 - CHAR_HEIGHT/2));
+        m_vWidgets.Push(new Text(title, nPadding, nBarHeight/2 - CHAR_HEIGHT/2, 0xffffffff));
 
         // Bar button
         m_vWidgets.Push(new Panel
@@ -43,7 +43,8 @@ Graphics::Window::Window(const unsigned int width, const unsigned int height, co
         (
             "X",
             m_Width - nButtonWidth - nPadding + 6,    // End of window minus button's position, plus 6 padding for text
-            nBarHeight - nButtonHeight + 2            // (As above but with 2 padding for text)
+            nBarHeight - nButtonHeight + 2,           // (As above but with 2 padding for text)
+            0xffffffff
         ));
     }
 

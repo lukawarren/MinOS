@@ -122,6 +122,8 @@ namespace Multitask
     static int      blockuntil(uint32_t filter);
     static int      sendmessageuntil(Message* message, int pid, uint32_t filter);
     static int      usleep(useconds_t usec);
+    static int      getusedmemory();
+    static int      gettotalmemory();
     
     int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
     {
@@ -233,6 +235,14 @@ namespace Multitask
             
             case 34:
                 returnStatus = usleep((useconds_t)sRegisters.ebx);
+            break;
+
+            case 35:
+                returnStatus = getusedmemory();
+            break;
+            
+            case 36:
+                returnStatus = gettotalmemory();
             break;
 
             default:
@@ -587,5 +597,15 @@ namespace Multitask
         Interrupts::bSwitchTasks = true;
         bSaveTaskBeforeSwitching = true;
         return 0;
+    }
+    
+    static int getusedmemory()
+    {
+        return Memory::kPageFrame.GetUsedPages() * PAGE_SIZE;
+    }
+    
+    static int gettotalmemory()
+    {
+        return Memory::maxPages * PAGE_SIZE;
     }
 }

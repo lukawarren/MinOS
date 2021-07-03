@@ -11,11 +11,11 @@ namespace Graphics
     class Text: public Widget
     {
     public:
-        Text(const uint32_t colour = 0xffffffff) : m_Colour(colour) {}
+        Text(const uint32_t colour = 0xff000000) : m_Colour(colour) {}
         
-        Text(char const* text, const uint32_t colour = 0xffffffff);
+        Text(char const* text, const uint32_t colour = 0xff000000);
         
-        Text(char const* text, const unsigned int x, const unsigned int y, const uint32_t colour = 0xffffffff);
+        Text(char const* text, const unsigned int x, const unsigned int y, const uint32_t colour = 0xff000000);
 
         ~Text();
 

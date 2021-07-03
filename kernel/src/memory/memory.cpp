@@ -10,6 +10,7 @@ namespace Memory
 {
     uint32_t userspaceBegin;
     uint32_t maxGroups;
+    uint32_t maxPages;
     uint32_t nFramebufferPages;
     uint32_t framebufferAddress;
 
@@ -17,7 +18,7 @@ namespace Memory
     {
         // Get memory bounds
         uint32_t upperBound = GetMaxMemory(pMultiboot);
-        uint32_t maxPages = upperBound / PAGE_SIZE;
+        maxPages = upperBound / PAGE_SIZE;
         maxGroups = maxPages / 32;
 
         // Allocate space for page tables, page directories and what-not

@@ -175,8 +175,12 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
 #endif
 
+// POSIX
+
 SYSCALL_ARGS_2(int, munmap, 20, void*, addr, size_t, length)
 SYSCALL_ARGS_3(int, mprotect, 21, void*, addr, size_t, len, int, prot)
+
+// MinOS
 
 SYSCALL_ARGS_0(int, getpagesize, 22)
 SYSCALL_ARGS_0(int, getscreenwidth, 23)
@@ -184,7 +188,7 @@ SYSCALL_ARGS_0(int, getscreenheight, 24)
 SYSCALL_ARGS_0(int, swapscreenbuffer, 25)
 
 #include "./message.h"
-// MinOS
+
 SYSCALL_ARGS_0(int, block, 26)
 SYSCALL_ARGS_2(int, sendmessage, 27, Message*, message, int, pid)
 SYSCALL_ARGS_1(int, getmessage, 28, Message*, message)
@@ -196,6 +200,10 @@ SYSCALL_ARGS_3(int, sendmessageuntil, 33, Message*, message, int, pid, uint32_t,
 
 // Back to POSIX
 SYSCALL_ARGS_1(int, usleep, 34, useconds_t, usec)
+
+// MinOS again
+SYSCALL_ARGS_0(uint32_t, getusedmemory, 35)
+SYSCALL_ARGS_0(uint32_t, gettotalmemory, 36)
 
 #ifdef __cplusplus
 }

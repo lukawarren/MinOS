@@ -371,7 +371,7 @@ namespace Memory
         return (i * 0x01010101) >> 24;          // horizontal sum of bytes
     }
 
-    uint32_t PageFrame::GetUsedPages()
+    uint32_t PageFrame::GetUsedPages() const
     {
         uint32_t pages = 0;
         
