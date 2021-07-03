@@ -193,7 +193,6 @@ namespace Multitask
         }
         
         assert(false);
-        while(1) {}
     }
     
     void Task::Block()

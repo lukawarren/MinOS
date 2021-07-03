@@ -29,7 +29,7 @@ int main()
         sprintf(sMemory, "Memory: %03zu MB / %03zu MB", getusedmemory() / 1024 / 1024, gettotalmemory() / 1024 / 1024);
         eTextSet(1, sMemory);
 
-        usleep(1000);
+        usleep(1000000);
         return true;
     }, false);
     

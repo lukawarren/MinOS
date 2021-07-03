@@ -10,8 +10,8 @@ namespace Framebuffer
 {
     BochsGraphicsDevice::BochsGraphicsDevice(const PCI::Device& device) : GraphicsDevice()
     {
-        const uint16_t width = 1024;
-        const uint16_t height = 768;
+        const uint16_t width = 1280;
+        const uint16_t height = 720;
 
         // Get address from PCI device BAR 0
         m_Address = device.bars[0] & 0xfffffff0;
