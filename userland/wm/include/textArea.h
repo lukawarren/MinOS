@@ -5,6 +5,7 @@
 #include <minlib.h>
 #include "widget.h"
 #include "font.h"
+#include "panel.h"
 
 namespace Graphics
 {
@@ -15,9 +16,15 @@ namespace Graphics
         ~TextArea();
 
         uint32_t GetPixel(const uint32_t x, const uint32_t y) const override;
+        Pair<bool, bool> ShouldUpdate(const Input::Mouse& mouse, const uint32_t windowX, const uint32_t windowY) override;
 
     private:
-        uint32_t m_Colour;
+        uint32_t m_colour;
+        Vector<Vector<char>> m_vLines;
+        Panel m_scrollbar;
+        
+        Vector<char>* MakeRowFromString(char const* string) const;
+        char GetCharacterFromText(const uint32_t row, const uint32_t column) const;
     };
 }
 

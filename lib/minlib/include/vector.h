@@ -9,10 +9,10 @@ template<typename T>
 class Vector
 {
 public:
-    Vector(const size_t nElements = 0) : m_nElements(nElements)
+    Vector(const size_t nElements = 0) : m_nElements(0)
     {
         // Pick size
-        if (nElements > 0) m_nMaxElements = m_nElements;
+        if (nElements > 0) m_nMaxElements = nElements;
         else m_nMaxElements = 2;
         
         // Allocate memory

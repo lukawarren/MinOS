@@ -25,8 +25,7 @@ namespace Graphics
         uint32_t GetPixel(const uint32_t x, const uint32_t y) const override;
         
         void SetColour(const uint32_t colour);
-    
-    private:
+        
         uint32_t m_cPanelColour;
     };
 }

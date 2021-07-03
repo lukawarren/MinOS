@@ -25,6 +25,7 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 extern void* operator new(size_t size);
+extern void* operator new[](size_t size);
 extern void operator delete(void * p);
 
 extern "C" void __cxa_pure_virtual();
