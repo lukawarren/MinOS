@@ -20,6 +20,7 @@
 #include "event.h"
 #include "pair.h"
 #include "eventloop.h"
+#include "string.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))

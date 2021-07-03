@@ -20,10 +20,13 @@ namespace Graphics
 
     private:
         uint32_t m_colour;
-        Vector<Vector<char>> m_vLines;
         Panel m_scrollbar;
         
-        Vector<char>* MakeRowFromString(char const* string) const;
+        Vector<String> m_vLines;
+        uint32_t m_nLine;
+        uint32_t m_nLinesPerView;
+        bool m_bScrollbar;
+        
         char GetCharacterFromText(const uint32_t row, const uint32_t column) const;
     };
 }
