@@ -13,7 +13,7 @@ namespace Graphics
     {
     public:
         Window() {}
-        Window(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, char const* title, const uint32_t pid);
+        Window(const unsigned int width, const unsigned int height, const unsigned int x, const unsigned int y, char const* title, const uint32_t pid, const bool bDecorated);
         ~Window();
 
         bool IsHoveredOver(const Input::Mouse& mouse) const;
@@ -41,6 +41,8 @@ namespace Graphics
         bool m_bSentExitRequest;
         uint32_t m_nBaseWidgets;
         
+        bool m_bDecorated;
+
         int m_dragOffsetX;
         int m_dragOffsetY;
     };

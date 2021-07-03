@@ -41,6 +41,18 @@ bool Graphics::Text::IsPixelSet(const uint32_t windowSpaceX, const uint32_t wind
     return pBitmap[y % CHAR_HEIGHT] & mask;
 }
 
+void Graphics::Text::SetText(char const* text)
+{
+    free(m_Text);
+    m_Text = (char*) malloc(sizeof(char) * strlen(text));
+    strcpy(m_Text, text);
+
+    m_Width = strlen(text) * CHAR_WIDTH;
+
+    free(m_pBitmap);
+    m_pBitmap = (uint32_t*) malloc(sizeof(uint32_t) * m_Width * m_Height);
+}
+
 Graphics::Text::~Text()
 {
     free(m_Text);

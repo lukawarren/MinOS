@@ -23,6 +23,7 @@ enum Events
     PANEL_SET_COLOUR,
     TEXT_AREA_ADD_ROW,
     TEXT_AREA_SET_ROW,
+    TEXT_SET,
     EXIT,
     KEY_DOWN,
     KEY_UP
@@ -50,8 +51,10 @@ struct eWindowCreate
     uint32_t x;
     uint32_t y;
     char sName[128];
+    bool bDecorated;
     
-    eWindowCreate(const uint32_t _width, const  uint32_t _height, const char* name) : width(_width), height(_height)
+    eWindowCreate(const uint32_t _width, const  uint32_t _height, const char* name, const bool _bDecorated = true) :
+        width(_width), height(_height), bDecorated(_bDecorated)
     {
         x = getscreenwidth() / 2 - width / 2;
         y = getscreenheight() / 2 - height / 2;
@@ -59,8 +62,8 @@ struct eWindowCreate
         Event<sWindowManagerEvent>({WINDOW_CREATE, this}, WINDOW_MANAGER_PID);
     }
     
-    eWindowCreate(const uint32_t _width, const  uint32_t _height, const uint32_t _x, const uint32_t _y, const char* name) :
-        width(_width), height(_height), x(_x), y(_y)
+    eWindowCreate(const uint32_t _width, const  uint32_t _height, const uint32_t _x, const uint32_t _y, const char* name, const bool _bDecorated = true) :
+        width(_width), height(_height), x(_x), y(_y), bDecorated(_bDecorated)
     {
         strcpy(sName, name);
         Event<sWindowManagerEvent>({WINDOW_CREATE, this}, WINDOW_MANAGER_PID);
@@ -176,10 +179,23 @@ struct eTextAreaSetRow
     uint32_t row;
     char text[200];
     
-    eTextAreaSetRow(const uint32_t _index, char const* _text) : index(_index)
+    eTextAreaSetRow(const uint32_t _index, char const* _text, const uint32_t _row) :
+        index(_index),row(_row)
     {
         strncpy(text, _text, sizeof(text));
         Event<sWindowManagerEvent>({TEXT_AREA_SET_ROW, this}, WINDOW_MANAGER_PID);
+    }
+} __attribute__((packed));
+
+struct eTextSet
+{
+    uint32_t index;
+    char text[200];
+    
+    eTextSet(const uint32_t _index, char const* _text) : index(_index)
+    {
+        strncpy(text, _text, sizeof(text));
+        Event<sWindowManagerEvent>({TEXT_SET, this}, WINDOW_MANAGER_PID);
     }
 } __attribute__((packed));
 

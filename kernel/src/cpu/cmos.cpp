@@ -52,6 +52,7 @@ namespace CMOS
         }
 
         year += 2000; // TODO: Fix when time travel is invented
+        hours += 1; // Don't ask me why it's +1! BST? Too bad!
         return { seconds, minutes, hours, day, month, year };
     }
 }

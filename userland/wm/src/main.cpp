@@ -16,6 +16,7 @@ int main()
     
     loadprogram("launcher/launcher.bin");
     loadprogram("notepad/notepad.bin");
+    loadprogram("bar/bar.bin");
     
     Graphics::Window* pActiveWindow = nullptr;
     while (1)
@@ -44,7 +45,8 @@ int main()
                         createWindowEvent->x,
                         createWindowEvent->y,
                         createWindowEvent->sName,
-                        pid
+                        pid,
+                        createWindowEvent->bDecorated
                     );
                     
                     compositor.m_vWindows.Push(window);
@@ -186,6 +188,19 @@ int main()
                     break;
                 }
                 
+                case TEXT_SET:
+                {
+                    auto window = compositor.GetWindowForPID(pid);
+                    if (window == nullptr) break;
+                    
+                    eTextSet* setTextEvent = (eTextSet*) event.data;
+                    auto widget = (Graphics::Text*)window->GetWidgetFromUserIndex(setTextEvent->index);
+                    widget->SetText(setTextEvent->text);
+                    widget->Render();
+                    compositor.DrawRegion(window->m_X + widget->m_X, window->m_Y + widget->m_Y, widget->m_Width, widget->m_Height);
+                    break;
+                }
+
                 case PANEL_SET_COLOUR:
                 {
                     auto window = compositor.GetWindowForPID(pid);

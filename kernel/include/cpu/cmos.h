@@ -31,6 +31,14 @@ namespace CMOS
         uint32_t day;
         uint32_t month;
         uint32_t year;
+
+        uint32_t GetSecondsInDay()
+        {
+            return
+                hour * 60 * 60 +
+                minute * 60 +
+                second;
+        }
     };
 
     Time GetTime();

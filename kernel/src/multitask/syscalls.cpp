@@ -5,6 +5,7 @@
 #include "memory/memory.h"
 #include "io/uart.h"
 #include "io/gfx/framebuffer.h"
+#include "cpu/cmos.h"
 #include "cpu/pic.h"
 #include "kstdlib.h"
 
@@ -48,6 +49,12 @@ struct stat
     time_t    st_atime;   /* time of last access */
     time_t    st_mtime;   /* time of last modification */
     time_t    st_ctime;   /* time of last status change */
+};
+
+struct timeval
+{
+    time_t      tv_sec;     /* seconds */
+    suseconds_t tv_usec;    /* microseconds */
 };
 
 #define STDIN   0
@@ -98,6 +105,7 @@ namespace Multitask
     static int      open(const char *pathname, int flags, mode_t mode);
     static caddr_t  sbrk(int incr);
     static int      write(int file, const void* ptr, size_t len);
+    static int      gettimeofday(struct timeval* p, void* tz);
     static void*    mmap(struct sMmapArgs* args);
     static int      munmap(void* addr, size_t length);
     static int      mprotect(void* addr, size_t len, int prot);
@@ -157,6 +165,10 @@ namespace Multitask
 
             case 17:
                 returnStatus = write((int)sRegisters.ebx, (const void*)sRegisters.ecx, (size_t)sRegisters.edx);
+            break;
+
+            case 18:
+                returnStatus = gettimeofday((struct timeval*)sRegisters.ebx, (void*)sRegisters.ecx);
             break;
 
             case 19:
@@ -364,6 +376,16 @@ namespace Multitask
         // Print
         for (size_t i = 0; i < len; ++i)
             UART::WriteChar(string[i]);
+
+        return 0;
+    }
+
+    static int gettimeofday(struct timeval* p, void*)
+    {
+        auto task = Multitask::GetCurrentTask();
+
+        timeval* data = (struct timeval*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)p);
+        data->tv_sec = CMOS::GetTime().GetSecondsInDay();
 
         return 0;
     }
