@@ -3,7 +3,7 @@
 constexpr uint32_t cBackgroundColour = 0xffaaaaaa;
 
 // Text
-constexpr uint32_t linePadding = 2;
+constexpr uint32_t linePadding = 4;
 constexpr uint32_t lineHeight = linePadding + CHAR_HEIGHT;
 constexpr uint32_t textScale = 2;
 
