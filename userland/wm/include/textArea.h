@@ -25,6 +25,7 @@ namespace Graphics
         Vector<String> m_vLines;
         uint32_t m_nLine;
         uint32_t m_nLinesPerView;
+        uint32_t m_nColumnsPerRow;
         bool m_bScrollbar;
         
         char GetCharacterFromText(const uint32_t row, const uint32_t column) const;

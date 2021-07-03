@@ -6,6 +6,7 @@ constexpr uint32_t cBackgroundColour = 0xffaaaaaa;
 constexpr uint32_t linePadding = 4;
 constexpr uint32_t lineHeight = linePadding + CHAR_HEIGHT;
 constexpr uint32_t textScale = 2;
+constexpr uint32_t padding = 1;
 
 // Scrolling
 constexpr uint32_t scrollbarWidth = 20;
@@ -17,6 +18,7 @@ namespace Graphics
         Widget(width, height, x, y), m_colour(colour), m_scrollbar(scrollbarWidth, scrollbarHeight, width - scrollbarWidth, 0)
     {
         m_nLinesPerView = height / lineHeight;
+        m_nColumnsPerRow = (width - scrollbarWidth) / CHAR_WIDTH - padding;
         
         const auto AddLine = [&](const char* string)
         {
@@ -45,8 +47,8 @@ namespace Graphics
 
     uint32_t TextArea::GetPixel(const uint32_t x, const uint32_t y) const
     {
-        const uint32_t row = y / lineHeight + m_nLine;
-        const uint32_t column = x / CHAR_WIDTH;
+        const uint32_t row = (y / lineHeight + m_nLine) - padding;
+        const uint32_t column = (x / CHAR_WIDTH) - padding;
         
         // Return early if scrollbar
         const uint32_t scrollbarX = x - m_scrollbar.m_X;
@@ -56,7 +58,7 @@ namespace Graphics
         
         // Return if outside text area
         const bool bLinePadding = (y % lineHeight >= CHAR_HEIGHT);
-        if (bLinePadding || row >= m_vLines.Length() || column >= m_vLines[row]->Length()) return cBackgroundColour;
+        if (bLinePadding || row >= m_vLines.Length() || column >= m_vLines[row]->Length() || column >= m_nColumnsPerRow) return cBackgroundColour;
         
         // Get character and query font bitmap
         const char character = GetCharacterFromText(row, column);
