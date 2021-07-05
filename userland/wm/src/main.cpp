@@ -25,7 +25,6 @@ int main()
         Pair<bool, Message> message;
         while ((message = Event<>::GetMessage()).m_first)
         {
-            Event<>::Ack(message);
             auto event = reinterpret_cast<sWindowManagerEvent&>(message.m_second.data);
             const uint32_t pid = message.m_second.sourcePID;
 
@@ -223,6 +222,8 @@ int main()
                     exit(-1);
                 break;
             }
+            
+            Event<>::Ack(message);
         }
         
         keyboard.Poll();

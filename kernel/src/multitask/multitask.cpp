@@ -117,7 +117,7 @@ namespace Multitask
         m_PageFrame = task.m_PageFrame;
         m_nSbrkBytesUsed = task.m_nSbrkBytesUsed;
         m_pSbrkBuffer = task.m_pSbrkBuffer;
-        memcpy(m_messages, task.m_messages, sizeof(m_messages));
+        m_messages = task.m_messages;
         m_PID = task.m_PID;
         m_bBlocked = task.m_bBlocked;
         m_bBlockedFilter = task.m_bBlockedFilter;
