@@ -5,78 +5,93 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "task.h"
+#include "multitask/message.h"
+#include "memory/pageFrame.h"
+#include "kstdlib.h"
 
-#define MAX_TASK_EVENTS 47  // 2020 bytes
+#define MAX_MESSAGES (PAGE_SIZE * 10 / sizeof(Message))
 
-struct TaskEventQueue
+namespace Multitask
 {
-    TaskEvent returnEventBuffer;
-    uint32_t nEvents = 0;
-    TaskEvent events[MAX_TASK_EVENTS];
-} __attribute__((packed));
+    enum class TaskType
+    {
+        KERNEL,
+        USER
+    };
 
-struct Task
-{
-    char sName[32];
-    uint32_t processID;
-    uint32_t size;
-    uint32_t location;
-    uint32_t* pStack;
-    uint32_t* pOriginalStack;
-    Task* pPrevTask = nullptr;
-    Task* pNextTask = nullptr;
-    TaskEventQueue* pEventQueue = nullptr;
-    bool bSubscribeToStdout = false;
-    bool bSubscribeToSysexit = false;
-    bool bSubscribeToKeyboard = false;
-    uint32_t parentID = 0;
-    bool bBlocked = false;
-    uint32_t blockedEvent = 0;
-};
+    class Task
+    {
+        public:
+            Task(char const* sName, const TaskType type, const uint32_t entrypoint);
 
-void EnableScheduler();
-void DisableScheduler();
+            void SwitchToTask();
+            void SwitchFromTask();
+            void SetEntrypoint(const uint32_t entrypoint);
 
-void OnMultitaskPIT();
+            void LoadFromTask(const Task& task);
 
-uint32_t GetNumberOfTasks();
+            // Task data
+            char m_sName[32];
+            uint32_t* m_pStack;
+            uint32_t m_Entrypoint;
+            TaskType m_Type;
+            uint32_t m_PID;
+            
+            // Events
+            bool m_bBlocked;
+            bool m_bBlockedFilter;
+            uint32_t m_blockedFilter;
 
-void TaskExit(Task* task = nullptr);
+            // Sleeping
+            uint32_t m_nMicroseconds;
 
-void TaskGrow(uint32_t size);
+            // Page frame - technically kernel tasks don't need one but hey-ho
+            Memory::PageFrame m_PageFrame;
 
-TaskEvent* GetNextEvent();
-int PushEvent(Task* task, TaskEvent* event, uint32_t processIDSource);
-int PushEvent(Task* task, TaskEvent* event);
-int PopLastEvent(uint32_t event);
+            // Sbrk implementation
+            void* m_pSbrkBuffer;
+            uint32_t m_nSbrkBytesUsed;
+            
+            // Message queue
+            uint32_t m_nMessages = 0;
 
-Task* GetTaskWithProcessID(uint32_t id);
+            void AddMesage(const uint32_t sourcePID, uint8_t* pData);
+            void GetMessage(Message* pMessage);
+            void RemoveMessage(const uint32_t filter);
+            void Block();
+            void Block(const uint32_t filter);
+            void Unblock();
+            bool HasMessages() const;
+            bool HasMessage(const uint32_t filter) const;
+            
+            void SleepForMicroseconds(const uint32_t microseconds);
+            
+        private:
+            // Message queue
+            Message* m_messages;
+    };
 
-void SubscribeToStdout(bool subscribe);
-void OnStdout(const char* message);
-void OnStdout(uint32_t number, bool hex);
+    void Init();
+    int CreateTask(char const* sName);
+    int CreateTask(char const* sName, const TaskType type, void (*entrypoint)());
+    
+    Task* GetCurrentTask();
+    void RemoveCurrentTask();
+    void RemoveTaskWithID(const uint32_t pid);
+    Task* GetTaskWithID(const uint32_t pid);
 
-void SubscribeToSysexit(bool subscribe);
-void OnSysexit(uint32_t exitingProcessID);
-void OnSysexit();
+    extern uint32_t nTasks;
 
-void SubscribeToKeyboard(bool subscribe);
-void OnKeyEvent(char key, bool bSpecial);
+    extern "C"
+    {
+        // Variables for assembly
+        extern uint32_t* pSavedTaskStack;
+        extern uint32_t* pNewTaskStack;
+        extern volatile bool bPrivilegeChange;
 
-void KillTask(Task* task);
-
-void OnProcessBlock(uint32_t event = 0);
-
-uint32_t GetProcess(const char* sName);
-
-enum TaskType
-{
-    KERNEL_TASK,
-    USER_TASK
-};
-
-Task* CreateTask(char const* sName, uint32_t entry, uint32_t size = 0, uint32_t location = 0, uint32_t parentID = 0);
-Task* CreateChildTask(char const* sName, uint32_t entry, uint32_t size = 0, uint32_t location = 0);
+        void OnTaskSwitch(const bool bPIT);
+        void IRQ0();
+    }
+}
 
 #endif

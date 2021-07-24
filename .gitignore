@@ -1,14 +1,24 @@
 build.sh
 buildToolchain.bat
+buildToolchain.sh
 compile.bat
 compile.sh
+bochs.bat
 minos_toolchain.tar.gz
 toolchain/
 bochs/
 .vscode
+.idea
+cmake-build-debug/
+MinOS.geany
+bochs.sh
 
 build/
 kernel/build/
 user/pages/build/
 
 tools/filesystem/build
+
+lib/newlib-4.1.0/build
+
+toolchain-backup.tar

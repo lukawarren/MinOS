@@ -1,458 +1,394 @@
-#include "multitask.h"
-#include "../interrupts/interrupts.h"
-#include "../memory/paging.h"
-#include "../gfx/vga.h"
-#include "stdlib.h"
-#include "taskSwitch.h"
+#include "multitask/multitask.h"
+#include "multitask/elf.h"
+#include "filesystem/filesystem.h"
+#include "memory/memory.h"
+#include "memory/modules.h"
+#include "cpu/pit.h"
+#include "cpu/pic.h"
+#include "io/gfx/framebuffer.h"
+#include "io/uart.h"
+#include "kstdlib.h"
 
-bool bEnableMultitasking = false;
-
-// Linked list of tasks
-Task* pTaskListHead = nullptr;
-Task* pTaskListTail = nullptr;
-Task* pCurrentTask = nullptr;
-size_t nTasks = 0;
-
-// Ring 0 vs Ring 3
-static uint32_t lastUserTaskPages = 0;
-static uint32_t processIDCount = 1;
-
-Task* CreateTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location, uint32_t parentID)
+namespace Multitask
 {
-    // Create new task in memory and linked list
-    Task* task = (Task*) kmalloc(sizeof(Task), USER_PAGE);
-    task->processID = processIDCount;
-    task->parentID = parentID;
-    strncpy(task->sName, sName, 32);
-    task->bBlocked = false;
+    // Task malloc "slab" that neatly fills two pages
+    constexpr uint32_t maxTasks = PAGE_SIZE * 32 / sizeof(Task);
+    static Task* tasks;
 
-    // Round task to nearest page
-    uint32_t originalSize = size;
-    uint32_t roundedSize = originalSize;
-    uint32_t remainder = roundedSize % PAGE_SIZE;
-    if (remainder != 0) roundedSize += PAGE_SIZE - remainder;
-    task->size = roundedSize;
-    task->location = location;
+    // House keeping
+    uint32_t nTasks = 0;
+    static uint32_t nCurrentTask = 0;
+    static uint32_t nPreviousTask = 0;
+    static uint32_t nPIDs = 0;
 
-    // Allocate stack
-    uint32_t stack = (uint32_t)kmalloc(4096, USER_PAGE, false);
-    task->pStack = (uint32_t*)(stack + 4096 - 16); // Stack grows downwards
-    uint32_t* pStackTop = task->pStack;
-    task->pOriginalStack = (uint32_t*)stack;
-    
-    // Allocate event queue
-    task->pEventQueue = (TaskEventQueue*) kmalloc(sizeof(TaskEventQueue), USER_PAGE, false);
-    task->pEventQueue->nEvents = 0;
+    // If we've coming from the kernel, there is no need to save our state
+    static bool bCameFromKernel = true;
 
-    // Push blank registers onto the stack
-    *--task->pStack = 0x00;   // stack alignment (if any)
-    *--task->pStack = 0x23;   // stack segment (ss)
-    *--task->pStack = (uint32_t) pStackTop; // esp
-    *--task->pStack = 0x202; // eflags - default value with interrupts enabled
-    *--task->pStack = 0x1B;    // cs (iret uses a 32-bit pop - don't panic!)
-    *--task->pStack = entry;  // eip
-    *--task->pStack = 0;      // eax
-    *--task->pStack = 0;      // ebx
-    *--task->pStack = 0;      // ecx
-    *--task->pStack = 0;      // edx
-    *--task->pStack = 0;      // esi
-    *--task->pStack = 0;      // edi
-    *--task->pStack = (uint32_t) pStackTop; // ebp?
-
-    // Segment registers
-    *--task->pStack = 0x23; // ds
-    *--task->pStack = 0x23; // fs
-    *--task->pStack = 0x23; // es
-    *--task->pStack = 0x23; // gs
-
-    // SSE, x87 FPU and MMX states - 512 bytes
-    for (unsigned int i = 0; i < 512/sizeof(uint32_t); ++i) *--task->pStack = 0;
-
-    // Linked list stuff
-    Task* oldHead = pTaskListHead;
-    pTaskListHead = task;
-    task->pPrevTask = oldHead;
-    oldHead->pNextTask = task;
-    
-    if (pTaskListTail == nullptr) pTaskListTail = task;
-    if (task->pNextTask == nullptr) task->pNextTask = pTaskListTail;
-
-    nTasks++;
-    processIDCount++;
-
-    return task;
-}
-
-Task* CreateChildTask(char const* sName, uint32_t entry, uint32_t size, uint32_t location)
-{
-    return CreateTask(sName, entry, size, location, pCurrentTask->processID);
-}
-
-void EnableScheduler()              { bEnableMultitasking = true; asm volatile("sti"); }
-void DisableScheduler()             { bEnableMultitasking = false; }
-
-static void MapNewUserTask(Task* task)
-{
-    // Unmap current task so its memory can't be read or written to accidentally
-    for (uint32_t i = 0; i < lastUserTaskPages; ++i)
+    Task::Task(char const* sName, const TaskType type, const uint32_t entrypoint)
     {
-        DeallocatePage(0x40000000 + i*PAGE_SIZE);
-    } 
+        // Set member variables
+        strncpy(m_sName, sName, sizeof(m_sName));
+        m_Type = type;
+        m_Entrypoint = entrypoint;
+        m_PID = ++nPIDs;
+        m_bBlocked = false;
+        m_nMicroseconds = 0;
 
-    // Setup paging so task begins at 0x40000000
-    for (uint32_t i = 0; i < task->size / PAGE_SIZE; ++i)
-    {
-        AllocatePage(task->location + i * PAGE_SIZE, 0x40000000 + i * PAGE_SIZE, USER_PAGE, false);
-    }
+        // Create stack - 128kb, 32 pages - that grows downwards - minus at least 1 to not go over 1 page, but actually 20 to ensure alignment
+        const uint32_t stackSize = PAGE_SIZE * 32;
+        const uint32_t stackBeginInMemory = (uint32_t)(Memory::kPageFrame.AllocateMemory(stackSize, KERNEL_PAGE)); // Mapped as user by *it's own* page frame
+        m_pStack = (uint32_t*) (stackBeginInMemory + stackSize-16);
+        const uint32_t stackTop = (uint32_t) m_pStack;
 
-    lastUserTaskPages = task->size / PAGE_SIZE;
-}
+        // Chose our segment registers *carefully* depending on privilege level
+        const uint32_t dataSegment = type == TaskType::KERNEL ? 0x10 : 0x23;
+        const uint32_t codeSegment = type == TaskType::KERNEL ? 0x08 : 0x1B;
 
-void OnMultitaskPIT()
-{
-    if (nTasks == 0 || !bEnableMultitasking) { bIRQShouldJump = false; return; }
-    
-    // If one task, switch to it if nessecary
-    if (nTasks == 1 && pCurrentTask == nullptr) 
-    {
-        pCurrentTask = pTaskListHead;
-        oldTaskStack = 0;
-        newTaskStack = (uint32_t) &pCurrentTask->pStack;
-        MapNewUserTask(pCurrentTask);
-        bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
-    }
-    else if (nTasks > 1)
-    {
-        // If no task has previously ran, avoid
-        // sullying the non-existent "old task"
-        if (pCurrentTask == nullptr)
+        // Setup stack for iret return
+        *--m_pStack = 0x00;                 // stack alignment (if any)
+        *--m_pStack = dataSegment;          // stack segment (ss)
+        *--m_pStack = stackTop;             // esp
+        *--m_pStack = 0x202;                // eflags - default value with interrupts enabled
+        *--m_pStack = codeSegment;          // cs
+        *--m_pStack = m_Entrypoint;         // eip
+
+        // Rest of stack, for restoring registers
+        *--m_pStack = 0;                    // eax
+        *--m_pStack = 0;                    // ecx
+        *--m_pStack = 0;                    // edx
+        *--m_pStack = 0;                    // ebx
+        *--m_pStack = 0;                    // esp
+        *--m_pStack = stackTop;             // ebp
+        *--m_pStack = 0;                    // esi
+        *--m_pStack = 0;                    // edi
+
+        // Segment registers
+        *--m_pStack = dataSegment; // ds
+        *--m_pStack = dataSegment; // fs
+        *--m_pStack = dataSegment; // es
+        *--m_pStack = dataSegment; // gs
+
+        // Setup page frame allocator for userspace processes
+        if (type == TaskType::USER)
         {
-            pCurrentTask = pTaskListTail;
-            Task* newTask = pCurrentTask;
-
-            while (newTask->bBlocked && nTasks > 1) newTask = newTask->pNextTask;
-
-            oldTaskStack = 0;
-            newTaskStack = (uint32_t) &newTask->pStack;
-            MapNewUserTask(newTask);
-            bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
+            m_PageFrame = Memory::PageFrame(stackBeginInMemory, stackSize);
+            m_pSbrkBuffer = nullptr;
+            m_nSbrkBytesUsed = 0;
+            m_messages = (Message*) m_PageFrame.AllocateMemory(MAX_MESSAGES * sizeof(Message), KERNEL_PAGE);
         }
 
-        // Otherwise continue cycling
+        // CR3 on stack as if we swtitched to it in C code,
+        // whilst using another task's stack, things'd get funky
+        if (type == TaskType::USER) *--m_pStack = m_PageFrame.GetCR3();
+        else  *--m_pStack = Memory::kPageFrame.GetCR3();
+        
+        UART::WriteString("[Multitask] Task ");
+        UART::WriteString(sName);
+        UART::WriteString(" created with PID ");
+        UART::WriteNumber(m_PID);
+        UART::WriteString("\n");
+    }
+
+    void Task::SwitchToTask()
+    {
+        pNewTaskStack = (uint32_t*) &(m_pStack);
+    }
+
+    void Task::SwitchFromTask()
+    {
+        pSavedTaskStack = (uint32_t*) &(m_pStack);
+    }
+
+    void Task::SetEntrypoint(const uint32_t entrypoint)
+    {
+        // Modify entrypoint in stack
+        m_pStack += 14;
+        *--m_pStack = entrypoint;
+        m_pStack -= 13;
+    }
+
+    void Task::LoadFromTask(const Task& task)
+    {
+        // Glorified copy constructor
+        strncpy(m_sName, task.m_sName, sizeof(m_sName) / sizeof(m_sName[0]));
+        m_pStack = task.m_pStack;
+        m_Entrypoint = task.m_Entrypoint;
+        m_Type = task.m_Type;
+        m_PageFrame = task.m_PageFrame;
+        m_nSbrkBytesUsed = task.m_nSbrkBytesUsed;
+        m_pSbrkBuffer = task.m_pSbrkBuffer;
+        m_messages = task.m_messages;
+        m_PID = task.m_PID;
+        m_bBlocked = task.m_bBlocked;
+        m_bBlockedFilter = task.m_bBlockedFilter;
+        m_blockedFilter = task.m_blockedFilter;
+        m_nMessages = task.m_nMessages;
+        m_nMicroseconds = task.m_nMicroseconds;
+    }
+
+    void Task::AddMesage(const uint32_t sourcePID, uint8_t* pData)
+    {
+        if (m_nMessages > MAX_MESSAGES)
+        {
+            assert(false);
+            return;
+        }
+        
+        // Add message
+        auto message = &m_messages[m_nMessages];
+        message->sourcePID = sourcePID;
+        memcpy(message->data, pData, sizeof(message->data));
+        m_nMessages++;
+        
+        // Unblock if need be
+        if (m_bBlockedFilter == false) m_bBlocked = false;
+        else if (HasMessage(m_blockedFilter))
+        {
+            m_bBlocked = false;
+            m_bBlockedFilter = false;
+        }
+    }
+    
+    void Task::GetMessage(Message* pMessage)
+    {
+        assert(m_nMessages > 0);
+        
+        // Copy to destination
+        memcpy(pMessage, &m_messages[0], sizeof(Message));
+        
+        // Shift all messages down the line
+        for (uint32_t i = 0; i < m_nMessages; ++i)
+            memcpy(&m_messages[i], &m_messages[i+1], sizeof(Message));
+        
+        m_nMessages--;
+    }
+    
+    void Task::RemoveMessage(uint32_t filter)
+    {
+        assert(m_nMessages > 0);
+        
+        const uint8_t bytes[4] =
+        {
+            uint8_t(filter >> 24),
+            uint8_t(filter >> 16),
+            uint8_t(filter >> 8),
+            uint8_t(filter)
+        };
+        
+        // Find first event satisfying first four bytes and remove it
+        for (uint32_t i = 0; i < m_nMessages; ++i)
+        {
+            if (m_messages[i].data[0] == bytes[0] && m_messages[i].data[1] == bytes[1] &&
+                m_messages[i].data[2] == bytes[2] && m_messages[i].data[3] == bytes[3])
+            {
+                // Shift events down by one
+                for (uint32_t j = i; j < m_nMessages; ++j)
+                {
+                    memcpy(&m_messages[j], &m_messages[j+1], sizeof(Message));
+                }
+                
+                m_nMessages--;
+                return;
+            }
+        }
+        
+        assert(false);
+    }
+    
+    void Task::Block()
+    {
+        m_bBlocked = true;
+        m_bBlockedFilter = false;
+        OnTaskSwitch(false);
+    }
+    
+    void Task::Block(const uint32_t filter)
+    {
+        m_bBlocked = true;
+        m_bBlockedFilter = true;
+        m_blockedFilter = filter;
+        OnTaskSwitch(false);
+    }
+    
+    void Task::Unblock()
+    {
+        m_bBlocked = false;
+        OnTaskSwitch(false);
+    }
+    
+    bool Task::HasMessages() const
+    {
+        return m_nMessages > 0;
+    }
+    
+    bool Task::HasMessage(const uint32_t filter) const
+    {
+        const uint8_t bytes[4] =
+        {
+            uint8_t(filter >> 24),
+            uint8_t(filter >> 16),
+            uint8_t(filter >> 8),
+            uint8_t(filter)
+        };
+        
+        // Find first event satisfying first four bytes
+        for (uint32_t i = 0; i < m_nMessages; ++i)
+            if (m_messages[i].data[0] == bytes[0] && m_messages[i].data[1] == bytes[1] &&
+                m_messages[i].data[2] == bytes[2] && m_messages[i].data[3] == bytes[3])
+                return true;
+        
+        return false;
+    }
+
+    void Task::SleepForMicroseconds(const uint32_t microseconds)
+    {
+        m_nMicroseconds = microseconds;
+        OnTaskSwitch(false);
+    }
+
+    void Init()
+    {
+        // Create malloc "slab"
+        tasks = (Task*) Memory::kPageFrame.AllocateMemory(sizeof(Task) * maxTasks, KERNEL_PAGE);
+    }
+
+    int CreateTask(char const* sName)
+    {
+        // Check we have room
+        assert(nTasks < maxTasks);
+        if (nTasks >= maxTasks) return -1;
+
+        // Create task
+        tasks[nTasks] = Task(sName, TaskType::USER, 0xdeadbeef);
+    
+        // Load ELF module into memory
+        const uint32_t entrypoint = Multitask::LoadElfProgram
+        (
+            (uint32_t)Filesystem::GetFile(sName)->m_pData,
+            tasks[nTasks].m_PageFrame
+        );
+        tasks[nTasks].SetEntrypoint(entrypoint);
+
+        nTasks++;
+        return nTasks-1;
+    }
+
+    int CreateTask(char const* sName, const TaskType type, void (*entrypoint)())
+    {
+        // Check we have room
+        assert(nTasks < maxTasks);
+        if (nTasks >= maxTasks) return -1;
+
+        // Create task and return index
+        tasks[nTasks] = Task(sName, type, (uint32_t)entrypoint);
+
+        nTasks++;
+        return nTasks-1;
+    }
+
+    void OnTaskSwitch(const bool bPIT)
+    {
+        assert(nTasks > 0);
+
+        if (bPIT)
+        {
+            // Decrease sleeping tasks' duration by a length equal to the PIT's delay
+            const auto delay = PIT::GetDelayInMicroseconds();
+            for (uint32_t i = 0; i < nTasks; ++i)
+            {
+                // Avoid underflows
+                if (tasks[i].m_nMicroseconds >= delay) tasks[i].m_nMicroseconds -= delay;
+                else tasks[i].m_nMicroseconds = 0;
+            }
+        }
+
+        // If we came from kernel, no need to save previous "task"
+        if (bCameFromKernel)
+        {
+            bCameFromKernel = false;
+            tasks[nCurrentTask].SwitchToTask();
+
+            // Set the privilege change level for next time
+            if (tasks[nCurrentTask].m_Type == TaskType::KERNEL) bPrivilegeChange = false;
+            else bPrivilegeChange = true;
+        }
         else
         {
-            Task* oldTask = pCurrentTask;
-            Task* newTask = pCurrentTask->pNextTask;
-
-            while (newTask->bBlocked && nTasks > 1) newTask = newTask->pNextTask;
-
-            pCurrentTask = newTask;
-            oldTaskStack = (uint32_t) &oldTask->pStack;
-            newTaskStack = (uint32_t) &newTask->pStack;
-            MapNewUserTask(newTask);
-            bIRQShouldJump = true; // Will tell the following IRQ 0 to switch tasks
-        }
-    }
-}
-
-uint32_t GetNumberOfTasks()
-{
-    return nTasks;
-}
-
-void TaskExit(Task* task)
-{
-    if (task == nullptr) task = pCurrentTask;
-
-    bool bSysexit = false;
-    if (task == pCurrentTask) bSysexit = true;
-
-    // Case 1: There is one element in the list
-    if (nTasks == 1)
-    {
-        pCurrentTask = nullptr;
-        pTaskListHead = nullptr;
-        pTaskListTail = nullptr;
-    }
-
-    // Case 2: The task is the first one in the list
-    else if (task == pTaskListTail)
-    {
-        pTaskListTail = task->pNextTask;
-        pTaskListHead->pNextTask = pTaskListTail;
-    }
-
-    // Case 3: The task is the last one in the list
-    else if (task == pTaskListHead)
-    {
-        pTaskListHead = task->pPrevTask;
-        pTaskListHead->pNextTask = pTaskListTail;
-    }
-
-    // Case 4: The task lies somewhere in the middle
-    else
-    {
-        task->pPrevTask->pNextTask = task->pNextTask;
-        task->pNextTask->pPrevTask = task->pPrevTask;
-    }
-
-    if (bSysexit) pCurrentTask = nullptr;
-
-    // Unallocate all memory
-    kfree(task->pOriginalStack, 4096); // stack
-    if (task->size != 0) kfree((void*)task->location, task->size); // memory
-    kfree(task->pEventQueue, sizeof(TaskEventQueue));
-    kfree(task, sizeof(Task)); // task struct
-
-    // Switch to new task
-    nTasks--;
-    
-    if (bSysexit)
-    {
-        bSysexitCall = true;
-        OnMultitaskPIT();
-    }
-}
-
-void TaskGrow(uint32_t size)
-{
-    pCurrentTask->size += size;
-    lastUserTaskPages = pCurrentTask->size / PAGE_SIZE;
-}
-
-TaskEvent* GetNextEvent()
-{
-    if (pCurrentTask->pEventQueue->nEvents == 0) return (TaskEvent*)nullptr;
-
-    // Get bottom event
-    memcpy(&pCurrentTask->pEventQueue->returnEventBuffer, &pCurrentTask->pEventQueue->events[0], sizeof(TaskEvent));
-
-    // Shift all events down by one
-    for (uint32_t i = 0; i < pCurrentTask->pEventQueue->nEvents; ++i)
-    {
-        memcpy(&pCurrentTask->pEventQueue->events[i], &pCurrentTask->pEventQueue->events[i+1], sizeof(TaskEvent));
-    }
-
-    pCurrentTask->pEventQueue->nEvents--;
-
-    return &pCurrentTask->pEventQueue->returnEventBuffer;
-}
-
-Task* GetTaskWithProcessID(uint32_t id)
-{
-    if (id == 0) return (Task*)nullptr;
-
-    Task* task = pTaskListTail;
-    unsigned int count = 0;
-    while (count < nTasks)
-    {
-        if (task->processID == id) return task;
-        task = task->pNextTask;
-        count++;
-    }
-
-    return (Task*)nullptr;
-}
-
-int PushEvent(Task* task, TaskEvent* event, uint32_t processIDSource)
-{
-    // Check event queue is not full
-    if (task->pEventQueue->nEvents >= MAX_TASK_EVENTS-1) return -1;
-
-    // Push event
-    memcpy(&task->pEventQueue->events[task->pEventQueue->nEvents], event, sizeof(TaskEvent));
-    task->pEventQueue->events[task->pEventQueue->nEvents].source = processIDSource;
-    task->pEventQueue->nEvents++;
-
-    // Unblock process
-    if (task->blockedEvent == 0 || event->id == task->blockedEvent) task->bBlocked = false;
-
-    return 0;
-}
-
-int PushEvent(Task* task, TaskEvent* event)
-{
-    return PushEvent(task, event, pCurrentTask->processID);
-}
-
-int PopLastEvent(uint32_t event)
-{
-    if (pCurrentTask->pEventQueue->nEvents == 0) return -1;
-
-    // Find first  event in question
-    for (uint32_t i = 0; i < pCurrentTask->pEventQueue->nEvents; ++i)
-    {
-        if (pCurrentTask->pEventQueue->events[i].id == event)
-        {
-            // Shift next events down by one
-            for (uint32_t j = i; j < pCurrentTask->pEventQueue->nEvents; ++j)
+            tasks[nPreviousTask].SwitchFromTask();
+            
+            // Avoid blocked tasks
+            while (nTasks > 1 && (tasks[nCurrentTask].m_bBlocked || tasks[nCurrentTask].m_nMicroseconds))
             {
-                memcpy(&pCurrentTask->pEventQueue->events[j], &pCurrentTask->pEventQueue->events[j+1], sizeof(TaskEvent));
+                nCurrentTask++;
+                if (nCurrentTask >= nTasks) nCurrentTask = 0;
             }
             
-            pCurrentTask->pEventQueue->nEvents--;
-            return 0;
+            tasks[nCurrentTask].SwitchToTask();
+
+            // Set the privilege change level for next time
+            if (tasks[nCurrentTask].m_Type == TaskType::KERNEL) bPrivilegeChange = false;
+            else bPrivilegeChange = true;
+        }
+
+        // Save previous task then advance current task by 1 (or loop back around)
+        nPreviousTask = nCurrentTask;
+        nCurrentTask++;
+        if (nCurrentTask >= nTasks) nCurrentTask = 0;
+
+        if (bPIT)
+        {
+            PIT::Reset(); // Must be reset every interrupt so as to fire again
+            PIC::EndInterrupt(0x20); // Offset is 20, and it's IRQ 0
         }
     }
 
-    return -1;
-}
-
-void SubscribeToStdout(bool subscribe)
-{
-    pCurrentTask->bSubscribeToStdout = subscribe;
-}
-
-void OnStdout(const char* message)
-{
-    // Walk up process tree before a subscriber of stdout is found
-    Task* task = GetTaskWithProcessID(pCurrentTask->parentID);
-    bool bFound = false;
-
-    while (task != nullptr)
+    Task* GetCurrentTask()
     {
-        if (task->bSubscribeToStdout && !bFound)
+        // See below comment
+        return &tasks[nPreviousTask];
+    }
+
+    void RemoveCurrentTask()
+    {
+        assert(nTasks > 1);
+
+        // Deallocate all the task's memory (including stack) - see below for "nPreviousTask"
+        tasks[nPreviousTask].m_PageFrame.FreeAllPages();
+
+        // We're in 1 big array, so find the element, and shift all above elements downwards
+        // (unless we're the last task in the array, in which case don't do anything).
+        // Current task is actually the next task to be ran (I know, I know...),
+        // hence the use of the previous task (I really have outdone myself)
+        if (nCurrentTask != maxTasks-1)
         {
-            // Found subscriber, dispatch events in the form of 31 chars at a time (plus null terminator)
-            for (uint32_t i = 0; i < strlen(message); i+=31)
+            for (uint32_t i = nPreviousTask; i < nTasks; ++i)
             {
-                TaskEvent event;
-                
-                event.id = EVENT_QUEUE_PRINTF;
-                for (uint32_t c = 0; c < 31; ++c)
-                {
-                    event.data[c] = message[i+c];
-                    if (message[i+c] == '\0') break; // Break if null terminator
-                }
-                event.data[31] = '\0';
-
-                PushEvent(task, &event);
+                tasks[i].LoadFromTask(tasks[i+1]);
             }
-
-            bFound = true;
         }
-        task = GetTaskWithProcessID(task->parentID);
+        nTasks--;
+
+        // Reset to original, guaranteed state
+        bCameFromKernel = true;
+        nCurrentTask = 0;
+        nPreviousTask = 0;
+        pSavedTaskStack = 0;
     }
 
-    // Else, just print to kernel screen
-    if (!bFound) VGA_printf(message, false);
-}
-
-void OnStdout(uint32_t data, bool hex)
-{
-    // Get number of digits
-    size_t i = data;
-    size_t nDigits = 1;
-    while (i/=(hex ? 16 : 10)) nDigits++;
-
-    auto digitToASCII = [](const size_t number) { return (char)('0' + number); };
-    auto hexToASCII = [](const size_t number) 
+    void RemoveTaskWithID(const uint32_t pid)
     {
-        char value = number % 16 + 48;
-        if (value > 57) value += 7;
-        return value;
-    };
-    auto getNthDigit = [](const size_t number, const size_t digit, const size_t base) { return int((number / pow(base, digit)) % base); };
-   
-    if (hex) OnStdout("0x");
+        if (pid == GetCurrentTask()->m_PID) RemoveCurrentTask();
+        else assert(false); // (not implemented yet, or ever really)
+    }
 
-    char buffer[2];
-    buffer[1] = '\0';
-
-    if (hex) 
-    { 
-        for (size_t d = 0; d < nDigits; ++d) 
+    Task* GetTaskWithID(const uint32_t pid)
+    {
+        for (uint32_t i = 0; i < nTasks; ++i)
         {
-            buffer[0] = (hexToASCII(getNthDigit(data, nDigits - d - 1, 16)));
-            OnStdout(buffer);
-        }
-    }
-    else
-    {
-        for (size_t d = 0; d < nDigits; ++d) 
-        {
-            buffer[0] = (digitToASCII(getNthDigit(data, nDigits - d - 1, 10)));
-            OnStdout(buffer);
-        }
-    }
-}
-
-void SubscribeToSysexit(bool subscribe)
-{
-    pCurrentTask->bSubscribeToSysexit = subscribe;
-}
-
-void OnSysexit(uint32_t exitingProcessID)
-{
-    // Walk up process tree before a subscriber of sysexit is found
-    Task* task = GetTaskWithProcessID(GetTaskWithProcessID(exitingProcessID)->parentID);
-
-    while (task != nullptr)
-    {
-        if (task->bSubscribeToSysexit)
-        {
-            // Found subscriber, dispatch event
-            TaskEvent event;     
-            event.id = EVENT_QUEUE_SYSEXIT;
-            PushEvent(task, &event, exitingProcessID);
-        }
-        task = GetTaskWithProcessID(task->parentID);
-    }
-}
-
-void OnSysexit()
-{
-    OnSysexit(pCurrentTask->processID);
-}
-
-void SubscribeToKeyboard(bool subscribe)
-{
-    pCurrentTask->bSubscribeToKeyboard = subscribe;
-}
-
-void OnKeyEvent(char key, bool bSpecial)
-{
-    // Walk through each task and sent event if applicable
-    unsigned int count = 0;
-    Task* task = pTaskListTail;
-    while (task != nullptr && count < nTasks)
-    {
-        if (task->bSubscribeToKeyboard)
-        {
-            TaskEvent event;
-            event.id = EVENT_QUEUE_KEY_PRESS;
-            event.data[0] = key;
-            event.data[1] = bSpecial;
-            PushEvent(task, &event);
+            if (tasks[i].m_PID == pid) return &tasks[i];
         }
 
-        task = task->pNextTask;
-        ++count;
-    }
-}
-
-void KillTask(Task* task)
-{
-    TaskExit(task);
-}
-
-void OnProcessBlock(uint32_t event)
-{
-    pCurrentTask->bBlocked = true;
-    pCurrentTask->blockedEvent = event;
-    OnMultitaskPIT();
-}
-
-uint32_t GetProcess(const char* sName)
-{
-    Task* task = pTaskListTail;
-    unsigned int count = 0;
-    while (count < nTasks)
-    {
-        if (strcmp(task->sName, sName)) return task->processID;
-        task = task->pNextTask;
-        count++;
+        return nullptr;
     }
 
-    return -1;
 }

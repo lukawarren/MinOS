@@ -1,135 +1,83 @@
 #include "kernel.h"
-#include "gfx/vga.h"
+#include "kstdlib.h"
+#include "cpu/cpu.h"
+#include "cpu/gdt.h"
+#include "cpu/pic.h"
 #include "io/uart.h"
-#include "io/pic.h"
-#include "io/io.h"
-#include "io/pit.h"
-#include "io/cpu.h"
-#include "memory/gdt.h"
-#include "memory/tss.h"
-#include "memory/idt.h"
-#include "memory/paging.h"
-#include "interrupts/interrupts.h"
-#include "interrupts/keyboard.h"
-#include "interrupts/timer.h"
-#include "multitask/taskSwitch.h"
-#include "multitask/multitask.h"
-#include "multitask/modules.h"
+#include "io/pci.h"
+#include "io/ps2.h"
+#include "io/mouse.h"
+#include "io/keyboard.h"
+#include "cpu/cmos.h"
+#include "memory/memory.h"
+#include "memory/modules.h"
 #include "multitask/elf.h"
-#include "file/filesystem.h"
-#include "stdlib.h"
+#include "io/gfx/framebuffer.h"
+#include "multitask/multitask.h"
+#include "filesystem/filesystem.h"
 
-extern uint32_t __tss_stack;
-TSS tssEntry;
-multiboot_info_t* pMultiboot;
+extern uint32_t __tss_stack; // TSS stack from linker
 
-extern "C" void kernel_main(multiboot_info_t* mbd) 
+extern "C" void kMain(multiboot_info_t* pMultibootInfo)
 {
-    pMultiboot = mbd;
+    // Init UART
+    UART::Init();
+    UART::WriteString("MinOS initialising...\n");
 
-    VGA_Init({  pMultiboot->framebuffer_width, pMultiboot->framebuffer_height, 
-                pMultiboot->framebuffer_pitch, (uint32_t*)pMultiboot->framebuffer_addr });
-    VGA_Clear();
+    // Print time
+    auto time = CMOS::GetTime();
+    UART::WriteString("[CMOS] Time is ");
+    UART::WriteNumber(time.hour);
+    UART::WriteString(":");
+    UART::WriteNumber(time.minute);
+    UART::WriteString("\n");
 
-    // Welcome message
-    VGA_printf("-------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
-    VGA_printf("                                    MinOS                                      ", true, VGA_COLOUR_GREEN);
-    VGA_printf("-------------------------------------------------------------------------------", true, VGA_COLOUR_GREEN);
-    VGA_printf(" ");
+    // TSS
+    CPU::TSS tss = CPU::CreateTSSEntry((uint32_t)&__tss_stack, 0x10);
 
-    // Start COM1 serial port
-    UART COM1 = UART(UART::COM1);
-    UART::pCOM = &COM1;
-    COM1.printf("MinOS running from COM1 at ", false);
-    COM1.printf<uint16_t, true>((uint16_t)UART::COM1);
-    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-    VGA_printf("UART communication established on COM1 at ", false);
-    VGA_printf<uint16_t, true>((uint16_t)COM1.m_Com);
-
-    // Create TSS
-    tssEntry = CreateTSSEntry((uint32_t)&__tss_stack, 0x10); // Stack pointer and ring 0 data selector 
-
-    // Construct GDT entries (0xFFFFF actually translates to all of memory)
-    GDTTable[0] = CreateGDTEntry(0, 0, 0);                                          // GDT entry at 0x0 cannot be used
-    GDTTable[1] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_CODE_PL0);                // Code      - 0x8
-    GDTTable[2] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL0);                // Data      - 0x10
-    GDTTable[3] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_CODE_PL3);                // User code - 0x18
-    GDTTable[4] = CreateGDTEntry(0x00000000, 0xFFFFF, GDT_DATA_PL3);                // User data - 0x20
-    GDTTable[5] = CreateGDTEntry((uint32_t) &tssEntry, sizeof(tssEntry), TSS_PL0);  // TSS       - 0x28
-
-    // Load GDT
-    LoadGDT(GDTTable, sizeof(GDTTable));
-    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-    VGA_printf("GDT sucessfully loaded");
-    VGA_printf("");
-    PrintGDT(GDTTable, 6);
-    VGA_printf("");
-
-    // Load TSS
-    LoadTSS(((uint32_t)&GDTTable[5] - (uint32_t)&GDTTable) | 0b11); // Set last 2 bits for RPL 3
-    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-    VGA_printf("TSS sucessfully loaded");
-
-    // Read memory map from GRUB
-    if ((mbd->flags & 6) == 0) {  VGA_printf("[Failure] Multiboot error!", true, VGA_COLOUR_LIGHT_RED); }
-
-    // Map out memory
-    uint32_t maxMemoryRange = GetMaxMemoryRange(pMultiboot);
-
-    // Pging messes up GRUB modules
-    MoveGrubModules(pMultiboot);
-
-    // Page frame allocation
-    InitPaging(maxMemoryRange);
-
-    // Setup PIT
-    InitPIT();
-    
-    // Init PIC, create IDT entries and enable interrupts
-    InitInterrupts(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL);
-    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-    VGA_printf("IDT sucessfully loaded");
-
-    // Setup keyboard driver
-    KeyboardInit();
-
-    // Test for SSE
-    bool bSSE = IsSSESupported();
-    if (bSSE)
+    // Setup GDT, TSS, IDT and interrupts
+    uint64_t GDTEntries[6] =
     {
-        VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-        VGA_printf("SSE2 supported");
-        EnableSSE();
-    }
-    else
-    {
-        VGA_printf("[Failure] ", false, VGA_COLOUR_LIGHT_RED);
-        VGA_printf("SSE not supported!");
-    }
+        CPU::CreateGDTEntry(0,          0,          0),            // GDT entry at 0x0 cannot be used 
+        CPU::CreateGDTEntry(0x00000000, 0xFFFFF,    GDT_CODE_PL0), // Code      - 0x8
+        CPU::CreateGDTEntry(0x00000000, 0xFFFFF,    GDT_DATA_PL0), // Data      - 0x10
+        CPU::CreateGDTEntry(0x00000000, 0xFFFFF,    GDT_CODE_PL3), // User code - 0x18
+        CPU::CreateGDTEntry(0x00000000, 0xFFFFF,    GDT_DATA_PL3), // User data - 0x20
+        CPU::CreateGDTEntry((uint32_t)&tss, sizeof(tss), TSS_PL0)
+    };
 
-    // Load GRUB modules and build filesystem
-    uint32_t vfsAddress = LoadGrubVFS(pMultiboot);
-    BuildVFS(vfsAddress);
-
-    // Load window manager
-    FileHandle cli = kFileOpen("cli");
-    void* cliBuffer = kmalloc(kGetFileSize(cli));
-    kFileRead(cli, cliBuffer);
-    auto elf = LoadElfFile(cliBuffer);
-    CreateTask("cli", elf.entry, elf.size, elf.location);
-    kfree(cliBuffer, kGetFileSize(cli));
-    kFileClose(cli);
-
-    VGA_printf("[Success] ", false, VGA_COLOUR_LIGHT_GREEN);
-    VGA_printf("Loaded cli from ramdisk");
+    // TSS descriptor - offset from start of GDT OR'ed with 3 to enable RPL 3
+    const uint16_t tssDescriptor = (5 * sizeof(uint64_t)) | 3;
     
-    VGA_printf("");
-    PrintPaging();
-    VGA_printf("");
-    VGA_printf("Enabling scheduler and interrupts...");
-    
-    EnableScheduler();
+    CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), tssDescriptor, PIC_MASK_NONE, PIC_MASK_NONE);
 
-    // Hang and wait for interrupts
-    while (true) { asm("hlt"); }
+    // Check multiboot, quickly grab GRUB modules, then configure memory
+    if ((pMultibootInfo->flags & 6) == false) UART::WriteString("Multiboot error!");
+    Modules::Init(pMultibootInfo);
+    Memory::Init(pMultibootInfo);
+
+    // Sanity check it all and reserve memory before it's snatched again!
+    Modules::PostInit();
+
+    // Setup filesystem
+    Filesystem::Init();
+    
+    // Free modules, as filesystem has its own copy of all files
+    Modules::Free();
+
+    // Setup devices
+    PCI::Init();
+    Framebuffer::Init(pMultibootInfo);
+    PS2::Init();
+    Mouse::Init();
+    Keyboard::Init();
+    
+    // Setup tasks
+    Multitask::Init();
+    Multitask::CreateTask("wm/wm.bin");
+
+    // Enable interrupts
+    CPU::EnableInterrupts();
+
+    for (;;) asm("nop"); // Hang
 }
