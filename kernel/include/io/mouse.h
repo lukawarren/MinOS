@@ -10,6 +10,7 @@
 #define MOUSE_BYTE_LEFT_BUTTON      (1 << 0)
 #define MOUSE_BYTE_RIGHT_BUTTON     (1 << 1)
 #define MOUSE_BYTE_MIDDLE_BUTTON    (1 << 2)
+#define MOUSE_BYTE_ALWAYS_ONE       (1 << 3)
 #define MOUSE_BYTE_X_SIGN_BIT       (1 << 4)
 #define MOUSE_BYTE_Y_SIGN_BIT       (1 << 5)
 #define MOUSE_BYTE_X_DID_OVERFLOW   (1 << 6)
