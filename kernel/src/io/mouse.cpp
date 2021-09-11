@@ -35,11 +35,6 @@ namespace Mouse
 
         // Install file
         *Filesystem::GetFile(Filesystem::FileDescriptors::mouse) = Filesystem::DeviceFile(sizeof(MouseData), (void*)pMouseData, "/dev/mouse", Filesystem::FileDescriptors::mouse);
-
-        // The mouse setup will send us an extra interrupt so account for it in the initial counting of interrupt state
-        nMouseInterrupt = 2;
-
-        UART::WriteString("[Mouse] Initialised\n");
     }
 
     void OnInterrupt()
@@ -52,6 +47,14 @@ namespace Mouse
         {
             case 0: // Various pieces of information
                 mouseInterruptBuffer[0] = data;
+                
+                // The mouse setup will send us an extra interrupt (sometimes!). Why? Who knows!
+                // But you know what? I can't be bothered fixing it! Too bad! Instead let's just
+                // do some sanity checking: the first byte must have it's 4th bit (going from
+                // right to left) set, so if it doesn't, that'll *probably* catch the error.
+                if ((mouseInterruptBuffer[0] & MOUSE_BYTE_ALWAYS_ONE) == false)
+                    return;
+                
             break;
 
             case 1: // Mouse X 
