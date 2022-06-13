@@ -1,5 +1,6 @@
 # MinOS
-A x86 operating system written in modern(ish) C++, a bit of C, and Assembly.
+A x86 operating system written in modern(ish) C++, a bit of C, and Assembly.<br/>
+<img alt="Screenshot of the window manager, with Snake and Notepad running" src="screenshots/window%20manager.png" width="512px"/>
 
 ## Features
 * Userspace with newlibc standard library (with old sbrk-style malloc replaced with liballoc)
