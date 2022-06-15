@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(const_mut_refs)]
 
+mod cpu;
 mod graphics;
 use core::panic::PanicInfo;
 
@@ -9,7 +10,10 @@ use core::panic::PanicInfo;
 pub extern "C" fn main() -> !
 {
     unsafe { graphics::vga::GLOBAL_TEXT_DEVICE.clear() }
-    println!("Hello world from {}", "Rust!");
+
+    println!("Initialising CPU...");
+    cpu::cpu::init_cpu();
+
     loop {}
 }
 
