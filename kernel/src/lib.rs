@@ -15,20 +15,6 @@ pub extern "C" fn main() -> !
     println!("Initialising CPU...");
     cpu::cpu::init_cpu();
 
-    use spinlock::Lock;
-    let test = Lock::<bool>::new(false);
-
-    println!("Locking...");
-    let mut bob = test.lock();
-    *bob = true;
-    println!("{}", bob);
-    println!("Freed...");
-    test.free();
-
-
-    println!("Locking once... {}", test.lock());
-    println!("Locking twice (should fail) {}", test.lock());
-
     loop {}
 }
 

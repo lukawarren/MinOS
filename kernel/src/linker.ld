@@ -24,5 +24,10 @@ SECTIONS
 	{
 		*(COMMON)
 		*(.bss)
+
+		/* Make room for TSS stack (which grows downwards, of course) */
+		. += 4k;
+        __tss_stack = .;
+        . += 16;
 	}
 }

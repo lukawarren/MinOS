@@ -1,6 +1,7 @@
 use core::sync::atomic::AtomicBool;
 use core::sync::atomic::Ordering;
 use core::cell::UnsafeCell;
+use crate::println;
 
 pub struct Lock<T>
 {
@@ -24,6 +25,7 @@ impl<T> Lock<T>
         // Wait for data to be freed
         while self.active.load(Ordering::Acquire) {}
         self.active.store(true, Ordering::Release);
+        println!("TODO: disable interrupts and then re-enable when freeing, and also disable interrupts when handling them"); // TODO
 
         // To allow for non-mutable static variables, "pretend" the data's immutable
         unsafe { &mut *self.data.get() }

@@ -46,10 +46,11 @@ impl Flag
     pub fn data_ring0() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
                                      Segment::GRANULARITY | Segment::DATA_READ_WRITE }
 
-
     pub fn code_ring3() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
                                      Segment::GRANULARITY | Segment::CODE_EXECUTE_READ | Segment::PRIVILEGE_LEVEL_3 }
 
     pub fn data_ring3() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
                                      Segment::GRANULARITY | Segment::DATA_READ_WRITE | Segment::PRIVILEGE_LEVEL_3 }
+
+    pub fn tss_ring0()  -> Segment { Segment::PRESENT | Segment::IS_32_BIT | Segment::CODE_EXECUTE_ONLY_ACCESSED }
 }
