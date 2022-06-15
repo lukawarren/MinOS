@@ -39,8 +39,17 @@ pub struct Flag;
 impl Flag
 {
     pub fn none() -> Segment { Segment::empty() }
-    pub fn code_ring0() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT | Segment::GRANULARITY | Segment::CODE_EXECUTE_READ }
-    pub fn data_ring0() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT | Segment::GRANULARITY | Segment::DATA_READ_WRITE }
-    pub fn code_ring3() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT | Segment::GRANULARITY | Segment::CODE_EXECUTE_READ | Segment::PRIVILEGE_LEVEL_3 }
-    pub fn data_ring3() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT | Segment::GRANULARITY | Segment::DATA_READ_WRITE | Segment::PRIVILEGE_LEVEL_3 }
+
+    pub fn code_ring0() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
+                                     Segment::GRANULARITY | Segment::CODE_EXECUTE_READ }
+
+    pub fn data_ring0() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
+                                     Segment::GRANULARITY | Segment::DATA_READ_WRITE }
+
+
+    pub fn code_ring3() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
+                                     Segment::GRANULARITY | Segment::CODE_EXECUTE_READ | Segment::PRIVILEGE_LEVEL_3 }
+
+    pub fn data_ring3() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
+                                     Segment::GRANULARITY | Segment::DATA_READ_WRITE | Segment::PRIVILEGE_LEVEL_3 }
 }
