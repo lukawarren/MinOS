@@ -19,6 +19,9 @@ pub extern "C" fn main() -> !
     println!("Initialising interrupts...");
     interrupts::interrupts::init();
 
+    println!("Enabling interrupts....");
+    cpu::cpu::enable_interrupts();
+
     loop {}
 }
 

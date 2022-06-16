@@ -1,7 +1,8 @@
-use super::super::cpu::idt;
-use super::super::cpu::idt::Attributes;
-use super::super::cpu::load_idt;
-use super::super::cpu::GLOBAL_IDT;
+use crate::cpu::{cpu, idt};
+use crate::cpu::idt::Attributes;
+use crate::cpu::load_idt;
+use crate::cpu::GLOBAL_IDT;
+use crate::print;
 use super::*;
 
 pub fn init()
@@ -69,4 +70,25 @@ pub fn init()
         let len = core::mem::size_of::<idt::Table>() * 256 - 1;
         load_idt(&GLOBAL_IDT as *const _ as u32, len as u16);
     }
+
+    // Setup PIC
+    pic::init(pic::PIC_MASK_KEYBOARD, pic::PIC_MASK_NONE);
+}
+
+#[no_mangle]
+extern "C" fn on_interrupt(irq: u32)
+{
+    print!(".");
+    match irq
+    {
+        1 =>
+        {
+            // Keyboard
+            cpu::inb(0x60);
+        }
+
+        _ => panic!("Unknown IRQ {}!", irq)
+    }
+
+    pic::end_interrupt(irq as u8);
 }

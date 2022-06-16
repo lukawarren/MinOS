@@ -13,6 +13,15 @@ blank_irq:
 %macro irq 1
 global irq_%1
 irq_%1:
+    pushad
+
+    cld ; The SysV ABI requires df be clear :-)
+    push dword %1
+    extern on_interrupt
+    call on_interrupt
+    add esp, 4
+
+    popad
     iret
 %endmacro
 

@@ -1,4 +1,5 @@
 use core::mem;
+use core::arch::asm;
 use super::gdt::*;
 use super::tss::*;
 use super::GLOBAL_GDT;
@@ -23,4 +24,21 @@ pub fn init_cpu()
 
         load_gdt(GLOBAL_GDT.as_ptr() as u32, (mem::size_of::<u64>() * GLOBAL_GDT.len()) as u16);
     }
+}
+
+pub fn outb(port: u16, data: u8)
+{
+    unsafe { asm!("out dx, al", in("dx") port, in("al") data); }
+}
+
+pub fn inb(port: u16) -> u8
+{
+    let data: u8;
+    unsafe { asm!("in al, dx",  out("al") data, in("dx") port); }
+    data
+}
+
+pub fn enable_interrupts()
+{
+    unsafe { asm!("sti"); }
 }
