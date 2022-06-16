@@ -5,6 +5,7 @@
 mod cpu;
 mod graphics;
 mod spinlock;
+mod interrupts;
 use core::panic::PanicInfo;
 
 #[no_mangle]
@@ -14,6 +15,9 @@ pub extern "C" fn main() -> !
 
     println!("Initialising CPU...");
     cpu::cpu::init_cpu();
+
+    println!("Initialising interrupts...");
+    interrupts::interrupts::init();
 
     loop {}
 }

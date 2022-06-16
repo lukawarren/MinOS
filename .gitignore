@@ -7,3 +7,4 @@ isodir/boot/kernel.bin
 docker_build.sh
 docker_run.sh
 bochs.bat
+bochs.sh

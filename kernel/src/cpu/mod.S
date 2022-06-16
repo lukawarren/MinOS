@@ -4,6 +4,10 @@ section text
 gdtr DW 0 ; limit
      DD 0 ; base
 
+; IDT pointer storage
+idtr DW 0 ; limit
+     DD 0 ; base
+
 global load_gdt
 load_gdt:
     ; Load limit
@@ -32,6 +36,24 @@ reload_cs:
     mov fs, ax
     mov gs, ax
     mov ss, ax
+
+    pop eax
+    ret
+
+
+global load_idt
+load_idt:
+    ; Load limit
+    push eax
+    mov ax, [esp]
+    mov [idtr], ax
+
+    ; Load base
+    mov eax, [esp + 8]
+    mov [idtr + 2], eax
+
+    ; Send to IDT
+    lidt [idtr]
 
     pop eax
     ret

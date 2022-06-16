@@ -1,8 +1,9 @@
 use bitflags::bitflags;
 
+pub type GdtEntry = u64;
+
 bitflags!
 {
-    #[allow(dead_code)]
     pub struct Segment : u16
     {
         const DESCRIPTOR_TYPE = 1 << 0x4; // 0 for system, 1 for code/data
@@ -30,27 +31,40 @@ bitflags!
         const CODE_EXECUTE_CONFORMING_ACCESSED = 0xd;
         const CODE_EXECUTE_READ_CONFORMING = 0xe;
         const CODE_EXECUTE_READ_CONFORMING_ACCESSED = 0xf;
+
+        const NONE = 0;
+
+        const CODE_RING_0 = Self::DESCRIPTOR_TYPE.bits | Self::PRESENT.bits | Self::IS_32_BIT.bits |
+                            Self::GRANULARITY.bits | Self::CODE_EXECUTE_READ.bits;
+
+        const DATA_RING_0 = Self::DESCRIPTOR_TYPE.bits | Self::PRESENT.bits | Self::IS_32_BIT.bits |
+                            Self::GRANULARITY.bits | Self::DATA_READ_WRITE.bits;
+
+        const CODE_RING_3 = Self::DESCRIPTOR_TYPE.bits | Self::PRESENT.bits | Self::IS_32_BIT.bits |
+                            Self::GRANULARITY.bits | Self::CODE_EXECUTE_READ.bits | Self::PRIVILEGE_LEVEL_3.bits;
+
+        const DATA_RING_3 = Self::DESCRIPTOR_TYPE.bits | Self::PRESENT.bits | Self::IS_32_BIT.bits |
+                            Self::GRANULARITY.bits | Self::DATA_READ_WRITE.bits | Self::PRIVILEGE_LEVEL_3.bits;
+
+        const TSS_RING_0 = Self::PRESENT.bits | Self::IS_32_BIT.bits | Self::CODE_EXECUTE_ONLY_ACCESSED.bits;
     }
 }
 
-pub struct Flag;
-
-#[allow(dead_code)]
-impl Flag
+pub fn create_gdt_entry(base: u32, limit: u32, flags: Segment) -> GdtEntry
 {
-    pub fn none() -> Segment { Segment::empty() }
+    let mut descriptor: u64 = 0;
+    let flag_bits = flags.bits() as u64;
 
-    pub fn code_ring0() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
-                                     Segment::GRANULARITY | Segment::CODE_EXECUTE_READ }
+    // Create the high 32 bit segment
+    descriptor |= limit as u64          & 0x000f0000; // Bits 19:16
+    descriptor |= (flag_bits << 8)      & 0x00f0ff00; // Set type, p, dpl, s, g, d/b, l and avl fields
+    descriptor |= ((base as u64) >> 16) & 0x000000ff; // Base bits 23:16
+    descriptor |= base as u64           & 0xff000000; // Base bits 31:24
 
-    pub fn data_ring0() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
-                                     Segment::GRANULARITY | Segment::DATA_READ_WRITE }
+    // Fill out the low segment
+    descriptor <<= 32;
+    descriptor |= (base as u64) << 16;
+    descriptor |= limit as u64 & 0x0000ffff;
 
-    pub fn code_ring3() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
-                                     Segment::GRANULARITY | Segment::CODE_EXECUTE_READ | Segment::PRIVILEGE_LEVEL_3 }
-
-    pub fn data_ring3() -> Segment { Segment:: DESCRIPTOR_TYPE | Segment::PRESENT | Segment::IS_32_BIT |
-                                     Segment::GRANULARITY | Segment::DATA_READ_WRITE | Segment::PRIVILEGE_LEVEL_3 }
-
-    pub fn tss_ring0()  -> Segment { Segment::PRESENT | Segment::IS_32_BIT | Segment::CODE_EXECUTE_ONLY_ACCESSED }
+    descriptor
 }
