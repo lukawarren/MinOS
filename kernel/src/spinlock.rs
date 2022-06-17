@@ -1,7 +1,6 @@
 use core::sync::atomic::AtomicBool;
 use core::sync::atomic::Ordering;
 use core::cell::UnsafeCell;
-use crate::println;
 
 pub struct Lock<T>
 {
@@ -11,7 +10,7 @@ pub struct Lock<T>
 
 impl<T> Lock<T>
 {
-    pub fn new(data: T) -> Lock<T>
+    pub const fn new(data: T) -> Lock<T>
     {
         Lock
         {
@@ -22,10 +21,16 @@ impl<T> Lock<T>
 
     pub fn lock(&self) -> &mut T
     {
-        // Wait for data to be freed
-        while self.active.load(Ordering::Acquire) {}
+        /*
+            Obviously on a proper multi-core system, the below would be written:
+            while self.active.load(Ordering::Acquire) {}
+
+            However as of now only a single core is supported, and so if we find
+            that we're locked out it's just going to hang everything, so can be
+            treated as an error.
+        */
+        if self.active.load(Ordering::Acquire) { panic!("spinlock already locked"); }
         self.active.store(true, Ordering::Release);
-        println!("TODO: disable interrupts and then re-enable when freeing, and also disable interrupts when handling them"); // TODO
 
         // To allow for non-mutable static variables, "pretend" the data's immutable
         unsafe { &mut *self.data.get() }
@@ -36,3 +41,5 @@ impl<T> Lock<T>
         self.active.store(false, Ordering::Release);
     }
 }
+
+unsafe impl<T> Sync for Lock<T> {}

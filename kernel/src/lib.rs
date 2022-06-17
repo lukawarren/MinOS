@@ -18,11 +18,18 @@ pub extern "C" fn main() -> !
 
     println!("Initialising interrupts...");
     interrupts::interrupts::init();
+    interrupts::interrupts::subscribe_to_irq(interrupts::IRQ_KEYBOARD, on_keyboard);
 
     println!("Enabling interrupts....");
     cpu::cpu::enable_interrupts();
 
     loop {}
+}
+
+fn on_keyboard()
+{
+    let key = cpu::cpu::inb(0x60);
+    print!("{}", key);
 }
 
 #[panic_handler]

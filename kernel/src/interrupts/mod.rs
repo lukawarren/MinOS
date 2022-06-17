@@ -1,6 +1,17 @@
 pub mod interrupts;
 mod pic;
 
+use crate::spinlock::Lock;
+
+pub static IRQ_KEYBOARD: u32 = 1;
+
+pub static INTERRUPT_HANDLERS: Lock<[Option<fn()>; 16]> = Lock::new([
+    Option::None, Option::None, Option::None, Option::None,
+    Option::None, Option::None, Option::None, Option::None,
+    Option::None, Option::None, Option::None, Option::None,
+    Option::None, Option::None, Option::None, Option::None
+]);
+
 extern "C"
 {
     fn blank_irq();

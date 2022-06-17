@@ -1,8 +1,7 @@
-use crate::cpu::{cpu, idt};
+use crate::cpu::idt;
 use crate::cpu::idt::Attributes;
 use crate::cpu::load_idt;
 use crate::cpu::GLOBAL_IDT;
-use crate::print;
 use super::*;
 
 pub fn init()
@@ -75,20 +74,33 @@ pub fn init()
     pic::init(pic::PIC_MASK_KEYBOARD, pic::PIC_MASK_NONE);
 }
 
+pub fn subscribe_to_irq(irq: u32, function: fn())
+{
+    let handlers = INTERRUPT_HANDLERS.lock();
+    let index = irq as usize;
+
+    assert_eq!(index >= handlers.len(), false);
+    let _ = handlers[index].insert(function);
+
+    INTERRUPT_HANDLERS.free();
+}
+
 #[no_mangle]
 extern "C" fn on_interrupt(irq: u32)
 {
-    print!(".");
-    match irq
-    {
-        1 =>
-        {
-            // Keyboard
-            cpu::inb(0x60);
-        }
+    let handlers = INTERRUPT_HANDLERS.lock();
+    let index = irq as usize;
 
-        _ => panic!("Unknown IRQ {}!", irq)
+    // Call subscribed interrupt handler (if any)
+    if index < handlers.len() && handlers[index].is_some()
+    {
+        handlers[index].unwrap()();
     }
 
+    else {
+        panic!("Unexpected IRQ {}", irq);
+    }
+
+    INTERRUPT_HANDLERS.free();
     pic::end_interrupt(irq as u8);
 }
