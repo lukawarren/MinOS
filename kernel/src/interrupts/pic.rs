@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use crate::cpu::cpu::outb;
+use crate::arch::cpu::outb;
 
 pub const PIC_1: u16                    = 0x20;
 pub const PIC_2: u16                    = 0xa0;
