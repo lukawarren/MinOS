@@ -34,16 +34,16 @@ pub fn init()
         GLOBAL_IDT.entries[offset + 15] = idt::Entry::new(irq_15, 0x8, Attributes::ENABLED_RING_0_INTERRUPT);
 
         // Exceptions
-        GLOBAL_IDT.entries[0] =  idt::Entry::new(exception_0,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[1] =  idt::Entry::new(exception_1,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[2] =  idt::Entry::new(exception_2,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[3] =  idt::Entry::new(exception_3,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[4] =  idt::Entry::new(exception_4,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[5] =  idt::Entry::new(exception_5,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[6] =  idt::Entry::new(exception_6,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[7] =  idt::Entry::new(exception_7,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[8] =  idt::Entry::new(exception_8,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
-        GLOBAL_IDT.entries[9] =  idt::Entry::new(exception_9,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[0]  = idt::Entry::new(exception_0,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[1]  = idt::Entry::new(exception_1,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[2]  = idt::Entry::new(exception_2,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[3]  = idt::Entry::new(exception_3,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[4]  = idt::Entry::new(exception_4,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[5]  = idt::Entry::new(exception_5,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[6]  = idt::Entry::new(exception_6,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[7]  = idt::Entry::new(exception_7,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[8]  = idt::Entry::new(exception_8,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
+        GLOBAL_IDT.entries[9]  = idt::Entry::new(exception_9,  0x8, Attributes::ENABLED_RING_0_INTERRUPT);
         GLOBAL_IDT.entries[10] = idt::Entry::new(exception_10, 0x8, Attributes::ENABLED_RING_0_INTERRUPT);
         GLOBAL_IDT.entries[11] = idt::Entry::new(exception_11, 0x8, Attributes::ENABLED_RING_0_INTERRUPT);
         GLOBAL_IDT.entries[12] = idt::Entry::new(exception_12, 0x8, Attributes::ENABLED_RING_0_INTERRUPT);
