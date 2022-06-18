@@ -8,8 +8,9 @@ RUN apt-get update -y &&\
 RUN apt-get install -y curl gcc && \
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly --profile minimal
 ENV PATH="/root/.cargo/bin:${PATH}"
+ENV CARGO_HOME="/code/cargo"
 RUN rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
 	
 # Link then create ISO
 WORKDIR /code
-CMD make
+CMD mkdir -p cargo && make
