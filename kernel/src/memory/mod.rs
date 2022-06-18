@@ -106,6 +106,7 @@ fn get_memory_range(multiboot_info: &multiboot2::BootInformation) -> Option<&Mem
 {
     // Attempt to find a contiguous area of memory in which to operate...
     let heap_begin = unsafe { &__kernel_end as *const _ as usize };
+
     let mut valid_areas = multiboot_info.memory_map_tag().unwrap()
         .all_memory_areas()
         .filter(|f| f.typ() == MemoryAreaType::Available)

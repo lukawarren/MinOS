@@ -103,8 +103,7 @@ extern "C" fn on_interrupt(irq: u32)
     let index = irq as usize;
 
     // Call subscribed interrupt handler (if any)
-    if index < handlers.len() && handlers[index].is_some()
-    {
+    if index < handlers.len() && handlers[index].is_some() {
         handlers[index].unwrap()();
     }
 

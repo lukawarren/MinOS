@@ -32,7 +32,6 @@ _start:
     ; for stack alignment)
     sub esp, 12
     push ebx
-    xchg bx, bx
     extern main
     call main
     pop ebx

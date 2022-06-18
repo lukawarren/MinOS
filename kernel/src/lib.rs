@@ -35,7 +35,7 @@ pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
     loop {}
 }
 
-fn on_keyboard()
+pub fn on_keyboard()
 {
     let key = cpu::inb(0x60);
     print!("{}", key);
