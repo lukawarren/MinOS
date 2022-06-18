@@ -1,8 +1,11 @@
 mod stack;
+mod paging;
 
 use multiboot2;
 use multiboot2::{MemoryArea, MemoryAreaType};
 use stack::Stack;
+use paging::PageFrame;
+use crate::arch;
 
 pub const PAGE_SIZE: usize = 4096;
 extern "C" { pub static __kernel_end: u32; }
@@ -13,15 +16,16 @@ struct FreePage
     address: usize
 }
 
-pub struct PageFrame
+pub struct PageAllocator
 {
     free_pages: &'static mut Stack<FreePage>,
+    page_frame: PageFrame,
     pub free_pages_count: usize
 }
 
-impl PageFrame
+impl PageAllocator
 {
-    pub fn create_root_frame(multiboot_info: &multiboot2::BootInformation) -> PageFrame
+    pub fn create_root_allocator(multiboot_info: &multiboot2::BootInformation) -> PageAllocator
     {
         // Get memory range from multiboot info
         assert!(multiboot_info.memory_map_tag().is_some());
@@ -33,41 +37,62 @@ impl PageFrame
         assert!(is_page_aligned(memory_range.start_address() as usize));
         assert!(is_page_aligned(memory_range.end_address() as usize));
 
+        // Leave room for page frame
+        let page_frame_size = PageFrame::size();
+
         // Knowing the chosen region starts beneath the kernel, set the start of memory there
-        let mem_start = unsafe { &__kernel_end as *const _ as usize };
+        let kernel_end = unsafe { &__kernel_end as *const _ as usize };
+        let mem_start = kernel_end + page_frame_size;
         let mem_end = memory_range.end_address() as usize;
         let pages = (mem_end - mem_start) / PAGE_SIZE - 1;
 
         unsafe
         {
-            let frame = Stack::<FreePage>::create_at_address(mem_start, FreePage {
+            // 1) Create ourselves
+            let free_pages = Stack::<FreePage>::create_at_address(mem_start, FreePage {
                 address: mem_start,
             });
 
-            let mut this = PageFrame {
-                free_pages: &mut *frame,
+            let page_frame = PageFrame::new(kernel_end);
+
+            let mut this = PageAllocator {
+                free_pages: &mut *free_pages,
+                page_frame,
                 free_pages_count: 0
             };
 
-            // Start at page 1 because the act of creating a page frame already freed one
+            // 2) Set pages to allocated, starting at page 1 because the act of creating a page frame already freed one
             for page in 1..pages {
                 this.free_page(mem_start + page*PAGE_SIZE);
             }
 
+            // 3) Map everything up to the kernel into memory so we don't page fault
+            for page in 0..mem_start/PAGE_SIZE {
+                this.page_frame.map_page(page * PAGE_SIZE, page * PAGE_SIZE, false);
+            }
+
+            // Enable paging
+            arch::cpu::load_cr3(kernel_end);
+            arch::enable_paging();
             this
         }
     }
 
-    pub fn allocate_page(&mut self) -> usize
+    pub fn allocate_page(&mut self, user_page: bool) -> usize
     {
+        // Get physical page
         let addr: Option<FreePage> = self.free_pages.pop();
         if addr.is_none() { panic!("no free pages left"); }
-
         self.free_pages_count -= 1;
-        addr.unwrap().address
+
+        // Map into memory
+        let address = addr.unwrap().address;
+        unsafe { self.page_frame.map_page(address, address, user_page); }
+
+        address
     }
 
-    pub unsafe fn reserve_page(&mut self, address: usize)
+    pub unsafe fn reserve_page(&mut self, address: usize, user_page: bool)
     {
         assert!(is_page_aligned(address));
         let mut node = Some(self.free_pages as *mut Stack<FreePage>);
@@ -76,8 +101,12 @@ impl PageFrame
         {
             if (*node.unwrap()).data.address == address
             {
+                // Set page as used
                 (*node.unwrap()).pop();
                 self.free_pages_count -= 1;
+
+                // Map into memory
+                 self.page_frame.map_page(address, address, user_page);
                 return;
             }
 
@@ -96,10 +125,9 @@ impl PageFrame
     }
 }
 
-pub fn round_size_to_nearest_page(size: usize) -> usize
+pub fn is_page_aligned(size: usize) -> bool
 {
-    let remainder = size % PAGE_SIZE;
-    if remainder == 0 { size } else { size + PAGE_SIZE - remainder }
+    size % PAGE_SIZE == 0
 }
 
 fn get_memory_range(multiboot_info: &multiboot2::BootInformation) -> Option<&MemoryArea>
@@ -114,9 +142,4 @@ fn get_memory_range(multiboot_info: &multiboot2::BootInformation) -> Option<&Mem
         .filter(|f| (f.end_address() as usize) > heap_begin);
 
     valid_areas.nth(0)
-}
-
-fn is_page_aligned(address: usize) -> bool
-{
-    address % PAGE_SIZE == 0
 }

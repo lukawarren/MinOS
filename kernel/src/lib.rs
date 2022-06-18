@@ -16,6 +16,7 @@ use multiboot2;
 pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
 {
     unsafe { graphics::vga::GLOBAL_TEXT_DEVICE.clear() }
+    println!("Welcome to MinOS!");
 
     // Init CPU and interrupts
     cpu::init_cpu();
@@ -27,10 +28,23 @@ pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
     assert_eq!(multiboot_header.is_err(), false);
 
     // Setup memory
-    let mut root_frame = memory::PageFrame::create_root_frame(&multiboot_header.unwrap());
+    println!("Initialising memory...");
+    let mut allocator = memory::PageAllocator::create_root_allocator(&multiboot_header.unwrap());
+    println!("Memory initialised");
 
-    println!("Welcome to MinOS!");
-    println!("Free pages: {}", root_frame.free_pages_count);
+    // Just to remove "unused function" warnings before any code requires paging :-)
+    unsafe
+    {
+        // Allocate page for test
+        let addr = allocator.allocate_page(false);
+        println!("First free page {:#x}", addr);
+        allocator.free_page(addr);
+
+        // Reserve page for test
+        allocator.reserve_page(0xbee000, false);
+    }
+
+    println!("Free pages: {}", allocator.free_pages_count);
     cpu::enable_interrupts();
     loop {}
 }

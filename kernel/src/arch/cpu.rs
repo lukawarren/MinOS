@@ -42,3 +42,11 @@ pub fn enable_interrupts()
 {
     unsafe { asm!("sti"); }
 }
+
+pub fn load_cr3(address: usize)
+{
+    unsafe
+    {
+        asm!("mov cr3, {}", in(reg) address);
+    }
+}

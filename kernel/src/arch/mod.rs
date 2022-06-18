@@ -16,5 +16,6 @@ extern "C"
 {
     pub fn load_gdt(base: u32, limit: u16);
     pub fn load_idt(base: u32, limit: u16);
+    pub fn enable_paging();
     pub static __tss_stack: u32;
 }

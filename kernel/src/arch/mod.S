@@ -57,3 +57,16 @@ load_idt:
 
     pop eax
     ret
+
+
+global enable_paging
+enable_paging:
+    ; Modify cr0 to enable paging
+    push ebp
+    mov ebp, esp
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+    mov esp, ebp
+    pop ebp
+    ret
