@@ -6,26 +6,32 @@ mod arch;
 mod graphics;
 mod spinlock;
 mod interrupts;
+mod memory;
 
 use arch::cpu as cpu;
-
 use core::panic::PanicInfo;
+use multiboot2;
 
 #[no_mangle]
-pub extern "C" fn main() -> !
+pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
 {
     unsafe { graphics::vga::GLOBAL_TEXT_DEVICE.clear() }
 
-    println!("Initialising CPU...");
+    // Init CPU and interrupts
     cpu::init_cpu();
-
-    println!("Initialising interrupts...");
     interrupts::init();
     interrupts::subscribe_to_irq(interrupts::IRQ_KEYBOARD, on_keyboard);
 
-    println!("Enabling interrupts....");
-    cpu::enable_interrupts();
+    // Parse multiboot info
+    let multiboot_header = unsafe { multiboot2::load(multiboot2_header_pointer) };
+    assert_eq!(multiboot_header.is_err(), false);
 
+    // Setup memory
+    let mut root_frame = memory::PageFrame::create_root_frame(&multiboot_header.unwrap());
+
+    println!("Welcome to MinOS!");
+    println!("Free pages: {}", root_frame.free_pages_count);
+    cpu::enable_interrupts();
     loop {}
 }
 

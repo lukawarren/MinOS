@@ -13,14 +13,30 @@ header_start:
     dd 8    ; size
 header_end:
 
+; Stack
+section .bss
+align 16
+stack_bottom:
+    resb 16384 ; 16 KiB
+stack_top:
+
 section .text
 bits 32
 
 _start:
 
-    ; call main kernel
+    ; set up stack
+    mov esp, stack_top
+
+    ; call main kernel (adding to esp
+    ; for stack alignment)
+    sub esp, 12
+    push ebx
+    xchg bx, bx
     extern main
     call main
+    pop ebx
+    add esp, 12
 
     ; halt if all else fails
     hlt

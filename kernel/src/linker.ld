@@ -29,5 +29,9 @@ SECTIONS
 		. += 4k;
         __tss_stack = .;
         . += 16;
+
+		/* Beginning of heap */
+		. = ALIGN(4k);
+		__kernel_end = .;
 	}
 }
