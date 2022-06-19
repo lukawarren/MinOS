@@ -70,3 +70,17 @@ enable_paging:
     mov esp, ebp
     pop ebp
     ret
+
+
+global flush_tlb
+flush_tlb:
+    ; On i486 and newer, the "invlpg" instruction
+    ; makes much more sense, as what is below is
+    ; overkill for most uses. However completely
+    ; reloading cl3 should suffice for now until
+    ; we run into any performance bottlenecks...
+    push eax
+    mov eax, cr3
+    mov cr3, eax
+    pop eax
+    ret

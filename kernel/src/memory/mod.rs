@@ -5,9 +5,9 @@ use multiboot2;
 use multiboot2::{MemoryArea, MemoryAreaType};
 use stack::Stack;
 use paging::PageFrame;
-use crate::arch;
+use paging::is_page_aligned;
+use crate::println;
 
-pub const PAGE_SIZE: usize = 4096;
 extern "C" { pub static __kernel_end: u32; }
 
 #[derive(Copy, Clone)]
@@ -30,7 +30,7 @@ impl PageAllocator
         // Get memory range from multiboot info
         assert!(multiboot_info.memory_map_tag().is_some());
         let memory_range = get_memory_range(multiboot_info).unwrap_or_else(|| {
-            panic!("No valid regions of memory found");
+            panic!("no valid regions of memory found");
         });
 
         // Make sure it's page aligned
@@ -44,36 +44,34 @@ impl PageAllocator
         let kernel_end = unsafe { &__kernel_end as *const _ as usize };
         let mem_start = kernel_end + page_frame_size;
         let mem_end = memory_range.end_address() as usize;
-        let pages = (mem_end - mem_start) / PAGE_SIZE - 1;
+        let heap_pages = (mem_end - mem_start) / paging::PAGE_SIZE;
+
+        println!("[Memory] Initialising with range {:#x}-{:#x}", mem_start, mem_end);
 
         unsafe
         {
-            // 1) Create ourselves
-            let free_pages = Stack::<FreePage>::create_at_address(mem_start, FreePage {
+            // 1) Create structure to keep track of free pages
+            let free_pages = &mut *Stack::<FreePage>::create_at_address(mem_start, FreePage {
                 address: mem_start,
             });
 
-            let page_frame = PageFrame::new(kernel_end);
-
+            // 2) Create ourselves, including the page frame
             let mut this = PageAllocator {
-                free_pages: &mut *free_pages,
-                page_frame,
+                free_pages,
+                page_frame: PageFrame::new(kernel_end),
                 free_pages_count: 0
             };
 
-            // 2) Set pages to allocated, starting at page 1 because the act of creating a page frame already freed one
-            for page in 1..pages {
-                this.free_page(mem_start + page*PAGE_SIZE);
+            // 3) Set all pages following the kernel to free, avoiding page 1 because the act of
+            //    creating a page frame already freed it... except go in reverse so that we
+            //    allocate from the start of memory to the end (because why not)
+            for i in 0..heap_pages {
+                let page = heap_pages - i;
+                this.free_page(mem_start + page * paging::PAGE_SIZE);
             }
 
-            // 3) Map everything up to the kernel into memory so we don't page fault
-            for page in 0..mem_start/PAGE_SIZE {
-                this.page_frame.map_page(page * PAGE_SIZE, page * PAGE_SIZE, false);
-            }
-
-            // Enable paging
-            arch::cpu::load_cr3(kernel_end);
-            arch::enable_paging();
+            // 4) Enable paging
+            this.page_frame.load_to_cpu(kernel_end);
             this
         }
     }
@@ -85,49 +83,49 @@ impl PageAllocator
         if addr.is_none() { panic!("no free pages left"); }
         self.free_pages_count -= 1;
 
-        // Map into memory
+        // Identity map into memory
         let address = addr.unwrap().address;
         unsafe { self.page_frame.map_page(address, address, user_page); }
 
         address
     }
 
-    pub unsafe fn reserve_page(&mut self, address: usize, user_page: bool)
+    pub unsafe fn reserve_page(&mut self, physical_address: usize, user_page: bool)
     {
-        assert!(is_page_aligned(address));
+        assert!(is_page_aligned(physical_address));
         let mut node = Some(self.free_pages as *mut Stack<FreePage>);
 
         while node.is_some()
         {
-            if (*node.unwrap()).data.address == address
+            if (*node.unwrap()).data.address == physical_address
             {
                 // Set page as used
                 (*node.unwrap()).pop();
                 self.free_pages_count -= 1;
 
-                // Map into memory
-                 self.page_frame.map_page(address, address, user_page);
+                // Identity map into memory
+                 self.page_frame.map_page(physical_address, physical_address, user_page);
                 return;
             }
 
             node = (*node.unwrap()).next;
         }
 
-        panic!("could not find reserved page");
+        panic!("could not find reserved page with address {}", physical_address);
     }
 
-    pub unsafe fn free_page(&mut self, address: usize)
+    pub unsafe fn free_page(&mut self, virtual_address: usize)
     {
-        self.free_pages.push(address, FreePage {
-            address,
+        // Add to list of free pages
+        let physical_address = self.page_frame.virtual_address_to_physical(virtual_address);
+        self.free_pages.push(physical_address, FreePage {
+            address: physical_address,
         });
         self.free_pages_count += 1;
-    }
-}
 
-pub fn is_page_aligned(size: usize) -> bool
-{
-    size % PAGE_SIZE == 0
+        // Unmap from memory
+        self.page_frame.unmap_page(virtual_address);
+    }
 }
 
 fn get_memory_range(multiboot_info: &multiboot2::BootInformation) -> Option<&MemoryArea>

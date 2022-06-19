@@ -108,7 +108,7 @@ extern "C" fn on_interrupt(irq: u32)
     }
 
     else {
-        panic!("Unexpected IRQ {}", irq);
+        panic!("unexpected IRQ {}", irq);
     }
 
     INTERRUPT_HANDLERS.free();

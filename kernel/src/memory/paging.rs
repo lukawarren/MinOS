@@ -1,6 +1,10 @@
 use bitflags::bitflags;
 use core::mem::size_of;
-use super::*;
+use crate::arch;
+
+pub const PAGE_SIZE: usize = 4096;
+pub const PAGE_TABLES: usize = 1024;
+pub const PAGE_DIRECTORIES: usize = 1024;
 
 bitflags!
 {
@@ -43,6 +47,11 @@ impl PageTable
         assert!(is_page_aligned(physical_address));
         self.physical_address_with_flags = physical_address | flags.bits();
     }
+
+    fn physical_address(&self) -> usize
+    {
+        self.physical_address_with_flags & 0xfffff000
+    }
 }
 
 #[repr(packed)]
@@ -71,20 +80,20 @@ impl PageDirectory
 #[repr(packed)]
 pub struct PageFrame
 {
-    directories: &'static mut[PageDirectory; 1024],
-    tables: &'static mut[PageTable; 1024 * 1024]
+    directories: &'static mut[PageDirectory; PAGE_DIRECTORIES],
+    tables: &'static mut[PageTable; PAGE_TABLES * PAGE_DIRECTORIES]
 }
 
 impl PageFrame
 {
-    pub unsafe fn new(start_address: usize) -> PageFrame
+    pub unsafe fn new(physical_start_address: usize) -> PageFrame
     {
-        let directories = &mut *(start_address as *mut [PageDirectory; 1024]);
-        let tables = &mut *((start_address + size_of::<PageDirectory>() * 1024) as *mut [PageTable; 1024 * 1024]);
+        let directories = &mut *(physical_start_address as *mut [PageDirectory; PAGE_DIRECTORIES]);
+        let tables = &mut *((physical_start_address + size_of::<PageDirectory>() * PAGE_DIRECTORIES) as *mut [PageTable; PAGE_TABLES * PAGE_DIRECTORIES]);
 
         // Identify map directories
         for i in 0..directories.len() {
-            directories[i] = PageDirectory::new((&tables[i * 1024] as *const _) as usize);
+            directories[i] = PageDirectory::new((&tables[i * PAGE_TABLES] as *const _) as usize);
         }
 
         // Identify map tables
@@ -110,11 +119,38 @@ impl PageFrame
                                 else { PageFlags::KERNEL_PAGE_READ_WRITE };
 
         self.tables[virtual_address / PAGE_SIZE].set(physical_address, flags);
+        arch::flush_tlb();
+    }
+
+    pub unsafe fn unmap_page(&mut self, virtual_address: usize)
+    {
+        assert!(is_page_aligned(virtual_address));
+
+        // Revert back to default identity mapping
+        self.tables[virtual_address / PAGE_SIZE] = PageTable::new(virtual_address);
+        arch::flush_tlb();
+    }
+
+    pub unsafe fn load_to_cpu(&self, physical_start_address: usize)
+    {
+        arch::cpu::load_cr3(physical_start_address);
+        arch::enable_paging();
+    }
+
+    pub fn virtual_address_to_physical(&self, address: usize) -> usize
+    {
+        let offset = address % PAGE_SIZE;
+        self.tables[address / PAGE_SIZE].physical_address() + offset
     }
 
     pub fn size() -> usize
     {
-        size_of::<PageDirectory>() * 1024 +
-        size_of::<PageTable>() * 1024 * 1024
+        size_of::<PageDirectory>() * PAGE_DIRECTORIES +
+        size_of::<PageTable>() * PAGE_TABLES * PAGE_DIRECTORIES
     }
+}
+
+pub fn is_page_aligned(size: usize) -> bool
+{
+    size % PAGE_SIZE == 0
 }
