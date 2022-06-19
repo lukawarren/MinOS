@@ -7,6 +7,7 @@ mod graphics;
 mod spinlock;
 mod interrupts;
 mod memory;
+mod multitask;
 
 use arch::cpu as cpu;
 use core::panic::PanicInfo;
@@ -25,6 +26,8 @@ pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
     // Parse multiboot info
     let multiboot_header = unsafe { multiboot2::load(multiboot2_header_pointer) };
     assert_eq!(multiboot_header.is_err(), false);
+
+    println!("{:#?}", multiboot_header.as_ref().unwrap().module_tags());
 
     // Setup memory
     let mut allocator = memory::PageAllocator::create_root_allocator(&multiboot_header.unwrap());

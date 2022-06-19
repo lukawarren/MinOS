@@ -2,6 +2,7 @@ MinOS.iso
 bochs/
 kernel/target
 isodir/boot/kernel.bin
+isodir/boot/*.module
 .idea
 .vscode
 docker_build.sh
