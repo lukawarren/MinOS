@@ -14,6 +14,7 @@ bitflags!
         const READ_WRITE = 1 << 1;
         const GLOBAL_ACCESS = 1 << 2;
 
+        const KERNEL_PAGE_DISABLED = 0;
         const KERNEL_PAGE_READ_WRITE = Self::PRESENT.bits() | Self::READ_WRITE.bits();
         const USER_PAGE_READ_WRITE = Self::PRESENT.bits() | Self::READ_WRITE.bits() | Self::GLOBAL_ACCESS.bits();
     }
@@ -28,17 +29,11 @@ struct PageTable
 
 impl PageTable
 {
-    fn new(physical_address: usize) -> PageTable
+    fn new() -> PageTable
     {
-        assert!(is_page_aligned(physical_address));
-
-        // Would set to be as restrictive as possible by default,
-        // (i.e. disabled), but free pages are stored in a linked
-        // list... within the pages themselves, so they have to be
-        // present.
+        // Set page to be disabled and owned by the kernel (by default)
         PageTable {
-            physical_address_with_flags: physical_address |
-                PageFlags::KERNEL_PAGE_READ_WRITE.bits()
+            physical_address_with_flags: PageFlags::KERNEL_PAGE_DISABLED.bits()
         }
     }
 
@@ -64,8 +59,10 @@ struct PageDirectory
 
 impl PageDirectory
 {
-    fn new(physical_table_address: usize) -> PageDirectory
+    fn new(first_page_table: &PageTable) -> PageDirectory
     {
+        let physical_table_address = (first_page_table as *const _) as usize;
+
         // Set the page directory to be user-space-readable and
         // present, knowing that the page tables themselves are
         // non-present and restricted to the kernel (by default).
@@ -91,14 +88,14 @@ impl PageFrame
         let directories = &mut *(physical_start_address as *mut [PageDirectory; PAGE_DIRECTORIES]);
         let tables = &mut *((physical_start_address + size_of::<PageDirectory>() * PAGE_DIRECTORIES) as *mut [PageTable; PAGE_TABLES * PAGE_DIRECTORIES]);
 
-        // Identify map directories
+        // Initialise page directories
         for i in 0..directories.len() {
-            directories[i] = PageDirectory::new((&tables[i * PAGE_TABLES] as *const _) as usize);
+            directories[i] = PageDirectory::new(&tables[i * PAGE_TABLES]);
         }
 
-        // Identify map tables
+        // Initialise page tables
         for i in 0..tables.len() {
-            tables[i] = PageTable::new(i * PAGE_SIZE);
+            tables[i] = PageTable::new();
         }
 
         PageFrame {
@@ -126,15 +123,15 @@ impl PageFrame
     {
         assert!(is_page_aligned(virtual_address));
 
-        // Revert back to default identity mapping
-        self.tables[virtual_address / PAGE_SIZE] = PageTable::new(virtual_address);
+        // Revert back to default mapping, disabling the page
+        self.tables[virtual_address / PAGE_SIZE] = PageTable::new();
         arch::flush_tlb();
     }
 
-    pub unsafe fn load_to_cpu(&self, physical_start_address: usize)
+    pub unsafe fn load_to_cpu(&self)
     {
+        let physical_start_address = (&self.directories[0] as *const _) as usize;
         arch::cpu::load_cr3(physical_start_address);
-        arch::enable_paging();
     }
 
     pub fn virtual_address_to_physical(&self, address: usize) -> usize

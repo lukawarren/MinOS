@@ -1,6 +1,6 @@
 // See https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
 
-use crate::memory::PageAllocator;
+use crate::memory::allocator::PageAllocator;
 
 const ELF_MAGIC_HEADER: [u8; 4] = [0x7f, b'E', b'L', b'F'];
 

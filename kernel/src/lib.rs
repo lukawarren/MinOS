@@ -30,18 +30,14 @@ pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
     println!("{:#?}", multiboot_header.as_ref().unwrap().module_tags());
 
     // Setup memory
-    let mut allocator = memory::PageAllocator::create_root_allocator(&multiboot_header.unwrap());
+    let (mut allocator, frame) = memory::init(multiboot_header.as_ref().unwrap());
 
-    // Just to remove "unused function" warnings before any code requires paging :-)
     unsafe
     {
         // Allocate page for test
-        let addr = allocator.allocate_page(false);
+        let addr = allocator.allocate_kernel_page();
         println!("First free page {:#x}", addr);
-        allocator.free_page(addr);
-
-        // Reserve page for test
-        allocator.reserve_page(0xbee000, false);
+        allocator.free_kernel_page(addr, &frame);
     }
 
     println!("Free pages: {}", allocator.free_pages_count);
