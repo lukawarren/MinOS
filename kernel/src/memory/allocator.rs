@@ -101,6 +101,14 @@ impl PageAllocator
         address
     }
 
+    /// Returns physical address
+    pub fn allocate_user_page_with_address(&mut self, virtual_address: usize, page_frame: &mut PageFrame) -> usize
+    {
+        let physical_address = self.allocate_kernel_page();
+        unsafe { page_frame.map_page(physical_address, virtual_address, true); }
+        physical_address
+    }
+
     pub unsafe fn free_kernel_page(&mut self, virtual_address: usize, page_frame: &PageFrame)
     {
         // Add to list of free pages and be done (no need to touch any page frames - see above)

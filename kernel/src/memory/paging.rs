@@ -43,6 +43,11 @@ impl PageTable
         self.physical_address_with_flags = physical_address | flags.bits();
     }
 
+    fn is_set(&self) -> bool
+    {
+        self.physical_address_with_flags != PageFlags::KERNEL_PAGE_DISABLED.bits()
+    }
+
     fn physical_address(&self) -> usize
     {
         self.physical_address_with_flags & 0xfffff000
@@ -115,7 +120,9 @@ impl PageFrame
         let flags = if user_page { PageFlags::USER_PAGE_READ_WRITE }
                                 else { PageFlags::KERNEL_PAGE_READ_WRITE };
 
-        self.tables[virtual_address / PAGE_SIZE].set(physical_address, flags);
+        let table = &mut self.tables[virtual_address / PAGE_SIZE];
+        assert_eq!(table.is_set(), false);
+        table.set(physical_address, flags);
         arch::flush_tlb();
     }
 
