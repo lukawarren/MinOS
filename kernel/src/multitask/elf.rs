@@ -156,8 +156,9 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
         if program_type == ProgramHeaderType::PtLoad
         {
             let source = address + program_header.p_offset as usize;
-            let dest = allocator.allocate_user_page_with_address(program_header.p_vaddr as usize, frame);
-            ptr::copy_nonoverlapping(source as *mut u8, dest as *mut u8, program_header.p_memsz as usize);
+            let size = program_header.p_memsz as usize;
+            let dest = allocator.allocate_user_pages_with_address(program_header.p_vaddr as usize, size, frame);
+            ptr::copy_nonoverlapping(source as *mut u8, dest as *mut u8, size);
         }
     }
 

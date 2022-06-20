@@ -1,9 +1,13 @@
+#![allow(dead_code)]
+
 use bitflags::bitflags;
 use core::mem::size_of;
 use crate::arch;
 use super::allocator::PageAllocator;
 
 pub const PAGE_SIZE: usize = 4096;
+pub const MAX_PAGES: usize = 0x100000;
+
 const PAGE_TABLES: usize = 1024;
 const PAGE_DIRECTORIES: usize = 1024;
 const DIRECTORY_SIZE: usize = PAGE_SIZE * PAGE_TABLES;
@@ -117,16 +121,16 @@ impl PageFrame
 
     pub fn create_user_frame(allocator: &mut PageAllocator) -> PageFrame
     {
-        debug_assert!(size_of::<PageDirectory>() * PAGE_DIRECTORIES <= PAGE_SIZE);
-        debug_assert!(size_of::<PageTable>() * PAGE_TABLES <= PAGE_SIZE);
+        debug_assert!(size_of::<PageDirectory>() * PAGE_DIRECTORIES == PAGE_SIZE);
+        debug_assert!(size_of::<PageTable>() * PAGE_TABLES == PAGE_SIZE);
 
-        let directories_address = allocator.allocate_kernel_page();
+        let directories_address = allocator.allocate_kernel_pages(PAGE_SIZE);
         let directories = unsafe { &mut *(directories_address as *mut [PageDirectory; PAGE_DIRECTORIES]) };
 
         // Initialise directories...
         for i in 0..directories.len()
         {
-            let tables_address = allocator.allocate_kernel_page();
+            let tables_address = allocator.allocate_kernel_pages(PAGE_SIZE);
             let tables = unsafe { &mut *(tables_address as *mut [PageTable; PAGE_TABLES]) };
 
             // ...and tables
