@@ -3,7 +3,7 @@
 
  SECTIONS
  {
-    . = 0;
+    . = 0x40000000;
 
     .text BLOCK(4K) : ALIGN(4K)
     {

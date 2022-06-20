@@ -1,11 +1,12 @@
-// See https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
+#![allow(unaligned_references, dead_code)]
 
 use crate::memory::allocator::PageAllocator;
 use crate::memory::paging::PageFrame;
-use core::fmt::Error;
 use core::mem;
 use core::ptr;
 use bitflags::bitflags;
+
+// ========== See https://en.wikipedia.org/wiki/Executable_and_Linkable_Format ==========
 
 const ELF_MAGIC_HEADER: [u8; 4] = [0x7f, b'E', b'L', b'F'];
 
@@ -57,6 +58,7 @@ const EV_CURRENT: u8 = 1;
 const EM_386: Elf32Half = 3;
 
 // For e_type
+#[repr(u16)]
 #[derive(PartialEq, Debug)]
 enum ElfType
 {
@@ -70,8 +72,8 @@ enum ElfType
 #[derive(PartialEq, Copy, Clone)]
 enum ProgramHeaderType
 {
-    PT_NULL = 0,    // unused
-    PT_LOAD = 1     // loadable segment
+    PtNull = 0, // unused
+    PtLoad = 1, // loadable segment
 }
 
 #[repr(C, packed)]
@@ -91,14 +93,14 @@ struct ElfProgramHeader
 #[repr(u32)]
 enum SectionHeaderType
 {
-    SHT_NULL	    = 0,  // null section
-    SHT_PROGBITS    = 1,  // program information
-    SHT_SYMTAB	    = 2,  // symbol table
-    SHT_STRTAB	    = 3,  // string table
-    SHT_RELA	    = 4,  // relocation (with addend)
-    SHT_NOBITS	    = 8,  // not present in file
-    SHT_REL		    = 9,  // relocation (no addend)
-    SHT_FINI_ARRAY  = 15, // array of destructors
+    ShtNull	     = 0,  // null section
+    ShtProgBits  = 1,  // program information
+    ShtSymTab	 = 2,  // symbol table
+    ShtStrTab	 = 3,  // string table
+    ShtRela	     = 4,  // relocation (with addend)
+    ShtNoBits	 = 8,  // not present in file
+    ShtRel		 = 9,  // relocation (no addend)
+    ShtFiniArray = 15, // array of destructors
 }
 
 // For sh_flags
@@ -138,11 +140,10 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
     assert_eq!(header.e_ident[ElfIdent::EIMag3 as usize],       ELF_MAGIC_HEADER[3]);
 
     // Check it's compatible
-    let header_e_machine = header.e_machine;
     assert_eq!(header.e_ident[ElfIdent::EIClass as usize],      ELF_CLASS_32);
     assert_eq!(header.e_ident[ElfIdent::EIData as usize],       ELF_DATA_2_LSB);
     assert_eq!(header.e_ident[ElfIdent::EIVersion as usize],    EV_CURRENT);
-    assert_eq!(header_e_machine,                                EM_386);
+    assert_eq!(header.e_machine,                                EM_386);
     assert_eq!(header.e_type,                                   ElfType::ETExec);
 
     // Load program headers
@@ -152,7 +153,7 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
         let program_header = &*(addr as *const ElfProgramHeader);
         let program_type = program_header.p_type;
 
-        if program_type == ProgramHeaderType::PT_LOAD
+        if program_type == ProgramHeaderType::PtLoad
         {
             let source = address + program_header.p_offset as usize;
             let dest = allocator.allocate_user_page_with_address(program_header.p_vaddr as usize, frame);

@@ -1,8 +1,12 @@
+#![allow(dead_code)]
+
 use super::stack::Stack;
 use super::paging::PageFrame;
 use super::paging::PAGE_SIZE;
 use super::paging::is_page_aligned;
+use crate::memory::paging::round_up_to_nearest_page;
 use multiboot2::{BootInformation, MemoryArea, MemoryAreaType};
+use crate::multitask::module;
 use crate::println;
 
 extern "C" { pub static __kernel_end: u32; }
@@ -40,12 +44,35 @@ impl PageAllocator
         let page_frame_size = PageFrame::size();
 
         // Knowing the chosen region starts beneath the kernel, set the start of memory there
-        let kernel_end = unsafe { &__kernel_end as *const _ as usize };
+        let mut kernel_end = unsafe { &__kernel_end as *const _ as usize };
+
+        // Anywhere from kernel_end to mem_start is going to be overwritten, so make sure it
+        // won't overwrite the multiboot stuff
+        if kernel_end < multiboot_info.start_address() &&
+            kernel_end + page_frame_size >= multiboot_info.start_address()
+        {
+            kernel_end = round_up_to_nearest_page(multiboot_info.end_address() + 1);
+        }
+
+        else if kernel_end >= multiboot_info.start_address() { panic!(); }
+
+        // Likewise skip over modules - TODO: stop assuming modules won't be high up in memory
+        let highest_module_address = module::highest_module_address(multiboot_info);
+        if kernel_end < highest_module_address
+        {
+            kernel_end = round_up_to_nearest_page(highest_module_address + 1);
+        }
+
+        // ...and finally start the heap in safety
         let mem_start = kernel_end + page_frame_size;
         let mem_end = memory_range.end_address() as usize;
         let heap_pages = (mem_end - mem_start) / PAGE_SIZE;
 
-        println!("[Memory] Creating root allocator with range {:#x}-{:#x}", mem_start, mem_end);
+        assert_eq!(module::address_lies_within_module(kernel_end, multiboot_info), false);
+        assert_eq!(module::address_lies_within_module(mem_start, multiboot_info), false);
+
+        println!("[Memory] Multiboot header lies at {:#x}-{:#x}", multiboot_info.start_address(), multiboot_info.end_address());
+        println!("[Memory] Creating root allocator with range {:#x}-{:#x} from {:#x}", mem_start, mem_end, kernel_end);
 
         unsafe
         {
@@ -65,16 +92,23 @@ impl PageAllocator
 
             // Set all pages following the kernel to free, avoiding page 1 because the act of
             // creating a page frame already freed it... except go in reverse so that we end up
-            // allocating pages from the start of memory to the end (because it looks nicer)
+            // allocating pages from the start of memory to the end (because it looks nicer)...
+            // except avoid setting pages to free if they overlap with a multiboot module...
+            // ...or the multiboot header itself
+
             for i in 0..heap_pages
             {
                 let page = heap_pages - i;
                 let physical_address = mem_start + page * PAGE_SIZE;
 
-                this.free_pages.push(physical_address, FreePage {
-                    physical_address,
-                });
-                this.free_pages_count += 1;
+                if !module::address_lies_within_module(physical_address, multiboot_info) &&
+                    !(physical_address >= multiboot_info.start_address() && physical_address <= multiboot_info.end_address())
+                {
+                    this.free_pages.push(physical_address, FreePage {
+                        physical_address,
+                    });
+                    this.free_pages_count += 1;
+                }
             }
 
             this
@@ -109,8 +143,10 @@ impl PageAllocator
         physical_address
     }
 
-    pub unsafe fn free_kernel_page(&mut self, virtual_address: usize, page_frame: &PageFrame)
+    pub unsafe fn free_kernel_page(&mut self, virtual_address: usize, page_frame: &mut PageFrame)
     {
+        assert!(is_page_aligned(virtual_address));
+
         // Add to list of free pages and be done (no need to touch any page frames - see above)
         let physical_address = page_frame.virtual_address_to_physical(virtual_address);
         self.free_pages.push(physical_address, FreePage {
@@ -124,6 +160,11 @@ impl PageAllocator
         // Treat as if kernel page, then unmap (see above)
         self.free_kernel_page(virtual_address, page_frame);
         page_frame.unmap_page(virtual_address);
+    }
+
+    pub fn allocate_user_page_frame(&mut self) -> PageFrame
+    {
+        PageFrame::create_user_frame(self)
     }
 }
 

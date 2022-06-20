@@ -1,10 +1,12 @@
 use bitflags::bitflags;
 use core::mem::size_of;
 use crate::arch;
+use super::allocator::PageAllocator;
 
 pub const PAGE_SIZE: usize = 4096;
-pub const PAGE_TABLES: usize = 1024;
-pub const PAGE_DIRECTORIES: usize = 1024;
+const PAGE_TABLES: usize = 1024;
+const PAGE_DIRECTORIES: usize = 1024;
+const DIRECTORY_SIZE: usize = PAGE_SIZE * PAGE_TABLES;
 
 bitflags!
 {
@@ -76,20 +78,25 @@ impl PageDirectory
                 PageFlags::USER_PAGE_READ_WRITE.bits()
         }
     }
+
+    fn physical_address(&self) -> usize
+    {
+        self.physical_address_with_flags & 0xfffff000
+    }
 }
 
 #[allow(dead_code)]
 #[repr(packed)]
 pub struct PageFrame
 {
-    directories: &'static mut[PageDirectory; PAGE_DIRECTORIES],
-    tables: &'static mut[PageTable; PAGE_TABLES * PAGE_DIRECTORIES]
+    directories: &'static mut[PageDirectory; PAGE_DIRECTORIES]
 }
 
 impl PageFrame
 {
-    pub unsafe fn new(physical_start_address: usize) -> PageFrame
+    pub unsafe fn create_kernel_frame(physical_start_address: usize) -> PageFrame
     {
+        // Use contiguous directories and tables
         let directories = &mut *(physical_start_address as *mut [PageDirectory; PAGE_DIRECTORIES]);
         let tables = &mut *((physical_start_address + size_of::<PageDirectory>() * PAGE_DIRECTORIES) as *mut [PageTable; PAGE_TABLES * PAGE_DIRECTORIES]);
 
@@ -104,8 +111,34 @@ impl PageFrame
         }
 
         PageFrame {
-            directories,
-            tables
+            directories
+        }
+    }
+
+    pub fn create_user_frame(allocator: &mut PageAllocator) -> PageFrame
+    {
+        debug_assert!(size_of::<PageDirectory>() * PAGE_DIRECTORIES <= PAGE_SIZE);
+        debug_assert!(size_of::<PageTable>() * PAGE_TABLES <= PAGE_SIZE);
+
+        let directories_address = allocator.allocate_kernel_page();
+        let directories = unsafe { &mut *(directories_address as *mut [PageDirectory; PAGE_DIRECTORIES]) };
+
+        // Initialise directories...
+        for i in 0..directories.len()
+        {
+            let tables_address = allocator.allocate_kernel_page();
+            let tables = unsafe { &mut *(tables_address as *mut [PageTable; PAGE_TABLES]) };
+
+            // ...and tables
+            for j in 0..tables.len() {
+                tables[j] = PageTable::new();
+            }
+
+            directories[i] = PageDirectory::new(&tables[0]);
+        }
+
+        PageFrame {
+            directories
         }
     }
 
@@ -118,11 +151,12 @@ impl PageFrame
         assert!(is_page_aligned(virtual_address));
 
         let flags = if user_page { PageFlags::USER_PAGE_READ_WRITE }
-                                else { PageFlags::KERNEL_PAGE_READ_WRITE };
+                    else { PageFlags::KERNEL_PAGE_READ_WRITE };
 
-        let table = &mut self.tables[virtual_address / PAGE_SIZE];
+        let table = self.get_table_mut(virtual_address);
         assert_eq!(table.is_set(), false);
         table.set(physical_address, flags);
+
         arch::flush_tlb();
     }
 
@@ -131,7 +165,7 @@ impl PageFrame
         assert!(is_page_aligned(virtual_address));
 
         // Revert back to default mapping, disabling the page
-        self.tables[virtual_address / PAGE_SIZE] = PageTable::new();
+        *self.get_table_mut(virtual_address) = PageTable::new();
         arch::flush_tlb();
     }
 
@@ -144,7 +178,7 @@ impl PageFrame
     pub fn virtual_address_to_physical(&self, address: usize) -> usize
     {
         let offset = address % PAGE_SIZE;
-        self.tables[address / PAGE_SIZE].physical_address() + offset
+        unsafe { self.get_table(address).physical_address() + offset }
     }
 
     pub fn size() -> usize
@@ -152,9 +186,37 @@ impl PageFrame
         size_of::<PageDirectory>() * PAGE_DIRECTORIES +
         size_of::<PageTable>() * PAGE_TABLES * PAGE_DIRECTORIES
     }
+
+    unsafe fn get_table_mut(&mut self, virtual_address: usize) -> &mut PageTable
+    {
+        let page_directory = virtual_address / DIRECTORY_SIZE;
+        let page_table = (virtual_address / PAGE_SIZE) % PAGE_TABLES;
+
+        let tables_address = self.directories[page_directory].physical_address(); // Assumes physical address to tables is also the virtual,
+                                                                                  // because for now the kernel is identity mapped
+
+        let tables = &mut *(tables_address as *mut [PageTable; PAGE_TABLES]);
+
+        &mut tables[page_table]
+    }
+
+    unsafe fn get_table(&self, virtual_address: usize) -> &PageTable
+    {
+        let page_directory = virtual_address / DIRECTORY_SIZE;
+        let page_table = (virtual_address / PAGE_SIZE) % PAGE_TABLES;
+        let tables_address = self.directories[page_directory].physical_address(); // See above
+        let tables = &*(tables_address as *const [PageTable; PAGE_TABLES]);
+        &tables[page_table]
+    }
 }
 
 pub fn is_page_aligned(size: usize) -> bool
 {
     size % PAGE_SIZE == 0
+}
+
+pub fn round_up_to_nearest_page(address: usize) -> usize
+{
+    let remainder = address % PAGE_SIZE;
+    if remainder == 0 { address } else { address + PAGE_SIZE - remainder }
 }

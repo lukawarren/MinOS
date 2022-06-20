@@ -4,12 +4,12 @@ mod stack;
 
 use multiboot2;
 
-pub fn init(multiboot_header: &multiboot2::BootInformation) -> (allocator::PageAllocator, paging::PageFrame)
+pub fn init(multiboot_info: &multiboot2::BootInformation) -> (allocator::PageAllocator, paging::PageFrame)
 {
     unsafe
     {
-        let allocator = allocator::PageAllocator::create_root_allocator(&multiboot_header);
-        let mut kernel_frame = paging::PageFrame::new(allocator.page_frame_address);
+        let allocator = allocator::PageAllocator::create_root_allocator(&multiboot_info);
+        let mut kernel_frame = paging::PageFrame::create_kernel_frame(allocator.page_frame_address);
 
         // Identify map whole memory range, because free pages are stored in linked lists within the
         // pages themselves, so the kernel needs a view of them, even if they're unallocated :-)
