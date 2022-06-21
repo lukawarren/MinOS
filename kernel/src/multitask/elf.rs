@@ -91,6 +91,7 @@ struct ElfProgramHeader
 
 // For sh_type
 #[repr(u32)]
+#[derive(Debug)]
 enum SectionHeaderType
 {
     ShtNull	     = 0,  // null section
@@ -117,7 +118,7 @@ bitflags!
 struct ElfSectionHeader
 {
     sh_name:        Elf32Word,
-    sh_type:        Elf32Word,
+    sh_type:        SectionHeaderType,
     sh_flags:       SectionHeaderFlags,
     sh_addr:        Elf32Address,
     sh_offset:      Elf32Offset,
@@ -156,9 +157,18 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
         if program_type == ProgramHeaderType::PtLoad
         {
             let source = address + program_header.p_offset as usize;
-            let size = program_header.p_memsz as usize;
-            let dest = allocator.allocate_user_pages_with_address(program_header.p_vaddr as usize, size, frame);
-            ptr::copy_nonoverlapping(source as *mut u8, dest as *mut u8, size);
+            let file_size = program_header.p_filesz as usize;
+            let mem_size = program_header.p_memsz as usize;
+
+            let dest = allocator.allocate_user_pages_with_address(
+                program_header.p_vaddr as usize,
+                mem_size,
+                frame
+            );
+
+            // If p_memsz exceeds p_filesz, then the remaining bits are to be cleared with zeros
+            ptr::write_bytes(dest as *mut u8, 0, mem_size);
+            ptr::copy_nonoverlapping(source as *mut u8, dest as *mut u8, file_size);
         }
     }
 
@@ -173,7 +183,39 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
         {
             match section_header.sh_type
             {
-                _ => todo!()
+                // BSS; allocate memory and zero it out
+                SectionHeaderType::ShtNoBits =>
+                {
+                    let dest = allocator.allocate_user_pages_with_address(
+                        section_header.sh_addr as usize,
+                        section_header.sh_size as usize,
+                        frame
+                    );
+
+                    ptr::write_bytes(dest as *mut u8, 0, section_header.sh_size as usize);
+                },
+
+                SectionHeaderType::ShtProgBits =>
+                {
+                    let source = address + section_header.sh_offset as usize;
+
+                    // It may actually be so that the pages specified here have already been mapped
+                    // above. However, the code below does not care, because it shouldn't.
+
+                    let dest = allocator.allocate_user_pages_with_address(
+                        section_header.sh_addr as usize,
+                        section_header.sh_size as usize,
+                        frame
+                    );
+
+                    ptr::copy_nonoverlapping(
+                        source as *mut u8,
+                        dest as *mut u8,
+                        section_header.sh_size as usize
+                    );
+                }
+
+                _ => todo!("{:#?}", section_header.sh_type)
             }
         }
 

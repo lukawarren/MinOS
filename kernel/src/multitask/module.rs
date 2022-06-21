@@ -45,8 +45,11 @@ pub fn load_module(module: &ModuleTag, allocator: &mut memory::allocator::PageAl
 {
     println!("[Multitask] Loading module {}", module.cmdline());
 
-    let mut page_frame = allocator.allocate_user_page_frame();
-    let entrypoint = unsafe { elf::load_elf_file(module.start_address() as usize, allocator, &mut page_frame) };
+    let mut page_frame = memory::create_user_page_frame(allocator);
+
+    let entrypoint = unsafe {
+        elf::load_elf_file(module.start_address() as usize, allocator, &mut page_frame)
+    };
 
     Module {
         page_frame,

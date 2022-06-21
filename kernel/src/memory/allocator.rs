@@ -1,15 +1,11 @@
 #![allow(dead_code)]
 
+use super::paging::{ PageFrame, PAGE_SIZE, is_page_aligned, round_up_to_nearest_page };
 use super::page_array::PageArray;
-use super::paging::PageFrame;
-use super::paging::PAGE_SIZE;
-use super::paging::is_page_aligned;
-use crate::memory::paging::round_up_to_nearest_page;
 use multiboot2::{BootInformation, MemoryArea, MemoryAreaType};
 use crate::multitask::module;
 use crate::println;
-
-extern "C" { pub static __kernel_end: u32; }
+use core::ptr;
 
 pub struct PageAllocator
 {
@@ -33,7 +29,7 @@ impl PageAllocator
         assert!(is_page_aligned(memory_range.end_address() as usize));
 
         // Leave room for page frame and page array
-        let kernel_end = unsafe { &__kernel_end as *const _ as usize };
+        let kernel_end = unsafe { &super::__kernel_end as *const _ as usize };
         let structures_size = PageFrame::size() + PageArray::size();
         let mut mem_start = kernel_end;
 
@@ -60,6 +56,7 @@ impl PageAllocator
         assert!(is_page_aligned(page_array_address));
         assert!(is_page_aligned(page_frame_address));
         assert!(is_page_aligned(heap_start));
+        assert!(is_page_aligned(kernel_end));
 
         println!("[Memory] Multiboot header lies at {:#x}-{:#x}", multiboot_info.start_address(), multiboot_info.end_address());
         println!("[Memory] Creating structures with range {:#x}-{:#x}", mem_start, heap_start-1);
@@ -100,6 +97,12 @@ impl PageAllocator
     {
         let size_aligned = round_up_to_nearest_page(size);
         let address = self.page_array.allocate_pages(size_aligned / PAGE_SIZE);
+
+        // Zero page out before returning
+        unsafe {
+            ptr::write_bytes(address as *mut u8, 0, size_aligned);
+        }
+
         address
     }
 
@@ -108,7 +111,16 @@ impl PageAllocator
     {
         // Allocate, then map into memory
         let address = self.allocate_kernel_pages(size);
-        unsafe { page_frame.map_page(address, address, true); }
+
+        unsafe
+        {
+            let pages = round_up_to_nearest_page(size) / PAGE_SIZE;
+
+            for i in 0..pages {
+                page_frame.map_page(address + PAGE_SIZE * i, address + PAGE_SIZE * i, true);
+            }
+        }
+
         address
     }
 
@@ -116,20 +128,24 @@ impl PageAllocator
     pub fn allocate_user_pages_with_address(&mut self, virtual_address: usize, size: usize, page_frame: &mut PageFrame) -> usize
     {
         let physical_address = self.allocate_kernel_pages(size);
-        unsafe { page_frame.map_page(physical_address, virtual_address, true); }
-        physical_address
-    }
 
-    pub fn allocate_user_page_frame(&mut self) -> PageFrame
-    {
-        PageFrame::create_user_frame(self)
+        unsafe
+            {
+                let pages = round_up_to_nearest_page(size) / PAGE_SIZE;
+
+                for i in 0..pages {
+                    page_frame.map_page(physical_address + PAGE_SIZE * i, virtual_address + PAGE_SIZE * i, true);
+                }
+            }
+
+        physical_address
     }
 }
 
 fn get_memory_range(multiboot_info: &BootInformation) -> Option<&MemoryArea>
 {
     // Attempt to find a contiguous area of memory in which to operate...
-    let heap_begin = unsafe { &__kernel_end as *const _ as usize };
+    let heap_begin = unsafe { &super::__kernel_end as *const _ as usize };
 
     let mut valid_areas = multiboot_info.memory_map_tag().unwrap()
         .all_memory_areas()

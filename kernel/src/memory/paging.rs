@@ -158,7 +158,6 @@ impl PageFrame
                     else { PageFlags::KERNEL_PAGE_READ_WRITE };
 
         let table = self.get_table_mut(virtual_address);
-        assert_eq!(table.is_set(), false);
         table.set(physical_address, flags);
 
         arch::flush_tlb();
