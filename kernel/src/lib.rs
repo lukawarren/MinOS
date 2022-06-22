@@ -29,8 +29,9 @@ pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
     // Setup memory
     let (mut allocator, _) = memory::init(&multiboot_info);
 
-    // Load module
-    let _module = multitask::module::load_module(multiboot_info.module_tags().nth(0).unwrap(), &mut allocator);
+    // Load task
+    let task = multitask::module::load_module(multiboot_info.module_tags().nth(0).unwrap(), &mut allocator);
+    multitask::add_task(task);
 
     println!("Welcome to MinOS!");
     cpu::enable_interrupts();

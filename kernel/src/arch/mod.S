@@ -59,6 +59,14 @@ load_idt:
     ret
 
 
+global load_tss
+load_tss:
+    push ax
+    mov ax, [esp + 6] ; load descriptor
+    ltr ax
+    pop ax
+    ret
+
 global enable_paging
 enable_paging:
     ; Modify cr0 to enable paging

@@ -28,8 +28,8 @@ _start:
     ; set up stack
     mov esp, stack_top
 
-    ; call main kernel (adding to esp
-    ; for stack alignment)
+    ; call main kernel (modifying esp
+    ; for 16 byte stack alignment)
     sub esp, 12
     push ebx
     extern main

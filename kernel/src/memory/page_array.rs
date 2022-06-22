@@ -27,6 +27,7 @@ impl PageArray
         }
     }
 
+    /// Returns physical address of first page allocated
     pub fn allocate_pages(&mut self, pages: usize) -> usize
     {
         if pages == 1
@@ -42,6 +43,41 @@ impl PageArray
                     self.clear_page(nth_page);
                     return nth_page * PAGE_SIZE
                 }
+            }
+        }
+
+        else if pages <= BITS_PER_GROUP
+        {
+            // We want to find a group with N free bits in a row...
+            for i in 0..NUMBER_OF_GROUPS
+            {
+                // ...which won't happen if the group's full
+                if self.bit_groups[i] == 0 { continue; }
+
+                // If the group isn't empty, check first if there's enough consecutive bits...
+                let mut bits = self.bit_groups[i];
+                if self.bit_groups[i].wrapping_add(1) != 0
+                {
+                    // ...by doing "bitmap & (bitmap >> 1)" for 2 pages, "bitmap & (bitmap >> 1) & (bitmap >> 2)" for 3, etc
+                    for i in 1..pages {
+                        bits &= self.bit_groups[i] >> i;
+                    }
+
+                    // Any non-zero value means we've found a valid group
+                    if bits == 0 { continue; }
+                }
+
+                // Now we've got a valid group, the first page of the N pages we want will just be the LSB
+                // (because bits go this way: 32 bit <-------- 0th bit)
+                let nth_bit = Self::get_position_of_least_significant_bit(bits) as usize;
+                let nth_page = i * BITS_PER_GROUP + nth_bit;
+
+                // As with one page, mark all affected as clear and return the address
+                for j in 0..pages {
+                    self.clear_page(nth_page + j)
+                }
+
+                return nth_page * PAGE_SIZE;
             }
         }
 

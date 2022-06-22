@@ -160,7 +160,7 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
             let file_size = program_header.p_filesz as usize;
             let mem_size = program_header.p_memsz as usize;
 
-            let dest = allocator.allocate_user_pages_with_address(
+            let dest = allocator.allocate_user_raw_with_address(
                 program_header.p_vaddr as usize,
                 mem_size,
                 frame
@@ -186,7 +186,7 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
                 // BSS; allocate memory and zero it out
                 SectionHeaderType::ShtNoBits =>
                 {
-                    let dest = allocator.allocate_user_pages_with_address(
+                    let dest = allocator.allocate_user_raw_with_address(
                         section_header.sh_addr as usize,
                         section_header.sh_size as usize,
                         frame
@@ -202,7 +202,7 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
                     // It may actually be so that the pages specified here have already been mapped
                     // above. However, the code below does not care, because it shouldn't.
 
-                    let dest = allocator.allocate_user_pages_with_address(
+                    let dest = allocator.allocate_user_raw_with_address(
                         section_header.sh_addr as usize,
                         section_header.sh_size as usize,
                         frame
@@ -222,6 +222,6 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
         else if flags.contains(SectionHeaderFlags::SHF_WRITE) { todo!(); }
     }
 
-    // Return entrypoint
-    header.e_entry as usize
+    // Return entrypoint - TODO: rectify
+    0x40000000 + header.e_entry as usize
 }

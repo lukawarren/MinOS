@@ -5,6 +5,9 @@ exception_has_no_error_code:
 
 section text
 
+extern on_interrupt
+extern on_exception
+
 global blank_irq
 blank_irq:
     iret
@@ -17,7 +20,6 @@ irq_%1:
 
     cld ; The SysV ABI requires df be clear :-)
     push dword %1
-    extern on_interrupt
     call on_interrupt
     add esp, 4
 
@@ -29,19 +31,24 @@ irq_%1:
 %macro exception 2
 global exception_%1
 exception_%1:
-
     ; If an error code is present (as in
     ; some exceptions), it needs to be
     ; manually popped off the stack
     cmp byte [exception_has_no_error_code], %2
-    je exception_return_%1
+    je exception_handle_%1
     add esp, 4
 
-exception_return_%1:
+exception_handle_%1:
+
+    ; Push error code, call Rust, then half for now
+    cld ; see above
+    push %1
+    call on_exception
+    hlt
+
     iret
 %endmacro
 
-irq 0
 irq 1
 irq 2
 irq 3

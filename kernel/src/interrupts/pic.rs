@@ -25,7 +25,7 @@ pub const PIC_MASK_KEYBOARD_CODE: u8    = 0x2;
 pub const PIC_MASK_ALL: u8              = 0xff;
 pub const PIC_MASK_NONE: u8             = 0;
 
-pub const PIC_MASK_PIT_AND_KEYBOARD: u8 = PIC_MASK_ALL ^ PIC_MASK_PIT_CODE | PIC_MASK_KEYBOARD_CODE;
+pub const PIC_MASK_PIT_AND_KEYBOARD: u8 = PIC_MASK_ALL ^ (PIC_MASK_PIT_CODE | PIC_MASK_KEYBOARD_CODE);
 pub const PIC_MASK_KEYBOARD: u8         = PIC_MASK_ALL ^ PIC_MASK_KEYBOARD_CODE;
 
 pub fn init(mask_one: u8, mask_two: u8)

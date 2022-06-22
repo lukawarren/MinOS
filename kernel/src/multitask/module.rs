@@ -1,13 +1,8 @@
 use multiboot2::{BootInformation, ModuleTag};
 use crate::memory;
 use crate::println;
+use super::task;
 use super::elf;
-
-pub struct Module
-{
-    pub page_frame: memory::paging::PageFrame,
-    pub entrypoint: usize
-}
 
 pub fn address_lies_within_module(address: usize, multiboot_info: &BootInformation) -> bool
 {
@@ -41,18 +36,18 @@ pub fn highest_module_address(multiboot_info: &BootInformation) -> usize
     highest
 }
 
-pub fn load_module(module: &ModuleTag, allocator: &mut memory::allocator::PageAllocator) -> Module
+pub fn load_module(module: &ModuleTag, allocator: &mut memory::allocator::PageAllocator) -> task::Task
 {
     println!("[Multitask] Loading module {}", module.cmdline());
 
+    // Setup memory
     let mut page_frame = memory::create_user_page_frame(allocator);
 
+    // Parse ELF file
     let entrypoint = unsafe {
         elf::load_elf_file(module.start_address() as usize, allocator, &mut page_frame)
     };
 
-    Module {
-        page_frame,
-        entrypoint
-    }
+    // Create task
+    task::Task::create_task(allocator, page_frame, entrypoint)
 }

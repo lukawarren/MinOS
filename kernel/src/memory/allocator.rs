@@ -6,6 +6,7 @@ use multiboot2::{BootInformation, MemoryArea, MemoryAreaType};
 use crate::multitask::module;
 use crate::println;
 use core::ptr;
+use core::mem;
 
 pub struct PageAllocator
 {
@@ -93,7 +94,7 @@ impl PageAllocator
     }
 
     /// Returns virtual address
-    pub fn allocate_kernel_pages(&mut self, size: usize) -> usize
+    pub fn allocate_kernel_raw(&mut self, size: usize) -> usize
     {
         let size_aligned = round_up_to_nearest_page(size);
         let address = self.page_array.allocate_pages(size_aligned / PAGE_SIZE);
@@ -107,10 +108,10 @@ impl PageAllocator
     }
 
     /// Returns virtual address
-    pub fn allocate_user_pages(&mut self, size: usize, page_frame: &mut PageFrame) -> usize
+    pub fn allocate_user_raw(&mut self, size: usize, page_frame: &mut PageFrame) -> usize
     {
         // Allocate, then map into memory
-        let address = self.allocate_kernel_pages(size);
+        let address = self.allocate_kernel_raw(size);
 
         unsafe
         {
@@ -125,9 +126,9 @@ impl PageAllocator
     }
 
     /// Returns physical address
-    pub fn allocate_user_pages_with_address(&mut self, virtual_address: usize, size: usize, page_frame: &mut PageFrame) -> usize
+    pub fn allocate_user_raw_with_address(&mut self, virtual_address: usize, size: usize, page_frame: &mut PageFrame) -> usize
     {
-        let physical_address = self.allocate_kernel_pages(size);
+        let physical_address = self.allocate_kernel_raw(size);
 
         unsafe
             {
@@ -139,6 +140,42 @@ impl PageAllocator
             }
 
         physical_address
+    }
+
+    /// Similar to allocate_kernel_raw, though automatically casts to desired type,
+    /// and does not manually zero-out memory, instead electing to call T::default()
+    pub fn allocate_kernel<T: Default>(&mut self) -> &mut T
+    {
+        self.create_object_at_address::<T>().0
+    }
+
+    /// As with allocate_kernel, but maps into user memory too
+    pub fn allocate_user<T: Default>(&mut self, page_frame: &mut PageFrame) -> &mut T
+    {
+        let (object, address) = self.create_object_at_address::<T>();
+
+        // Map into memory
+        unsafe
+        {
+            let pages = round_up_to_nearest_page(mem::size_of::<T>()) / PAGE_SIZE;
+            for i in 0..pages {
+                page_frame.map_page(address + PAGE_SIZE * i, address + PAGE_SIZE * i, true);
+            }
+        }
+
+        object
+    }
+
+    /// Returns physical address
+    fn create_object_at_address<T: Default>(&mut self) -> (&mut T, usize)
+    {
+        let size_aligned = round_up_to_nearest_page(mem::size_of::<T>());
+        let address = self.page_array.allocate_pages(size_aligned / PAGE_SIZE);
+
+        let object = unsafe { &mut *(address as *mut T) };
+        *object = Default::default();
+
+        (object, address)
     }
 }
 

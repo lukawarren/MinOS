@@ -7,7 +7,12 @@ use allocator::PageAllocator;
 use paging::PageFrame;
 use paging::PAGE_SIZE;
 
-extern "C" { pub(crate) static __kernel_end: u32; }
+extern "C" {
+    pub(crate) static __kernel_end: usize;
+}
+
+#[no_mangle]
+pub(crate) static mut KERNEL_CR3: usize = 0;
 
 pub fn init(multiboot_info: &multiboot2::BootInformation) -> (PageAllocator, PageFrame)
 {

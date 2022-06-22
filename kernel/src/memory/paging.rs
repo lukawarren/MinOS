@@ -90,10 +90,11 @@ impl PageDirectory
 }
 
 #[allow(dead_code)]
+#[derive(Clone, Copy)]
 #[repr(packed)]
 pub struct PageFrame
 {
-    directories: &'static mut[PageDirectory; PAGE_DIRECTORIES]
+    directories: *mut [PageDirectory; PAGE_DIRECTORIES]
 }
 
 impl PageFrame
@@ -114,23 +115,21 @@ impl PageFrame
             tables[i] = PageTable::new();
         }
 
-        PageFrame {
-            directories
-        }
+        // Set cr3 globally for benefit of assembly
+        let this = PageFrame { directories };
+        super::KERNEL_CR3 = this.cr3();
+        this
     }
 
     pub fn create_user_frame(allocator: &mut PageAllocator) -> PageFrame
     {
-        debug_assert!(size_of::<PageDirectory>() * PAGE_DIRECTORIES == PAGE_SIZE);
-        debug_assert!(size_of::<PageTable>() * PAGE_TABLES == PAGE_SIZE);
-
-        let directories_address = allocator.allocate_kernel_pages(PAGE_SIZE);
+        let directories_address = allocator.allocate_kernel_raw(PAGE_SIZE);
         let directories = unsafe { &mut *(directories_address as *mut [PageDirectory; PAGE_DIRECTORIES]) };
 
         // Initialise directories...
         for i in 0..directories.len()
         {
-            let tables_address = allocator.allocate_kernel_pages(PAGE_SIZE);
+            let tables_address = allocator.allocate_kernel_raw(PAGE_SIZE);
             let tables = unsafe { &mut *(tables_address as *mut [PageTable; PAGE_TABLES]) };
 
             // ...and tables
@@ -174,8 +173,12 @@ impl PageFrame
 
     pub unsafe fn load_to_cpu(&self)
     {
-        let physical_start_address = (&self.directories[0] as *const _) as usize;
-        arch::cpu::load_cr3(physical_start_address);
+        arch::cpu::load_cr3(self.cr3());
+    }
+
+    pub fn cr3(&self) -> usize
+    {
+        self.directories as usize
     }
 
     pub fn virtual_address_to_physical(&self, address: usize) -> usize
@@ -195,8 +198,8 @@ impl PageFrame
         let page_directory = virtual_address / DIRECTORY_SIZE;
         let page_table = (virtual_address / PAGE_SIZE) % PAGE_TABLES;
 
-        let tables_address = self.directories[page_directory].physical_address(); // Assumes physical address to tables is also the virtual,
-                                                                                  // because for now the kernel is identity mapped
+        let tables_address = (&mut *self.directories)[page_directory].physical_address(); // Assumes physical address to tables is also the virtual,
+                                                                                          // because for now the kernel is identity mapped
 
         let tables = &mut *(tables_address as *mut [PageTable; PAGE_TABLES]);
 
@@ -207,7 +210,7 @@ impl PageFrame
     {
         let page_directory = virtual_address / DIRECTORY_SIZE;
         let page_table = (virtual_address / PAGE_SIZE) % PAGE_TABLES;
-        let tables_address = self.directories[page_directory].physical_address(); // See above
+        let tables_address = (&mut *self.directories)[page_directory].physical_address(); // See above
         let tables = &*(tables_address as *const [PageTable; PAGE_TABLES]);
         &tables[page_table]
     }
