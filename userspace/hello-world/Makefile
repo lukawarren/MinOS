@@ -1,5 +1,5 @@
-MODULE_NAME = ps2
-OUTPUT = ../../isodir/boot/${MODULE_NAME}.module
+NAME = hello-world
+OUTPUT = ../../isodir/boot/${NAME}.module
 
 ASSEMBLER = nasm
 ASSEMBLER_FLAGS = -f elf32
@@ -16,4 +16,4 @@ $(ASSEMBLY_OBJECTS): $(ASSEMBLY_SOURCES)
 	$(ASSEMBLER) $(ASSEMBLER_FLAGS) $(patsubst %.o, %.S, $@) -o $@
 
 clean:
-	rm ${OUTPUT}
+	rm -f ${OUTPUT}

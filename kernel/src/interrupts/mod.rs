@@ -6,15 +6,11 @@ use crate::arch::idt::Attributes;
 use crate::arch::GLOBAL_IDT;
 use crate::arch::load_idt;
 use crate::arch::idt;
+use crate::arch::cpu;
 
 pub static IRQ_KEYBOARD: u32 = 1;
 
-pub static INTERRUPT_HANDLERS: Lock<[Option<fn()>; 16]> = Lock::new([
-    Option::None, Option::None, Option::None, Option::None,
-    Option::None, Option::None, Option::None, Option::None,
-    Option::None, Option::None, Option::None, Option::None,
-    Option::None, Option::None, Option::None, Option::None
-]);
+pub static INTERRUPT_HANDLERS: Lock<[Option<fn(&cpu::Registers)>; 256]> = Lock::new([None; 256]);
 
 pub fn init()
 {
@@ -77,6 +73,9 @@ pub fn init()
         GLOBAL_IDT.entries[29] = idt::Entry::new(exception_29, 0x8, Attributes::ENABLED_RING_0_INTERRUPT);
         GLOBAL_IDT.entries[30] = idt::Entry::new(exception_30, 0x8, Attributes::ENABLED_RING_0_INTERRUPT);
 
+        // Syscalls
+        GLOBAL_IDT.entries[80] = idt::Entry::new(irq_80, 0x8, Attributes::ENABLED_RING_3_INTERRUPT);
+
         // Finally load to CPU
         let len = core::mem::size_of::<idt::Table>() * 256 - 1;
         load_idt(&GLOBAL_IDT as *const _ as u32, len as u16);
@@ -87,7 +86,7 @@ pub fn init()
     pit::init();
 }
 
-pub fn subscribe_to_irq(irq: u32, function: fn())
+pub fn subscribe_to_irq(irq: u32, function: fn(&cpu::Registers))
 {
     let handlers = INTERRUPT_HANDLERS.lock();
     let index = irq as usize;
@@ -101,14 +100,14 @@ pub fn subscribe_to_irq(irq: u32, function: fn())
 }
 
 #[no_mangle]
-extern "C" fn on_interrupt(irq: u32)
+extern "C" fn on_interrupt(irq: u32, registers: cpu::Registers)
 {
     let handlers = INTERRUPT_HANDLERS.lock();
     let index = irq as usize;
 
     // Call subscribed interrupt handler (if any)
     if index < handlers.len() && handlers[index].is_some() {
-        handlers[index].unwrap()();
+        handlers[index].unwrap()(&registers);
     }
 
     else {
@@ -120,7 +119,7 @@ extern "C" fn on_interrupt(irq: u32)
 }
 
 #[no_mangle]
-extern "C" fn on_exception(exception: u32)
+extern "C" fn on_exception(exception: u32, registers: cpu::Registers)
 {
     let exceptions: [&str; 31] =
     [
@@ -142,7 +141,7 @@ extern "C" fn on_exception(exception: u32)
         "security exception",
     ];
 
-    panic!("exception {} called: {}", exception, exceptions[exception as usize]);
+    panic!("exception {} called ({}) - {:#?}", exception, exceptions[exception as usize], registers);
 }
 
 extern "C"
@@ -165,6 +164,7 @@ extern "C"
     fn irq_13();
     fn irq_14();
     fn irq_15();
+    fn irq_80();
 
     fn exception_0();
     fn exception_1();

@@ -11,7 +11,7 @@ const TASK_STACK_ENTRIES: usize = TASK_STACK_SIZE / core::mem::size_of::<usize>(
 pub struct Task
 {
     pub stack_address: usize,
-    page_frame: paging::PageFrame
+    pub page_frame: paging::PageFrame
 }
 
 struct Stack

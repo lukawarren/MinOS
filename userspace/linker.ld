@@ -1,8 +1,8 @@
- ENTRY(on_load)
- OUTPUT_FORMAT(elf32-i386)
+ENTRY(_start)
+OUTPUT_FORMAT(elf32-i386)
 
- SECTIONS
- {
+SECTIONS
+{
     . = 0x40000000;
 
     .text BLOCK(4K) : ALIGN(4K)
@@ -31,4 +31,4 @@
         *(COMMON)
         *(.bss) *(.bss.*)
     }
- }
+}

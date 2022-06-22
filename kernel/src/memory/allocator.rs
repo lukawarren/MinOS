@@ -15,9 +15,8 @@ pub struct PageAllocator
 
 impl PageAllocator
 {
-    /// Returns allocator followed by the address where memory ends, then the address left for
-    /// the kernel page frame to go into
-    pub fn create_root_allocator(multiboot_info: &BootInformation) -> (PageAllocator, usize, usize)
+    /// Returns allocator followed by the address left for the kernel page frame to go into
+    pub fn create_root_allocator(multiboot_info: &BootInformation) -> (PageAllocator, usize)
     {
         // Get memory range from multiboot info
         assert!(multiboot_info.memory_map_tag().is_some());
@@ -89,7 +88,7 @@ impl PageAllocator
                 }
             }
 
-            (this, mem_end, page_frame_address)
+            (this, page_frame_address)
         }
     }
 
@@ -131,13 +130,13 @@ impl PageAllocator
         let physical_address = self.allocate_kernel_raw(size);
 
         unsafe
-            {
-                let pages = round_up_to_nearest_page(size) / PAGE_SIZE;
+        {
+            let pages = round_up_to_nearest_page(size) / PAGE_SIZE;
 
-                for i in 0..pages {
-                    page_frame.map_page(physical_address + PAGE_SIZE * i, virtual_address + PAGE_SIZE * i, true);
-                }
+            for i in 0..pages {
+                page_frame.map_page(physical_address + PAGE_SIZE * i, virtual_address + PAGE_SIZE * i, true);
             }
+        }
 
         physical_address
     }

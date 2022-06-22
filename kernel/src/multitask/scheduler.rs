@@ -12,7 +12,7 @@ struct AssemblyInfo
     came_from_kernel: bool
 }
 
-pub(crate) struct Scheduler
+pub struct Scheduler
 {
     tasks: [Option<Task>; MAX_TASKS],
     number_of_tasks: usize,
@@ -21,7 +21,7 @@ pub(crate) struct Scheduler
     assembly_info: AssemblyInfo
 }
 
-pub(crate) static SCHEDULER: Lock<Scheduler> = Lock::new(Scheduler::default());
+pub static SCHEDULER: Lock<Scheduler> = Lock::new(Scheduler::default());
 const MAX_TASKS: usize = 32;
 
 impl Scheduler
@@ -62,6 +62,11 @@ impl Scheduler
     {
         self.tasks[self.number_of_tasks] = Some(task);
         self.number_of_tasks += 1;
+    }
+
+    pub fn get_current_task(&self) -> &Task
+    {
+        self.tasks[self.current_task].as_ref().unwrap()
     }
 
     const fn default() -> Self {

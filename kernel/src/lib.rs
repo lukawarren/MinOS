@@ -8,6 +8,7 @@ mod spinlock;
 mod interrupts;
 mod memory;
 mod multitask;
+mod syscalls;
 
 use arch::cpu as cpu;
 use core::panic::PanicInfo;
@@ -23,22 +24,24 @@ pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
     interrupts::init();
     interrupts::subscribe_to_irq(interrupts::IRQ_KEYBOARD, on_keyboard);
 
-    // Parse multiboot info
+    // Parse multiboot info and setup memory
     let multiboot_info = unsafe { multiboot2::load(multiboot2_header_pointer) }.unwrap();
-
-    // Setup memory
-    let (mut allocator, _) = memory::init(&multiboot_info);
+    let (mut allocator, page_frame) = memory::init(&multiboot_info);
 
     // Load task
-    let task = multitask::module::load_module(multiboot_info.module_tags().nth(0).unwrap(), &mut allocator);
+    let module = multiboot_info.module_tags().nth(0).unwrap();
+    let task = multitask::module::load_module(module, &mut allocator);
     multitask::add_task(task);
+
+    // Hand over allocator, etc to future syscalls
+    syscalls::init(allocator, page_frame);
 
     println!("Welcome to MinOS!");
     cpu::enable_interrupts();
     loop {}
 }
 
-pub fn on_keyboard()
+pub fn on_keyboard(_: &cpu::Registers)
 {
     let key = cpu::inb(0x60);
     print!("{}", key);

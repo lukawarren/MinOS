@@ -19,19 +19,10 @@ pub fn init(multiboot_info: &multiboot2::BootInformation) -> (PageAllocator, Pag
     unsafe
     {
         // Create allocator
-        let (allocator,
-            memory_end,
-            page_frame_address) = PageAllocator::create_root_allocator(&multiboot_info);
+        let (allocator, page_frame_address) = PageAllocator::create_root_allocator(&multiboot_info);
 
         // Create root paging frame
-        let mut kernel_frame = PageFrame::create_kernel_frame(page_frame_address);
-
-        // Identity map all pages for the kernel
-        let pages = memory_end / PAGE_SIZE;
-        for i in 0..pages
-        {
-            kernel_frame.map_page(i * PAGE_SIZE, i * PAGE_SIZE, false);
-        }
+        let kernel_frame = PageFrame::create_kernel_frame(page_frame_address);
 
         // Enable paging
         kernel_frame.load_to_cpu();
@@ -43,7 +34,7 @@ pub fn init(multiboot_info: &multiboot2::BootInformation) -> (PageAllocator, Pag
 
 pub fn create_user_page_frame(allocator: &mut PageAllocator) -> PageFrame
 {
-    let mut frame = paging::PageFrame::create_user_frame(allocator);
+    let mut frame = PageFrame::create_user_frame(allocator);
 
     // Map kernel into memory first, so interrupts and the like can run
     unsafe

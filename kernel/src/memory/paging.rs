@@ -46,12 +46,18 @@ impl PageTable
     fn set(&mut self, physical_address: usize, flags: PageFlags)
     {
         assert!(is_page_aligned(physical_address));
+        assert_eq!(self.is_set(), false);
         self.physical_address_with_flags = physical_address | flags.bits();
     }
 
     fn is_set(&self) -> bool
     {
         self.physical_address_with_flags != PageFlags::KERNEL_PAGE_DISABLED.bits()
+    }
+
+    fn is_user_readable(&self) -> bool
+    {
+        (self.physical_address_with_flags & PageFlags::USER_PAGE_READ_WRITE.bits()) == PageFlags::USER_PAGE_READ_WRITE.bits()
     }
 
     fn physical_address(&self) -> usize
@@ -105,15 +111,20 @@ impl PageFrame
         let directories = &mut *(physical_start_address as *mut [PageDirectory; PAGE_DIRECTORIES]);
         let tables = &mut *((physical_start_address + size_of::<PageDirectory>() * PAGE_DIRECTORIES) as *mut [PageTable; PAGE_TABLES * PAGE_DIRECTORIES]);
 
-        // Initialise page directories
+        // Initialise page directories (identity mapped)
         for i in 0..directories.len() {
             directories[i] = PageDirectory::new(&tables[i * PAGE_TABLES]);
         }
 
-        // Initialise page tables
-        for i in 0..tables.len() {
+        // Initialise page tables (identity mapped)
+        for i in 0..tables.len()
+        {
             tables[i] = PageTable::new();
+            tables[i].set(i * PAGE_SIZE, PageFlags::KERNEL_PAGE_READ_WRITE);
         }
+
+        // Didn't call normal mapping function so have to flush TLB manually
+        arch::flush_tlb();
 
         // Set cr3 globally for benefit of assembly
         let this = PageFrame { directories };
@@ -171,6 +182,26 @@ impl PageFrame
         arch::flush_tlb();
     }
 
+    /// Attempts to translate a user virtual address into a kernel virtual address (owned by this object),
+    /// but only if the referenced pages are user pages that are already mapped in
+    pub fn read_from_user_memory(&self, virtual_user_address: usize, size: usize, user_frame: &PageFrame) -> Option<usize>
+    {
+        // Check pages are valid, mapped user pages
+        let beginning = (virtual_user_address/ PAGE_SIZE) * PAGE_SIZE;
+        let end = round_up_to_nearest_page(virtual_user_address + size);
+        let pages = (end - beginning) / PAGE_SIZE;
+
+        for i in 0..pages
+        {
+            let page_table = unsafe { user_frame.get_table(virtual_user_address + i * PAGE_SIZE) };
+            if page_table.is_user_readable() == false { return None }
+        }
+
+        // Assume identity mapping, as does befit the kernel at this point in time
+        let physical_address = user_frame.virtual_address_to_physical(virtual_user_address);
+        Some(physical_address)
+    }
+
     pub unsafe fn load_to_cpu(&self)
     {
         arch::cpu::load_cr3(self.cr3());
@@ -197,7 +228,6 @@ impl PageFrame
     {
         let page_directory = virtual_address / DIRECTORY_SIZE;
         let page_table = (virtual_address / PAGE_SIZE) % PAGE_TABLES;
-
         let tables_address = (&mut *self.directories)[page_directory].physical_address(); // Assumes physical address to tables is also the virtual,
                                                                                           // because for now the kernel is identity mapped
 

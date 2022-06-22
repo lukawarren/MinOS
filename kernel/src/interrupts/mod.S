@@ -1,7 +1,10 @@
 section data
 
-exception_has_no_error_code:
-    db 0
+; Set by Rust paging code
+extern KERNEL_CR3
+
+exception_has_no_error_code: db 0
+interrupt_cr3_holder: dd 0
 
 section text
 
@@ -12,20 +15,39 @@ global blank_irq
 blank_irq:
     iret
 
+
 ; Generic interrupt handler
 %macro irq 1
 global irq_%1
 irq_%1:
-    pushad
 
+    ; Save cr3
+    push eax
+    mov eax, cr3
+    mov [interrupt_cr3_holder], eax
+
+    ; Load kernel cr3
+    mov eax, [KERNEL_CR3]
+    mov cr3, eax
+    pop eax
+
+    ; Run handler
+    pushad
     cld ; The SysV ABI requires df be clear :-)
     push dword %1
     call on_interrupt
     add esp, 4
-
     popad
+
+    ; Restore cr3
+    push eax
+    mov eax, [interrupt_cr3_holder]
+    mov cr3, eax
+    pop eax
+
     iret
 %endmacro
+
 
 ; Generic exception handler
 %macro exception 2
@@ -39,8 +61,9 @@ exception_%1:
     add esp, 4
 
 exception_handle_%1:
-
-    ; Push error code, call Rust, then half for now
+    ; Push error code and registers, call
+    ; Rust, then half for now
+    pushad
     cld ; see above
     push %1
     call on_exception
@@ -48,6 +71,7 @@ exception_handle_%1:
 
     iret
 %endmacro
+
 
 irq 1
 irq 2
@@ -64,6 +88,7 @@ irq 12
 irq 13
 irq 14
 irq 15
+irq 80
 
 exception 0,  0
 exception 1,  0

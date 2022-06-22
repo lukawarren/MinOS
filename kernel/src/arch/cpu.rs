@@ -12,6 +12,21 @@ pub const KERNEL_DATA_SEGMENT: u32 = 0x10;
 pub const USER_CODE_SEGMENT: u32 = 0x18 | 3;
 pub const USER_DATA_SEGMENT: u32 = 0x20 | 3;
 
+/// As pushed by the "pushad" instruction
+#[repr(C, packed)]
+#[derive(Clone, Copy, Debug)]
+pub struct Registers
+{
+    pub edi: u32,
+    pub esi: u32,
+    pub ebp: u32,
+    pub esp: u32,
+    pub ebx: u32,
+    pub edx: u32,
+    pub ecx: u32,
+    pub eax: u32
+}
+
 pub fn init_cpu()
 {
     unsafe
@@ -57,8 +72,5 @@ pub fn enable_interrupts()
 
 pub fn load_cr3(address: usize)
 {
-    unsafe
-    {
-        asm!("mov cr3, {}", in(reg) address);
-    }
+    unsafe { asm!("mov cr3, {}", in(reg) address); }
 }

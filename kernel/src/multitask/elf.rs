@@ -195,24 +195,8 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
                     ptr::write_bytes(dest as *mut u8, 0, section_header.sh_size as usize);
                 },
 
-                SectionHeaderType::ShtProgBits =>
-                {
-                    let source = address + section_header.sh_offset as usize;
-
-                    // It may actually be so that the pages specified here have already been mapped
-                    // above. However, the code below does not care, because it shouldn't.
-
-                    let dest = allocator.allocate_user_raw_with_address(
-                        section_header.sh_addr as usize,
-                        section_header.sh_size as usize,
-                        frame
-                    );
-
-                    ptr::copy_nonoverlapping(
-                        source as *mut u8,
-                        dest as *mut u8,
-                        section_header.sh_size as usize
-                    );
+                SectionHeaderType::ShtProgBits => {
+                    // Already loaded by the program headers (luckily)... I think (well it works for now)
                 }
 
                 _ => todo!("{:#?}", section_header.sh_type)
@@ -222,6 +206,6 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
         else if flags.contains(SectionHeaderFlags::SHF_WRITE) { todo!(); }
     }
 
-    // Return entrypoint - TODO: rectify
-    0x40000000 + header.e_entry as usize
+    // Return entrypoint
+    header.e_entry as usize
 }
