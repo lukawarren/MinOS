@@ -6,10 +6,11 @@ ASSEMBLY_SOURCES := $(wildcard src/*/*.S) $(wildcard src/*.S)
 ASSEMBLY_OBJECTS := $(patsubst %.S, %.o, $(ASSEMBLY_SOURCES))
 
 LINKER_FILE = src/linker.ld
+LINKER = ../toolchain/prefix/bin/i686-elf-ld
 
 all: $(ASSEMBLY_OBJECTS)
 	cargo build
-	ld -m elf_i386 -o target/kernel.bin -T ${LINKER_FILE} ${ASSEMBLY_OBJECTS} $(RUST_LIBRARY)
+	${LINKER} -o target/kernel.bin -T ${LINKER_FILE} ${ASSEMBLY_OBJECTS} $(RUST_LIBRARY)
 	rm ${ASSEMBLY_OBJECTS}
 
 $(ASSEMBLY_OBJECTS): $(ASSEMBLY_SOURCES)

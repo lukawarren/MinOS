@@ -1,4 +1,4 @@
-#![allow(unaligned_references, dead_code)]
+#![allow(dead_code)]
 
 use crate::memory::allocator::PageAllocator;
 use crate::memory::paging::PageFrame;
@@ -59,12 +59,13 @@ const EM_386: Elf32Half = 3;
 
 // For e_type
 #[repr(u16)]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 enum ElfType
 {
     ETNone  = 0, // unknown
     ETRel   = 1, // relocatable file
-    ETExec  = 2  // executable file
+    ETExec  = 2, // executable file
+    EtDyn   = 3  // shared object file
 }
 
 // For p_type
@@ -91,7 +92,7 @@ struct ElfProgramHeader
 
 // For sh_type
 #[repr(u32)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum SectionHeaderType
 {
     ShtNull	     = 0,  // null section
@@ -140,12 +141,16 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
     assert_eq!(header.e_ident[ElfIdent::EIMag2 as usize],       ELF_MAGIC_HEADER[2]);
     assert_eq!(header.e_ident[ElfIdent::EIMag3 as usize],       ELF_MAGIC_HEADER[3]);
 
+    // Fix unaligned references
+    let header_e_machine = header.e_machine;
+    let header_e_type = header.e_type;
+
     // Check it's compatible
     assert_eq!(header.e_ident[ElfIdent::EIClass as usize],      ELF_CLASS_32);
     assert_eq!(header.e_ident[ElfIdent::EIData as usize],       ELF_DATA_2_LSB);
     assert_eq!(header.e_ident[ElfIdent::EIVersion as usize],    EV_CURRENT);
-    assert_eq!(header.e_machine,                                EM_386);
-    assert_eq!(header.e_type,                                   ElfType::ETExec);
+    assert_eq!(header_e_machine,                                EM_386);
+    assert_eq!(header_e_type,                                   ElfType::ETExec);
 
     // Load program headers
     for i in 0..header.e_phnum as usize
@@ -181,7 +186,9 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
 
         if section_header.sh_size > 0 && flags.contains(SectionHeaderFlags::SHF_ALLOC)
         {
-            match section_header.sh_type
+            let section_type = section_header.sh_type;
+
+            match section_type
             {
                 // BSS; allocate memory and zero it out
                 SectionHeaderType::ShtNoBits =>
@@ -199,7 +206,7 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
                     // Already loaded by the program headers (luckily)... I think (well it works for now)
                 }
 
-                _ => todo!("{:#?}", section_header.sh_type)
+                _ => todo!("{:#?}", section_type)
             }
         }
 

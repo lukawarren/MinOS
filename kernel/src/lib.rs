@@ -28,10 +28,13 @@ pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
     let multiboot_info = unsafe { multiboot2::load(multiboot2_header_pointer) }.unwrap();
     let (mut allocator, page_frame) = memory::init(&multiboot_info);
 
-    // Load task
-    let module = multiboot_info.module_tags().nth(0).unwrap();
-    let task = multitask::module::load_module(module, &mut allocator);
-    multitask::add_task(task);
+    // Load tasks
+    for module in multiboot_info.module_tags()
+    {
+        println!("[Multitask] Loading module {}", module.cmdline());
+        let task = multitask::module::load_module(module, &mut allocator);
+        multitask::add_task(task);
+    }
 
     // Hand over allocator, etc to future syscalls
     syscalls::init(allocator, page_frame);

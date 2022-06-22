@@ -38,8 +38,6 @@ pub fn highest_module_address(multiboot_info: &BootInformation) -> usize
 
 pub fn load_module(module: &ModuleTag, allocator: &mut memory::allocator::PageAllocator) -> task::Task
 {
-    println!("[Multitask] Loading module {}", module.cmdline());
-
     // Setup memory
     let mut page_frame = memory::create_user_page_frame(allocator);
 
