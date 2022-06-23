@@ -15,5 +15,5 @@ build/main.o: main.c
 	${PREFIX}-gcc -c main.c -o build/main.o ${CFLAGS}
 
 clean:
-	rm -r build
+	rm -rf build
 	rm -f ${OUTPUT}
