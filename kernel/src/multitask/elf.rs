@@ -92,7 +92,7 @@ struct ElfProgramHeader
 
 // For sh_type
 #[repr(u32)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 enum SectionHeaderType
 {
     ShtNull	     = 0,  // null section
@@ -102,6 +102,7 @@ enum SectionHeaderType
     ShtRela	     = 4,  // relocation (with addend)
     ShtNoBits	 = 8,  // not present in file
     ShtRel		 = 9,  // relocation (no addend)
+    ShtDynSym    = 11, // dynamic linking symbols
     ShtFiniArray = 15, // array of destructors
 }
 
@@ -206,7 +207,7 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
                     // Already loaded by the program headers (luckily)... I think (well it works for now)
                 }
 
-                _ => todo!("{:#?}", section_type)
+                _ => todo!("{}", section_type as usize)
             }
         }
 
