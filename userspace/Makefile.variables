@@ -2,9 +2,9 @@ LINKER_FILE = ../linker.ld
 PREFIX = ../../toolchain/prefix/bin/i686-elf
 
 LIBGCC = ../../toolchain/prefix/lib/gcc/i686-elf/12.1.0/libgcc.a
-MINLIBC = ../minlibc/build/minlibc.a
-MINLIBC_INCLUDE = ../minlibc/include
+MINLIBC_INCLUDE = -I ../minlibc/build/include
+MINLIBC = ../minlibc/build/minlibc.o
 
-RAW_CFLAGS = -ffreestanding -nostdlib -O2 -Wall -Wextra
-CFLAGS = -I ${MINLIBC_INCLUDE} ${RAW_CFLAGS}
+RAW_CFLAGS = -ffreestanding -nostdlib -O2
+CFLAGS = ${MINLIBC_INCLUDE} ${RAW_CFLAGS} -Wall -Wextra
 LINK_FLAGS = -nostdlib -O2 -L ${LIBGCC} ${MINLIBC}

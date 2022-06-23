@@ -6,7 +6,9 @@ bochslog.txt
 kernel/target
 isodir/boot/kernel.bin
 isodir/boot/*.module
+
 userspace/hello-world-c/build
+userspace/minlibc/build
 
 .idea
 .vscode
