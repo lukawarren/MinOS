@@ -19,11 +19,13 @@ ${PREFIX}/bin/i686-elf-ld:
 
 # gcc
 ${PREFIX}/bin/i686-elf-gcc:
-	#curl http://ftp.gnu.org/gnu/gcc/${DOWNLOAD_GCC}/${DOWNLOAD_GCC}.tar.gz --output gcc.tar.gz
-	#tar -xzf gcc.tar.gz
+	curl http://ftp.gnu.org/gnu/gcc/${DOWNLOAD_GCC}/${DOWNLOAD_GCC}.tar.gz --output gcc.tar.gz
+	tar -xzf gcc.tar.gz
+	cd ${DOWNLOAD_GCC} && ./contrib/download_prerequisites
 	mkdir -p ${PREFIX}
 	mkdir -p build/gcc
 	cd build/gcc &&\
+	../../${DOWNLOAD_GCC}/configure --target=${TARGET} --prefix=${PREFIX} --disable-multilib --disable-nls --enable-language=c,c++ --without-headers &&\
 	make -j ${THREADS} all-gcc &&\
 	make -j ${THREADS} all-target-libgcc &&\
 	make -j ${THREADS} install-gcc &&\

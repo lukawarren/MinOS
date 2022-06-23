@@ -1,3 +1,5 @@
+UNAME := $(shell uname)
+
 all:
 	# Toolchain
 	cd toolchain && make all
@@ -11,8 +13,12 @@ all:
 	cd userspace/hello-world && make
 	cd userspace/hello-world-c && make
 
-	# ISO
+	# ISO - GRUB needs the -d flag, unless compiled from source on MacOS (for me at least)
+ifeq ($(UNAME), Darwin)
+	grub-mkrescue -o MinOS.iso isodir/
+else
 	grub-mkrescue -d /usr/lib/grub/i386-pc -o MinOS.iso isodir/
+endif
 
 run: all
 	qemu-system-i386 -cdrom MinOS.iso -serial stdio -vga std
@@ -33,3 +39,4 @@ clean-including-toolchain:
 	cd kernel && make clean
 	cd userspace/hello-world && make clean
 	cd userspace/hello-world-c && make clean
+

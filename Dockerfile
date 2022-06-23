@@ -5,7 +5,7 @@ RUN apt-get update -y &&\
 	apt-get install -y nasm binutils make xorriso grub-common grub-pc-bin
 
 # Install toolchain compile dependencies
-RUN apt-get install -y gcc g++ libgmp-dev libmpfr-dev libmpc-dev
+RUN apt-get install -y gcc g++
 
 # Install Rust dependencies
 RUN apt-get install -y curl && \

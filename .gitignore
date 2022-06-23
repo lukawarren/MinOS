@@ -1,5 +1,7 @@
 MinOS.iso
 bochs/
+bochs
+bochslog.txt
 
 kernel/target
 isodir/boot/kernel.bin
@@ -17,4 +19,8 @@ bochs.sh
 .DS_Store
 
 cargo/
+
 toolchain/prefix
+toolchain/bin*
+toolchain/gcc*
+toolchain/build
