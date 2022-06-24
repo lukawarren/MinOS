@@ -16,9 +16,37 @@
 #include <stdint.h>
 void * sbrk( intptr_t );
 
-/* MinOS */
+/* MinOS start */
+#include <stddef.h> /* for size_t */
+#include <string.h> /* for memset */
+#include <errno.h> /* for errno */
+
+#define LACKS_UNISTD_H
+#define LACKS_FCNTL_H
+#define LACKS_SYS_PARAM_H
+#define LACKS_SYS_MMAN_H
+#define LACKS_STRINGS_H
+#define LACKS_STRING_H
+#define LACKS_SYS_TYPES_H
+#define LACKS_ERRNO_H
+#define LACKS_STDLIB_H
+#define LACKS_SCHED_H
+#define LACKS_TIME_H
 #define HAVE_MORECORE 0
 #define HAVE_MMAP 1
+
+#define PROT_READ 0x1
+#define PROT_WRITE 0x2
+#define MAP_SHARED 0x01
+#define MAP_PRIVATE 0x02
+#define O_RDWR 0x2
+
+void *mmap(void* addr, size_t length, int prot, int flags, int fd, long int offset);
+int munmap(void* addr, size_t length);
+int open(const char* pathname, int flags);
+void abort(void);
+
+/* MinOS end */
 
 #ifndef REGTEST
 

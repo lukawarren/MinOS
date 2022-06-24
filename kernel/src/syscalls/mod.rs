@@ -26,7 +26,7 @@ fn on_syscall(registers: &cpu::Registers)
         0 => // k_error(char const* message, size_t len)
         {
             print_from_syscall(kernel, task, registers);
-            panic!();
+            panic!("see above");
         },
 
         1 => // print_string(char const* message, size_t len)
