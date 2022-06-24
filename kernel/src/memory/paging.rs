@@ -160,8 +160,8 @@ impl PageFrame
         // The physical location of the page table / directory represents the virtual address mapped,
         // and the physical address inside a page table itself represents the physical address mapped
 
-        assert!(is_page_aligned(physical_address));
-        assert!(is_page_aligned(virtual_address));
+        assert!(is_page_aligned(physical_address), "{:#x} is not aligned", virtual_address);
+        assert!(is_page_aligned(virtual_address), "{:#x} is not aligned", virtual_address);
 
         let flags = if user_page { PageFlags::USER_PAGE_READ_WRITE }
                     else { PageFlags::KERNEL_PAGE_READ_WRITE };

@@ -31,7 +31,7 @@ int vfprintf( struct _PDCLIB_file_t * _PDCLIB_restrict stream, const char * _PDC
     status.stream = stream;
 
     _PDCLIB_LOCK( stream->mtx );
-
+    
     if ( _PDCLIB_prepwrite( stream ) == EOF )
     {
         _PDCLIB_UNLOCK( stream->mtx );

@@ -2,7 +2,7 @@
 
 int _start()
 {
-    printf("Hello world from C!");
+    printf("Hello world from C!\n");
     while (1) {}
     return 0;
 }

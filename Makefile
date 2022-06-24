@@ -11,7 +11,6 @@ all:
 
 	# User programs
 	cd userspace/minlibc && make
-	cd userspace/libposix && make
 	cd userspace/hello-world && make
 	cd userspace/hello-world-c && make
 
@@ -31,7 +30,6 @@ clean:
 	rm -f isodir/boot/*.module
 	cd kernel && make clean
 	cd userspace/minlibc && make clean
-	cd userspace/libposix && make clean
 	cd userspace/hello-world && make clean
 	cd userspace/hello-world-c && make clean
 
@@ -42,7 +40,6 @@ clean-including-toolchain:
 	cd toolchain && make clean
 	cd kernel && make clean
 	cd userspace/minlibc && make clean
-	cd userspace/libposix && make clean
 	cd userspace/hello-world && make clean
 	cd userspace/hello-world-c && make clean
 

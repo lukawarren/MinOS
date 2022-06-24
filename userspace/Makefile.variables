@@ -3,9 +3,8 @@ PREFIX = ../../toolchain/prefix/bin/i686-elf
 LIBGCC = ../../toolchain/prefix/lib/gcc/i686-elf/12.1.0/libgcc.a
 
 MINLIBC_INCLUDE = -I ../minlibc/include
-MINLIBC = ../minlibc/minlibc.o
-LIBPOSIX = ../libposix/build/libposix.o
+MINLIBC = ../minlibc/minlibc.a
 
-RAW_CFLAGS = -ffreestanding -nostdlib -O2
+RAW_CFLAGS = -ffreestanding -nostdlib -O0
 CFLAGS = ${MINLIBC_INCLUDE} ${RAW_CFLAGS} -Wall -Wextra
-LINK_FLAGS = -nostdlib -O2 ${MINLIBC} ${LIBPOSIX} ${LIBGCC}
+LINK_FLAGS = -nostdlib -O2 ${MINLIBC} ${LIBGCC}

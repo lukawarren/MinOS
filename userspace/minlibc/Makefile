@@ -1,9 +1,9 @@
 include ../Makefile.variables
 
-OUTPUT := minlibc.o
+OUTPUT := minlibc.a
 SRCDIR := functions
-INCLUDES := -I ./include
-SOURCES := $(shell find $(SRCDIR) -name '*.c' | grep -v _dlmalloc)
+INCLUDES := -I ./include -I ../syscalls/
+SOURCES := $(shell find $(SRCDIR) -name '*.c' | grep -v _dlmalloc) minos_posix_layer.c
 OBJECTS := $(SOURCES:%.c=%.o)
 
 FLAGS := -D_PDCLIB_BUILD -D_PDCLIB_STATIC_DEFINE

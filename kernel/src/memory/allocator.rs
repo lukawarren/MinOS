@@ -97,12 +97,6 @@ impl PageAllocator
     {
         let size_aligned = round_up_to_nearest_page(size);
         let address = self.page_array.allocate_pages(size_aligned / PAGE_SIZE);
-
-        // Zero page out before returning
-        unsafe {
-            ptr::write_bytes(address as *mut u8, 0, size_aligned);
-        }
-
         address
     }
 

@@ -166,6 +166,9 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
             let file_size = program_header.p_filesz as usize;
             let mem_size = program_header.p_memsz as usize;
 
+            // The desired address may not be page aligned, and thus may overlap with other sections.
+            // However, the below function will indeed let us allocate the same physical address twice.
+            // As long as take care to allocate freely but only write to the bytes desired, we should be fine.
             let dest = allocator.allocate_user_raw_with_address(
                 program_header.p_vaddr as usize,
                 mem_size,
