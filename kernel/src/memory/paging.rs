@@ -46,7 +46,6 @@ impl PageTable
     fn set(&mut self, physical_address: usize, flags: PageFlags)
     {
         assert!(is_page_aligned(physical_address));
-        assert_eq!(self.is_set(), false);
         self.physical_address_with_flags = physical_address | flags.bits();
     }
 

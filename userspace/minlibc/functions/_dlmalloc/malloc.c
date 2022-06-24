@@ -16,6 +16,10 @@
 #include <stdint.h>
 void * sbrk( intptr_t );
 
+/* MinOS */
+#define HAVE_MORECORE 0
+#define HAVE_MMAP 1
+
 #ifndef REGTEST
 
 #include "_PDCLIB_config.h"

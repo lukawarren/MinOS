@@ -3,7 +3,7 @@ OUTPUT = ../../isodir/boot/${NAME}.module
 include ../Makefile.variables
 
 all: build/main.o
-	${PREFIX}-ld -o ${OUTPUT} -T ${LINKER_FILE} build/main.o ${LINK_FLAGS}
+	${PREFIX}-gcc -T ${LINKER_FILE} -o ${OUTPUT} build/main.o ${LINK_FLAGS}
 
 build/main.o: main.c
 	mkdir -p build

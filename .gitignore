@@ -9,6 +9,9 @@ isodir/boot/*.module
 
 userspace/hello-world-c/build
 userspace/minlibc/build
+userspace/minlibc/*/*/*.o
+userspace/minlibc/minlibc.o
+userspace/libposix/build
 
 .idea
 .vscode
