@@ -10,9 +10,7 @@ all:
 	cp target/kernel.bin ../isodir/boot/kernel.bin
 
 	# User programs
-	cd userspace/minlibc && make
-	cd userspace/hello-world && make
-	cd userspace/hello-world-c && make
+	cd userspace && make
 
 	# ISO - GRUB needs the -d flag, unless compiled from source on MacOS (for me at least)
 ifeq ($(UNAME), Darwin)
@@ -29,9 +27,7 @@ clean:
 	rm -f isodir/boot/kernel.bin
 	rm -f isodir/boot/*.module
 	cd kernel && make clean
-	cd userspace/minlibc && make clean
-	cd userspace/hello-world && make clean
-	cd userspace/hello-world-c && make clean
+	cd userspace && make clean
 
 clean-including-toolchain:
 	rm -f MinOS.iso
@@ -39,7 +35,5 @@ clean-including-toolchain:
 	rm -f isodir/boot/*.module
 	cd toolchain && make clean
 	cd kernel && make clean
-	cd userspace/minlibc && make clean
-	cd userspace/hello-world && make clean
-	cd userspace/hello-world-c && make clean
+	cd userspace && make clean
 
