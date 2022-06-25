@@ -1,7 +1,10 @@
+PREFIX = i686-elf
+PREFIX_DIR := $(shell pwd)/../../toolchain/prefix
+PREFIX_PATH = export PATH=$(PREFIX_DIR)/bin/:$$PATH
+
 LINKER_FILE = ../linker.ld
-PREFIX_DIR = ../../toolchain/prefix/bin
-PREFIX = $(PREFIX_DIR)/i686-elf
-LIBGCC = ../../toolchain/prefix/lib/gcc/i686-elf/12.1.0/libgcc.a
+
+LIBGCC = ${PREFIX_DIR}/lib/gcc/i686-elf/12.1.0/libgcc.a
 
 CFLAGS = -ffreestanding -nostdlib -O2 ${RAW_CFLAGS} -Wall -Wextra
 LINK_FLAGS = -nostdlib -O2 ${LIBGCC}

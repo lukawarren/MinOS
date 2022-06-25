@@ -9,10 +9,12 @@ isodir/boot/*.module
 
 userspace/hello-world-c/build
 
-userspace/minlibc/autoconf*
-userspace/minlibc/automake*
+userspace/minlibc/autotools
+userspace/minlibc/build
 userspace/minlibc/newlib-build
-userspace/minlibc/prefix
+userspace/minlibc/newlib-4.1.0/newlib/libc/sys/minos/Makefile.in
+userspace/minlibc/newlib-4.1.0/newlib/libc/sys/minos/aclocal.m4
+userspace/minlibc/newlib-4.1.0/newlib/libc/sys/minos/configure
 
 .idea
 .vscode
