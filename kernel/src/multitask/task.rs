@@ -11,7 +11,9 @@ const TASK_STACK_ENTRIES: usize = TASK_STACK_SIZE / core::mem::size_of::<usize>(
 pub struct Task
 {
     pub stack_address: usize,
-    pub page_frame: paging::PageFrame
+    pub page_frame: paging::PageFrame,
+    pub heap_size: usize, // For kernel's version of sbrk
+    pub heap_start: usize // For kernel's version of sbrk
 }
 
 struct Stack
@@ -77,7 +79,9 @@ impl Task
 
         Task {
             page_frame: frame,
-            stack_address: (stack as *const _) as usize + stack_pointer * mem::size_of::<usize>()
+            stack_address: (stack as *const _) as usize + stack_pointer * mem::size_of::<usize>(),
+            heap_size: 0,
+            heap_start: paging::USER_MEMORY_OFFSET
         }
     }
 }

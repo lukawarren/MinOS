@@ -5,7 +5,7 @@ OUTPUT = ../../isodir/boot/$(NAME).module
 
 all: $(OUTPUT)
 
-$(OUTPUT): src/main.c
+$(OUTPUT): src/main.c $(LIB_SYSCALLS)
 	mkdir -p build
 	$(CC) -o build/main.o -c src/main.c $(CFLAGS)
 	$(LD) -T ../linker.ld -o $(OUTPUT) build/main.o $(LINK_FLAGS)

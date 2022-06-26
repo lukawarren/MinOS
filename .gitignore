@@ -8,6 +8,7 @@ isodir/boot/kernel.bin
 isodir/boot/*.module
 
 userspace/hello-world/build
+userspace/cpu-idle/*.o
 
 userspace/minlibc/autotools
 userspace/minlibc/build

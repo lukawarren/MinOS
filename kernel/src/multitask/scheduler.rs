@@ -27,7 +27,7 @@ const MAX_TASKS: usize = 32;
 impl Scheduler
 {
     #[no_mangle]
-    extern "C" fn on_schedule_interrupt() -> usize
+    pub extern "C" fn change_tasks(came_from_interrupt: bool) -> usize
     {
         let this = SCHEDULER.lock();
         assert!(this.number_of_tasks > 0);
@@ -39,9 +39,11 @@ impl Scheduler
             this.current_task = 0;
         }
 
-        // End interrupt
-        pit::reload();
-        pic::end_interrupt(0);
+        // End interrupt if need be (may have been called from a syscall)
+        if came_from_interrupt {
+            pit::reload();
+            pic::end_interrupt(0);
+        }
 
         // Return info for assembly - if this is the first time calling the PIT interrupt, we're
         // coming from the kernel, so we don't have an old task
@@ -64,9 +66,19 @@ impl Scheduler
         self.number_of_tasks += 1;
     }
 
-    pub fn get_current_task(&self) -> &Task
+    pub fn remove_current_task(&mut self)
     {
-        self.tasks[self.current_task].as_ref().unwrap()
+        // Move all elements above in the array down by one
+        for i in self.current_task..self.number_of_tasks-1 {
+            self.tasks[i] = self.tasks[i+1];
+        }
+
+        self.number_of_tasks -= 1;
+    }
+
+    pub fn get_current_task(&mut self) -> &mut Task
+    {
+        self.tasks[self.current_task].as_mut().unwrap()
     }
 
     const fn default() -> Self {

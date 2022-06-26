@@ -1,6 +1,5 @@
 use multiboot2::{BootInformation, ModuleTag};
 use crate::memory;
-use crate::println;
 use super::task;
 use super::elf;
 

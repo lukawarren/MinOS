@@ -166,9 +166,6 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
             let file_size = program_header.p_filesz as usize;
             let mem_size = program_header.p_memsz as usize;
 
-            // The desired address may not be page aligned, and thus may overlap with other sections.
-            // However, the below function will indeed let us allocate the same physical address twice.
-            // As long as take care to allocate freely but only write to the bytes desired, we should be fine.
             let dest = allocator.allocate_user_raw_with_address(
                 program_header.p_vaddr as usize,
                 mem_size,
@@ -194,15 +191,10 @@ pub unsafe fn load_elf_file(address: usize, allocator: &mut PageAllocator, frame
 
             match section_type
             {
-                // BSS; allocate memory and zero it out
+                // BSS; zero out memory
                 SectionHeaderType::ShtNoBits =>
                 {
-                    let dest = allocator.allocate_user_raw_with_address(
-                        section_header.sh_addr as usize,
-                        section_header.sh_size as usize,
-                        frame
-                    );
-
+                    let dest = frame.virtual_address_to_physical(section_header.sh_addr as usize);
                     ptr::write_bytes(dest as *mut u8, 0, section_header.sh_size as usize);
                 },
 

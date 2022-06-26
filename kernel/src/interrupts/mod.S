@@ -3,8 +3,12 @@ section data
 ; Set by Rust paging code
 extern KERNEL_CR3
 
-exception_has_no_error_code: db 0
+; Global because used by
+; syscalls too
+global interrupt_cr3_holder
 interrupt_cr3_holder: dd 0
+
+exception_has_no_error_code: db 0
 
 section text
 
@@ -88,7 +92,6 @@ irq 12
 irq 13
 irq 14
 irq 15
-irq 80
 
 exception 0,  0
 exception 1,  0

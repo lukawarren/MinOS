@@ -92,7 +92,8 @@ pub fn subscribe_to_irq(irq: u32, function: fn(&cpu::Registers))
     let index = irq as usize;
 
     assert_eq!(index >= handlers.len(), false);
-    assert_ne!(index, 0); // PIT handled separately
+    assert_ne!(index, 0);  // PIT handled separately
+    assert_ne!(index, 80); // Syscalls handled separately
 
     let _ = handlers[index].insert(function);
 

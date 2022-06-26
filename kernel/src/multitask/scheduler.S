@@ -26,7 +26,7 @@ assembly_info_address: dd 0
 
 section text
 
-extern on_schedule_interrupt
+extern change_tasks
 
 global on_pit_interrupt
 on_pit_interrupt:
@@ -51,9 +51,11 @@ on_pit_interrupt:
 
     ; Call Rust code
     pushad
+    push dword 1
     cld ; df needs to be clear as per the SysV ABI
-    call on_schedule_interrupt ; returns value into eax
+    call change_tasks ; returns value into eax
     mov [assembly_info_address], eax
+    add esp, 4
     popad
 
     ; Load assembly_info_address and
@@ -107,6 +109,7 @@ preserve_old_task:
     mov eax, [eax + 4]
     mov [eax], esp
 
+extern load_new_task ; used by syscalls
 load_new_task:
 
     ; Load "new_stack_address"

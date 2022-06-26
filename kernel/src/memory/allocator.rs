@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::paging::{ PageFrame, PAGE_SIZE, is_page_aligned, round_up_to_nearest_page };
+use super::paging::{ PageFrame, PAGE_SIZE, USER_MEMORY_OFFSET, is_page_aligned, round_up_to_nearest_page };
 use super::page_array::PageArray;
 use multiboot2::{BootInformation, MemoryArea, MemoryAreaType};
 use crate::multitask::module;
@@ -135,8 +135,8 @@ impl PageAllocator
         physical_address
     }
 
-    /// Similar to allocate_kernel_raw, though automatically casts to desired type,
-    /// and does not manually zero-out memory, instead electing to call T::default()
+    /// Similar to allocate_kernel_raw, though automatically casts to desired type.
+    /// Does not manually zero-out memory, instead electing to call T::default()
     pub fn allocate_kernel<T: Default>(&mut self) -> &mut T
     {
         self.create_object_at_address::<T>().0
@@ -157,6 +157,28 @@ impl PageAllocator
         }
 
         object
+    }
+
+    pub fn deallocate_user(&mut self, virtual_address: usize, size: usize, page_frame: &mut PageFrame)
+    {
+        // Make sure it's not kernel memory
+        assert!(virtual_address > USER_MEMORY_OFFSET);
+        let size_aligned = round_up_to_nearest_page(size);
+        let pages = size_aligned / PAGE_SIZE;
+
+        // Free from allocator
+        let physical_address = page_frame.virtual_address_to_physical(virtual_address);
+        self.page_array.free_pages(physical_address, pages);
+
+        // Unmap from page frame
+        for i in 0..pages {
+            unsafe { page_frame.unmap_page(virtual_address + i * PAGE_SIZE); }
+        }
+
+        // Zero out memory for security
+        unsafe {
+            ptr::write_bytes(physical_address as *mut u8, 0, size_aligned);
+        }
     }
 
     /// Returns physical address

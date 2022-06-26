@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #include "syscalls.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -10,6 +13,7 @@
 #define STDIN  0
 #define STDOUT 1
 #define STDERR 2
+#define IS_STD_OUTPUT(x) (x == STDOUT || x == STDIN || x == STDERR)
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -27,21 +31,43 @@
 }
 
 // Processes
-void _exit() STUB_HANG(__LINE__)
+void _exit()
+{
+    k_exit();
+}
+
 int kill(int pid, int sig) STUB_HANG(__LINE__)
 int getpid() STUB(__LINE__)
 
 // Files
 int open(const char *name, int flags, ...) STUB(__LINE__)
-int read(int file, char *ptr, int len) STUB(__LINE__)
-int write(int file, char *ptr, int len) STUB(__LINE__)
-int close(int file) STUB(__LINE__)
-int lseek(int file, int ptr, int dir) STUB(__LINE__)
-int isatty(int file) STUB(__LINE__)
+
+int read(int fd, char *ptr, int len) STUB(__LINE__)
+
+int write(int fd, char *ptr, int len)
+{
+    if (IS_STD_OUTPUT(fd)) k_print_string(ptr, len);
+    else STUB(__LINE__)
+    return len;
+}
+
+int close(int fd)
+{
+    if (!IS_STD_OUTPUT(fd)) STUB(__LINE__)
+    return 0;
+}
+
+int lseek(int fd, int ptr, int dir) STUB(__LINE__)
+
+int isatty(int fd)
+{
+    return IS_STD_OUTPUT(fd);
+}
+
 int fstat(int fd, struct stat* buf)
 {
     // Character device for stdout, etc
-    if (fd == STDOUT || fd == STDIN || fd == STDERR) buf->st_mode = S_IFCHR;
+    if (IS_STD_OUTPUT(fd)) buf->st_mode = S_IFCHR;
     else STUB(__LINE__)
 
     return 0;
@@ -49,4 +75,10 @@ int fstat(int fd, struct stat* buf)
 
 
 // Memory
-caddr_t sbrk(int incr) STUB(__LINE__)
+caddr_t sbrk(int incr)
+{
+    if (incr >= 0) return (caddr_t) k_increase_heap((size_t)incr);
+    else return (caddr_t) k_decrease_heap((size_t)incr);
+}
+
+#pragma GCC diagnostic pop

@@ -2,11 +2,12 @@
 
 use bitflags::bitflags;
 use core::mem::size_of;
-use crate::arch;
 use super::allocator::PageAllocator;
+use crate::arch;
 
 pub const PAGE_SIZE: usize = 4096;
 pub const MAX_PAGES: usize = 0x100000;
+pub const USER_MEMORY_OFFSET: usize = 0x40000000;
 
 const PAGE_TABLES: usize = 1024;
 const PAGE_DIRECTORIES: usize = 1024;
@@ -46,6 +47,8 @@ impl PageTable
     fn set(&mut self, physical_address: usize, flags: PageFlags)
     {
         assert!(is_page_aligned(physical_address));
+        assert!(!self.is_set());
+
         self.physical_address_with_flags = physical_address | flags.bits();
     }
 
