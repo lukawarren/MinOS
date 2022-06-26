@@ -1,20 +1,15 @@
+include ../Makefile.variables
+
 NAME = hello-world
-OUTPUT = ../../isodir/boot/${NAME}.module
+OUTPUT = ../../isodir/boot/$(NAME).module
 
-ASSEMBLER = nasm
-ASSEMBLER_FLAGS = -f elf32
-ASSEMBLY_SOURCES := $(wildcard */*.S) $(wildcard *.S)
-ASSEMBLY_OBJECTS := $(patsubst %.S, %.o, $(ASSEMBLY_SOURCES))
+all: $(OUTPUT)
 
-PREFIX = ../../toolchain/prefix/bin/i686-elf
-LINKER_FILE = ../linker.ld
-
-all: $(ASSEMBLY_OBJECTS)
-	${PREFIX}-ld -o ${OUTPUT} -T ${LINKER_FILE} ${ASSEMBLY_OBJECTS}
-	rm ${ASSEMBLY_OBJECTS}
-
-$(ASSEMBLY_OBJECTS): $(ASSEMBLY_SOURCES)
-	$(ASSEMBLER) $(ASSEMBLER_FLAGS) $(patsubst %.o, %.S, $@) -o $@
+$(OUTPUT): src/main.c
+	mkdir -p build
+	$(CC) -o build/main.o -c src/main.c $(CFLAGS)
+	$(LD) -T ../linker.ld -o $(OUTPUT) build/main.o $(LINK_FLAGS)
 
 clean:
-	rm -f ${OUTPUT}
+	rm -rf build
+	rm -f $(OUTPUT)

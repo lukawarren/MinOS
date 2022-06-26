@@ -2,9 +2,14 @@ PREFIX = i686-elf
 PREFIX_DIR := $(shell pwd)/../../toolchain/prefix
 PREFIX_PATH = export PATH=$(PREFIX_DIR)/bin/:$$PATH
 
+CC = $(PREFIX_PATH) && $(PREFIX)-gcc
+LD = $(PREFIX_PATH) && $(PREFIX)-ld
+
 LINKER_FILE = ../linker.ld
 
 LIBGCC = ${PREFIX_DIR}/lib/gcc/i686-elf/12.1.0/libgcc.a
+LIB_C = ../minlibc/build/i686-minos
+LIB_SYSCALLS = ../syscalls/build/syscalls.a
 
-CFLAGS = -ffreestanding -nostdlib -O2 ${RAW_CFLAGS} -Wall -Wextra
-LINK_FLAGS = -nostdlib -O2 ${LIBGCC}
+CFLAGS = -ffreestanding -nostdlib -O2 -Wall -Wextra -I $(LIB_C)/include
+LINK_FLAGS = -nostdlib -O2 $(LIB_C)/lib/libm.a $(LIB_C)/lib/libc.a $(LIB_C)/lib/libg.a $(LIB_SYSCALLS) $(LIBGCC)

@@ -1,4 +1,5 @@
 ENTRY(_start)
+STARTUP(../minlibc/build/i686-minos/lib/crt0.o)
 OUTPUT_FORMAT(elf32-i386)
 
 SECTIONS
@@ -37,4 +38,18 @@ SECTIONS
         *(COMMON)
         *(.bss) *(.bss.*)
     }
+
+    .init_array BLOCK(4K) : ALIGN(4K)
+	{
+		__init_array_start = .;
+		KEEP (*(.ctor*))
+		__init_array_end = .;
+	}
+
+	.fini_array BLOCK(4K) : ALIGN(4K)
+	{
+		__fini_array_start = .;
+		KEEP (*(.dtor*))
+		__fini_array_end = .;
+	}
 }

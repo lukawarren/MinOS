@@ -7,7 +7,7 @@ kernel/target
 isodir/boot/kernel.bin
 isodir/boot/*.module
 
-userspace/hello-world-c/build
+userspace/hello-world/build
 
 userspace/minlibc/autotools
 userspace/minlibc/build
@@ -15,6 +15,8 @@ userspace/minlibc/newlib-build
 userspace/minlibc/newlib-4.1.0/newlib/libc/sys/minos/Makefile.in
 userspace/minlibc/newlib-4.1.0/newlib/libc/sys/minos/aclocal.m4
 userspace/minlibc/newlib-4.1.0/newlib/libc/sys/minos/configure
+
+userspace/syscalls/build
 
 .idea
 .vscode

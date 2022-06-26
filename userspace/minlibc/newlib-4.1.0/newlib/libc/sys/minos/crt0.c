@@ -1,12 +1,17 @@
 #include <fcntl.h>
- 
+#include <stdlib.h>
+
 extern void exit(int code);
-extern int main ();
- 
+extern int main();
+
+/* C++ global constructors, etc */
+extern void __libc_init_array();
+extern void __libc_fini_array();
+
 void _start()
 {
-    // TODO: argc and argv, if needed
-    _init_signal();
+    __libc_init_array();
     int ex = main();
+    __libc_fini_array();
     exit(ex);
 }

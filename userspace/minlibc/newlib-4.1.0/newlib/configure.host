@@ -379,9 +379,6 @@ case "${host_cpu}" in
 	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
 	newlib_cflags="${newlib_cflags} -ffunction-sections -fdata-sections "
 	;;
-  i[3-7]86-*-minos*)
-	sys_dir=minos
-	;;
   *)
 	echo '***' "Newlib does not support CPU ${host_cpu}" 1>&2
 	exit 1
@@ -636,6 +633,14 @@ case "${host}" in
   z8k-*-coff)
 	sys_dir=z8ksim
 	;;
+  i[3-7]86-*-minos*)
+	sys_dir=minos
+	have_crt0="yes"
+	default_newlib_io_c99_formats="yes"
+	default_newlib_io_long_double="yes"
+	default_newlib_io_long_long="yes"
+	default_newlib_io_pos_args="yes"
+	newlib_cflags="${newlib_cflags} -DHAVE_INITFINI_ARRAY"
 esac
 
 # Host specific flag settings -- usually for features that are not

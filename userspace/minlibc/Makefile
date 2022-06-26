@@ -30,8 +30,7 @@ $(AUTOTOOLS_ROOT)/automake.gz:
 
 $(NEWLIB_TARGET): $(AUTOTOOLS_ROOT)/autoconf.gz $(AUTOTOOLS_ROOT)/automake.gz
 	$(AUTOTOOLS_PATH) && cd $(NEWLIB)/newlib/libc/sys && autoconf
-	$(AUTOTOOLS_PATH) && cd $(NEWLIB)/newlib/libc/sys/minos && autoconf
-	$(AUTOTOOLS_PATH) && cd $(NEWLIB)/newlib/libc/sys/minos && autoreconf 
+	$(AUTOTOOLS_PATH) && cd $(NEWLIB)/newlib/libc/sys/minos && autoreconf
 
 	# Setup symlinks to trick newlib into working
 	CURRENT_DIR=$$(pwd) &&\

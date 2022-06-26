@@ -1,6 +1,9 @@
 #ifndef SYSCALLS_H
 #define SYSCALL_S
 
+#include <stdint.h>
+#include <stddef.h>
+
 #define SYSCALL_ARGS_0(type, fn, num)\
 type fn()\
 {\
