@@ -54,16 +54,19 @@ impl PageArray
                 // ...which won't happen if the group's full
                 if self.bit_groups[i] == 0 { continue; }
 
-                // If the group isn't empty, check first if there's enough consecutive bits...
+                // If the group isn't full, check first if there's enough consecutive bits...
                 let mut bits = self.bit_groups[i];
-                if self.bit_groups[i].wrapping_add(1) != 0
+
+                // ...except that the below code won't work if the whole group is full of 1's,
+                // but luckily that can just be skipped
+                if self.bit_groups[i] != u32::MAX
                 {
-                    // ...by doing "bitmap & (bitmap >> 1)" for 2 pages, "bitmap & (bitmap >> 1) & (bitmap >> 2)" for 3, etc
+                    // Do "bitmap & (bitmap >> 1)" for 2 pages, "bitmap & (bitmap >> 1) & (bitmap >> 2)" for 3, etc
                     for i in 1..pages {
                         bits &= self.bit_groups[i] >> i;
                     }
 
-                    // Any non-zero value means we've found a valid group
+                    // Any non-zero value means we've found a valid group, so quit this attempt otherwise
                     if bits == 0 { continue; }
                 }
 
@@ -86,7 +89,7 @@ impl PageArray
             todo!();
         }
 
-        panic!("no free pages found");
+        panic!("no free pages found ({} requested)", pages);
     }
 
     pub fn free_pages(&mut self, address: usize, pages: usize)
@@ -95,6 +98,25 @@ impl PageArray
         {
             self.set_page(address / PAGE_SIZE + page);
         }
+    }
+
+    /// Assumes 32-bit
+    pub fn number_of_free_pages(&self) -> usize
+    {
+        let mut free_pages: u32 = 0;
+
+        for group in 0..NUMBER_OF_GROUPS
+        {
+            let mut i = self.bit_groups[group] as u32;
+
+            // Get number of bits set (any Intel CPU after 2008 could however use a single instruction, "popcnt")
+            i = i - ((i >> 1) & 0x55555555);                    // add pairs of bits
+            i = (i & 0x33333333) + ((i >> 2) & 0x33333333);     // quads
+            i = (i + (i >> 4)) & 0x0F0F0F0F;                    // groups of 8
+            free_pages += (i.wrapping_mul(0x01010101)) >> 24;   // horizontal sum of bytes
+        }
+
+        free_pages as usize
     }
 
     pub fn size() -> usize {

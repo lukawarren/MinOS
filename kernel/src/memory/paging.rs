@@ -7,7 +7,6 @@ use crate::arch;
 
 pub const PAGE_SIZE: usize = 4096;
 pub const MAX_PAGES: usize = 0x100000;
-pub const USER_MEMORY_OFFSET: usize = 0x40000000;
 
 const PAGE_TABLES: usize = 1024;
 const PAGE_DIRECTORIES: usize = 1024;
@@ -169,6 +168,7 @@ impl PageFrame
         let flags = if user_page { PageFlags::USER_PAGE_READ_WRITE }
                     else { PageFlags::KERNEL_PAGE_READ_WRITE };
 
+
         let table = self.get_table_mut(virtual_address);
         table.set(physical_address, flags);
 
@@ -218,6 +218,11 @@ impl PageFrame
     {
         let offset = address % PAGE_SIZE;
         unsafe { self.get_table(address).physical_address() + offset }
+    }
+
+    pub fn is_user_page(&self, virtual_address: usize) -> bool
+    {
+        unsafe { self.get_table(virtual_address) }.is_user_readable()
     }
 
     pub fn size() -> usize

@@ -13,7 +13,6 @@ pub struct Task
     pub stack_address: usize,
     pub page_frame: paging::PageFrame,
     pub heap_size: usize, // For kernel's version of sbrk
-    pub heap_start: usize // For kernel's version of sbrk
 }
 
 struct Stack
@@ -80,8 +79,12 @@ impl Task
         Task {
             page_frame: frame,
             stack_address: (stack as *const _) as usize + stack_pointer * mem::size_of::<usize>(),
-            heap_size: 0,
-            heap_start: paging::USER_MEMORY_OFFSET
+            heap_size: 0
         }
+    }
+
+    pub fn destroy(&mut self, allocator: &mut allocator::PageAllocator)
+    {
+        allocator.free_user_pages_from_frame(&mut self.page_frame);
     }
 }

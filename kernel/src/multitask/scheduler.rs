@@ -1,7 +1,8 @@
-use super::task::Task;
+use crate::memory::allocator::PageAllocator;
 use crate::interrupts::pic;
 use crate::interrupts::pit;
 use crate::spinlock::Lock;
+use super::task::Task;
 
 /// For communicating with the assembly code
 #[repr(C, packed)]
@@ -66,8 +67,10 @@ impl Scheduler
         self.number_of_tasks += 1;
     }
 
-    pub fn remove_current_task(&mut self)
+    pub fn remove_current_task(&mut self, allocator: &mut PageAllocator)
     {
+        self.tasks[self.current_task].unwrap().destroy(allocator);
+
         // Move all elements above in the array down by one
         for i in self.current_task..self.number_of_tasks-1 {
             self.tasks[i] = self.tasks[i+1];

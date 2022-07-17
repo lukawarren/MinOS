@@ -18,10 +18,10 @@ impl KernelObjects
         }
     }
 
-    pub fn set(&mut self, mut allocator: PageAllocator, mut frame: PageFrame)
+    pub fn set(&mut self, allocator: &mut PageAllocator, frame: &mut PageFrame)
     {
-        self.allocator = &mut allocator;
-        self.page_frame = &mut frame;
+        self.allocator = allocator;
+        self.page_frame = frame;
     }
 
     pub fn allocator(&self) -> &mut PageAllocator

@@ -19,7 +19,7 @@ extern "C" {
     static mut syscall_return: SyscallReturn;
 }
 
-pub fn init(allocator: allocator::PageAllocator, page_frame: paging::PageFrame)
+pub fn init(allocator: &mut allocator::PageAllocator, page_frame: &mut paging::PageFrame)
 {
     KERNEL.lock().set(allocator, page_frame);
     KERNEL.free();
@@ -48,23 +48,25 @@ extern "C" fn on_syscall(registers: cpu::Registers)
             0
         },
 
-        // k_increase_heap(size_t size)
-        2 =>
-        {
-            let size = registers.ebx as usize;
-            k_increase_heap(kernel, task, size)
-        },
-
-        // k_decrease_heap(size_t size)
-        3 =>
-        {
-            let size = registers.ebx as usize;
-            k_decrease_heap(kernel, task, size)
-        },
-
-        4 => // k_exit()
+        2 => // k_exit()
         {
             exited = true;
+            0
+        },
+
+        // k_allocate_pages(size_t pages)
+        3 =>
+        {
+            let pages = registers.ebx as usize;
+            k_allocate_pages(kernel, task, pages)
+        },
+
+        // k_free_pages(size_t address, size_t pages)
+        4 =>
+        {
+            let address = registers.ebx as usize;
+            let pages = registers.ecx as usize;
+            k_free_pages(kernel, task, address, pages);
             0
         }
 
@@ -76,8 +78,9 @@ extern "C" fn on_syscall(registers: cpu::Registers)
 
     // If task did exist, we need to pick a new one
     if exited {
-        scheduler.remove_current_task();
+        scheduler.remove_current_task(kernel.allocator());
         Scheduler::change_tasks(false);
+        crate::println!("Free pages is now {}", kernel.allocator().free_pages());
     }
 
     unsafe
@@ -100,47 +103,14 @@ fn print_from_syscall(kernel: &kernel_access::KernelObjects, task: &Task, regist
     }
 }
 
-fn k_increase_heap(kernel: &kernel_access::KernelObjects, task: &mut Task, size: usize) -> usize
+fn k_allocate_pages(kernel: &kernel_access::KernelObjects, task: &mut Task, pages: usize) -> usize
 {
-    if size == 0 { return task.heap_start + task.heap_size }
-
-    let initial_heap_end = task.heap_start + task.heap_size;
-    let new_heap_end = initial_heap_end + size;
-    let pages = (new_heap_end / paging::PAGE_SIZE) - (initial_heap_end / paging::PAGE_SIZE);
-
-    if pages > 0
-    {
-        let aligned = paging::round_up_to_nearest_page(initial_heap_end);
-
-        for i in 0..pages
-        {
-            // Map in new pages
-            let _ = kernel.allocator().allocate_user_raw_with_address(
-                aligned + i * paging::PAGE_SIZE,
-                paging::PAGE_SIZE,
-                &mut task.page_frame
-            );
-        }
-    }
-
-    // Return start of new memory region allocated
-    task.heap_size += size;
-    new_heap_end
+    assert!(pages > 0);
+    kernel.allocator().allocate_user_raw(paging::PAGE_SIZE * pages, &mut task.page_frame)
 }
 
-fn k_decrease_heap(kernel: &kernel_access::KernelObjects, task: &mut Task, size: usize) -> usize
+fn k_free_pages(kernel: &kernel_access::KernelObjects, task: &mut Task, address: usize, pages: usize)
 {
-    if size == 0 { return task.heap_start + task.heap_size }
-
-    assert!(paging::is_page_aligned(task.heap_size));
-    assert!(paging::is_page_aligned(task.heap_start));
-    assert!(paging::is_page_aligned(size));
-
-    // Unmap from memory
-    let new_size = task.heap_size - size;
-    kernel.allocator().deallocate_user(task.heap_start + new_size, size, &mut task.page_frame);
-    task.heap_size = new_size;
-
-    // Return new end of memory
-    return task.heap_start + task.heap_size
+    assert!(pages > 0);
+    kernel.allocator().deallocate_user(address, paging::PAGE_SIZE * pages, &mut task.page_frame);
 }

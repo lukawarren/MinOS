@@ -9,22 +9,61 @@
 /* pointer to array of char* strings that define the current environment variables */
 char **environ;
 
-void    _exit       ();
-int     close       (int file);
-int     execve      (char *name, char **argv, char **env);
-int     fork        ();
-int     fstat       (int file, struct stat *st);
-int     getpid      ();
-int     isatty      (int file);
-int     kill        (int pid, int sig);
-int     link        (char *old, char *new);
-int     lseek       (int file, int ptr, int dir);
-int     open        (const char *name, int flags, ...);
-int     read        (int file, char *ptr, int len);
-caddr_t sbrk        (int incr);
-int     stat        (const char *file, struct stat *st);
-clock_t times       (struct tms *buf);
-int     unlink      (char *name);
-int     wait        (int *status);
-int     write       (int file, char *ptr, int len);
-int     gettimeofday(struct timeval *p, void *restrict);
+void    _exit           ();
+int     close           (int file);
+int     execve          (char *name, char **argv, char **env);
+int     fork            ();
+int     fstat           (int file, struct stat *st);
+int     getpid          ();
+int     isatty          (int file);
+int     kill            (int pid, int sig);
+int     link            (char *old, char *new);
+int     lseek           (int file, int ptr, int dir);
+int     open            (const char *name, int flags, ...);
+int     read            (int file, char *ptr, int len);
+caddr_t sbrk            (int incr);
+int     stat            (const char *file, struct stat *st);
+clock_t times           (struct tms *buf);
+int     unlink          (char *name);
+int     wait            (int *status);
+int     write           (int file, char *ptr, int len);
+int     gettimeofday    (struct timeval *p, void *restrict);
+
+
+// ----- liballoc -----
+
+extern size_t k_allocate_pages (size_t pages);
+extern size_t k_free_pages     (size_t address, size_t pages);
+
+void* _malloc_r         (struct _reent *r, size_t n) { malloc(n);}
+void* _free_r           (struct _reent *r, size_t n) { free(n); }
+void* _realloc_r        (struct _reent *r, size_t n) { realloc(n); }
+void* _calloc_r         (struct _reent *r, size_t n) { realloc(n); }
+
+volatile int spinlock = 0;
+
+int liballoc_lock()
+{
+    // TODO: mutex support
+    while (__sync_lock_test_and_set(&spinlock, 1)) {}
+    return 0;
+}
+
+int liballoc_unlock()
+{
+    // TODO: mutex support
+    __sync_synchronize();
+    spinlock = 0;
+    return 0;
+}
+
+extern void* liballoc_alloc(int pages)
+{
+    return (void*) k_allocate_pages(pages);
+}
+
+extern int liballoc_free(void* address, int pages)
+{
+    k_free_pages((size_t) address, pages);
+    return 0;
+}

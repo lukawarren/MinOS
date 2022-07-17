@@ -30,8 +30,8 @@ type fn(p1 n1, p2 n2)\
 
 SYSCALL_ARGS_2(void, k_error, 0, const char*, message, size_t, len)
 SYSCALL_ARGS_2(void, k_print_string, 1, const char*, message, size_t, len)
-SYSCALL_ARGS_1(size_t, k_increase_heap, 2, size_t, size)
-SYSCALL_ARGS_1(size_t, k_decrease_heap, 3, size_t, size)
-SYSCALL_ARGS_0(void, k_exit, 4)
+SYSCALL_ARGS_0(void, k_exit, 2)
+SYSCALL_ARGS_1(size_t, k_allocate_pages, 3, size_t, pages)
+SYSCALL_ARGS_2(void, k_free_pages, 4, size_t, address, size_t, pages)
 
 #endif

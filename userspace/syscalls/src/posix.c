@@ -73,12 +73,4 @@ int fstat(int fd, struct stat* buf)
     return 0;
 }
 
-
-// Memory
-caddr_t sbrk(int incr)
-{
-    if (incr >= 0) return (caddr_t) k_increase_heap((size_t)incr);
-    else return (caddr_t) k_decrease_heap((size_t)incr);
-}
-
 #pragma GCC diagnostic pop

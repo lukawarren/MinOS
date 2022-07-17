@@ -640,7 +640,7 @@ case "${host}" in
 	default_newlib_io_long_double="yes"
 	default_newlib_io_long_long="yes"
 	default_newlib_io_pos_args="yes"
-	newlib_cflags="${newlib_cflags} -DHAVE_INITFINI_ARRAY"
+	newlib_cflags="${newlib_cflags} -DHAVE_INITFINI_ARRAY -DMALLOC_PROVIDED"
 esac
 
 # Host specific flag settings -- usually for features that are not

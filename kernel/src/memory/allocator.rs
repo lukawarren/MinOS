@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::paging::{ PageFrame, PAGE_SIZE, USER_MEMORY_OFFSET, is_page_aligned, round_up_to_nearest_page };
+use super::paging::{ PageFrame, PAGE_SIZE, MAX_PAGES, is_page_aligned, round_up_to_nearest_page };
 use super::page_array::PageArray;
 use multiboot2::{BootInformation, MemoryArea, MemoryAreaType};
 use crate::multitask::module;
@@ -92,7 +92,7 @@ impl PageAllocator
         }
     }
 
-    /// Returns virtual address
+    /// Returns physical address - NOTE: may break if the kernel is not identity mapped
     pub fn allocate_kernel_raw(&mut self, size: usize) -> usize
     {
         let size_aligned = round_up_to_nearest_page(size);
@@ -162,7 +162,7 @@ impl PageAllocator
     pub fn deallocate_user(&mut self, virtual_address: usize, size: usize, page_frame: &mut PageFrame)
     {
         // Make sure it's not kernel memory
-        assert!(virtual_address > USER_MEMORY_OFFSET);
+        assert!(page_frame.is_user_page(virtual_address));
         let size_aligned = round_up_to_nearest_page(size);
         let pages = size_aligned / PAGE_SIZE;
 
@@ -178,6 +178,25 @@ impl PageAllocator
         // Zero out memory for security
         unsafe {
             ptr::write_bytes(physical_address as *mut u8, 0, size_aligned);
+        }
+    }
+
+    /// Returns the number of free pages (i.e. free the adjective, not the verb)
+    pub fn free_pages(&self) -> usize
+    {
+        self.page_array.number_of_free_pages()
+    }
+
+    /// E.g. used when a user task finished and its memory is freed
+    pub fn free_user_pages_from_frame(&mut self, page_frame: &mut PageFrame)
+    {
+        for i in 0..MAX_PAGES
+        {
+            if page_frame.is_user_page(i * PAGE_SIZE)
+            {
+                // TODO: write code directly, as technically no need to unmap pages first
+                self.deallocate_user(i * PAGE_SIZE, PAGE_SIZE, page_frame);
+            }
         }
     }
 

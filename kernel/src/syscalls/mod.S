@@ -17,7 +17,6 @@ extern load_new_task
 
 global irq_80
 irq_80:
-
     ; Save cr3
     push eax
     mov eax, cr3

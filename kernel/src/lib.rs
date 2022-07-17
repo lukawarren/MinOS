@@ -26,20 +26,20 @@ pub extern "C" fn main(multiboot2_header_pointer: usize) -> !
 
     // Parse multiboot info and setup memory
     let multiboot_info = unsafe { multiboot2::load(multiboot2_header_pointer) }.unwrap();
-    let (mut allocator, page_frame) = memory::init(&multiboot_info);
+    let (mut allocator, mut page_frame) = memory::init(&multiboot_info);
 
     // Load tasks
     for module in multiboot_info.module_tags()
     {
-        println!("[Multitask] Loading module {}", module.cmdline());
+        println!("[Multitask] Loading module {} - free pages {}", module.cmdline(), allocator.free_pages());
         let task = multitask::module::load_module(module, &mut allocator);
         multitask::add_task(task);
     }
 
     // Hand over allocator, etc to future syscalls
-    syscalls::init(allocator, page_frame);
+    syscalls::init(&mut allocator, &mut page_frame);
 
-    println!("Welcome to MinOS!");
+    println!("Welcome to MinOS - starting userspace!");
     cpu::enable_interrupts();
     loop {}
 }
