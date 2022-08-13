@@ -39,6 +39,6 @@ SECTIONS
 
         /* End of kernel; start of heap */
 		. = ALIGN(4k);
-		_kernel_end = .;
+		kernel_end = .;
 	}
 }

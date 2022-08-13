@@ -24,3 +24,5 @@ tools/filesystem/build
 lib/newlib-4.1.0/build
 
 toolchain-backup.tar
+
+problems.sh

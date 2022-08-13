@@ -3,7 +3,7 @@
 #include "cpu/idt.h"
 #include "klib.h"
 
-extern uint32_t _kernel_end; // From linker
+extern uint32_t kernel_end; // From linker
 
 namespace cpu
 {
@@ -12,7 +12,7 @@ namespace cpu
     void init()
     {
         // Create TSS
-        TSS tss = create_tss((size_t)&_kernel_end, 0x10);
+        TSS tss = create_tss((size_t)&kernel_end, 0x10);
 
         // Create GDT
         GDT gdt[6] =
