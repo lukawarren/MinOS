@@ -17,12 +17,12 @@ set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
 # linker.ld
 set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${LINKER_SCRIPT}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${LINKER_SCRIPT} -fuse-ld=lld")
 set_target_properties(${TARGET_NAME} PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
 
 # Compile flags
-set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Winline -Wno-long-long -Wconversion")
-set (COMMON_FLAGS "-ffreestanding -nostdlib -fuse-ld=lld --target=i686-pc-none-elf -march=i686")
+set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Winline -Wno-long-long -Wconversion -Werror")
+set (COMMON_FLAGS "-ffreestanding -nostdlib --target=i686-pc-none-elf -march=i686")
 set (CMAKE_CXX_FLAGS "-std=c++20 ${WARNINGS} ${COMMON_FLAGS} -fno-exceptions -fno-rtti -fno-use-cxa-atexit -fno-sized-deallocation")
 set (CMAKE_C_FLAGS "-std=gnu99 ${WARNINGS} ${COMMON_FLAGS}")
 
@@ -30,8 +30,8 @@ set (CMAKE_C_FLAGS "-std=gnu99 ${WARNINGS} ${COMMON_FLAGS}")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Add source files
-file(GLOB_RECURSE C_SRCS src/*.c)
-file(GLOB_RECURSE CPP_SRCS src/*.cpp)
-file(GLOB_RECURSE ASM_SRCS src/*.S)
+file(GLOB_RECURSE C_SRCS src/*.c src/*/*.c)
+file(GLOB_RECURSE CPP_SRCS src/*.cpp src/*/*.cpp)
+file(GLOB_RECURSE ASM_SRCS src/*.S src/*/*.S)
 
 add_executable(${PROJECT_NAME}.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})

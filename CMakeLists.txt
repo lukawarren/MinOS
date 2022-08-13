@@ -9,4 +9,4 @@ add_custom_command(TARGET run COMMAND
                     cp ../grub.cfg isodir/boot/grub &&
                     cp kernel/kernel.bin isodir/boot &&
                     grub2-mkrescue -o MinOS.iso isodir &>/dev/null &&
-                    qemu-system-i386 -cdrom MinOS.iso)
+                    qemu-system-i386 -cdrom MinOS.iso -serial mon:stdio -nographic)
