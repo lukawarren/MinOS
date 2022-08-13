@@ -1,13 +1,36 @@
+#pragma once
 #include "gdt.h"
 #include "idt.h"
 
 namespace cpu
 {
+    extern IDT idt[256];
+
+    void init();
+
+    struct Registers
+    {
+        uint32_t edi;
+        uint32_t esi;
+        uint32_t ebp;
+        uint32_t esp;
+        uint32_t ebx;
+        uint32_t edx;
+        uint32_t ecx;
+        uint32_t eax;
+    };
+
     extern "C"
     {
         void load_gdt(const GDT* gdt, const size_t size);
         void load_tss(const uint16_t descriptor);
         void load_idt(const IDTDescriptor* descriptor);
+    }
+
+    inline void enable_interrupts()
+    {
+        asm("xchg %bx, %bx");
+        asm("sti");
     }
 
     inline void outb(uint16_t port, uint8_t data)

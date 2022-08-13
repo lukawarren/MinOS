@@ -78,4 +78,5 @@ void _println(const char* file, const char* message)
     uart::write_string(file);
     uart::write_string("] ");
     uart::write_string(message);
+    uart::write_char('\n');
 }

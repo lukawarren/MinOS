@@ -31,8 +31,19 @@ namespace cpu
 
         IDTDescriptor(const IDT* address)
         {
-            idtAddress = (uint32_t) address;
+            idtAddress = (uint32_t)address;
             idtLength = sizeof(IDT) * 256 - 1;
         }
     } __attribute__((packed));
+
+    constexpr IDT create_idt_entry(const uint32_t entrypoint, const uint16_t selector, const uint8_t attributes)
+    {
+        IDT idtEntry = IDT {};
+        idtEntry.offsetLower = entrypoint & 0xFFFF;
+        idtEntry.selector = selector;
+        idtEntry.zero = 0;
+        idtEntry.typeAttribute = attributes;
+        idtEntry.offsetHigher = (uint16_t)((entrypoint & 0xFFFF0000) >> 16);
+        return idtEntry;
+    }
 }

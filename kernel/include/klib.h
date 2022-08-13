@@ -10,14 +10,14 @@ size_t pow(const size_t number, const size_t power);
 void memset(void* b, int c, int len);
 void memcpy(void *dest, void *src, size_t n);
 
-#define assert(expr) \
-    if (!(expr)) \
-        error(__FILE__, __LINE__, #expr)
-
 // To keep intellisense happy
 #ifndef SOURCE_PATH_SIZE
     #define SOURCE_PATH_SIZE 0
 #endif
+
+#define assert(expr) \
+    if (!(expr)) \
+        error((char const*)__FILE__ + SOURCE_PATH_SIZE, __LINE__, #expr)
 
 #define println(message) \
     _println((char const*)__FILE__ + SOURCE_PATH_SIZE, message)
