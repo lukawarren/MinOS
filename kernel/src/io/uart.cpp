@@ -16,21 +16,21 @@ namespace uart
 
     void init()
     {
-        CPU::outb((uint16_t)com + 1, 0x00); // Disable all interrupts
-        CPU::outb((uint16_t)com + 3, 0x80); // Enable DLAB (set baud rate divisor)
-        CPU::outb((uint16_t)com + 0, 0x03); // Set divisor to 3 (lo byte) 38400 baud
-        CPU::outb((uint16_t)com + 1, 0x00); //                  (hi byte)
-        CPU::outb((uint16_t)com + 3, 0x03); // 8 bits, no parity, one stop bit
-        CPU::outb((uint16_t)com + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
-        CPU::outb((uint16_t)com + 4, 0x0B); // IRQs enabled, RTS/DSR set
+        cpu::outb((uint16_t)com + 1, 0x00); // Disable all interrupts
+        cpu::outb((uint16_t)com + 3, 0x80); // Enable DLAB (set baud rate divisor)
+        cpu::outb((uint16_t)com + 0, 0x03); // Set divisor to 3 (lo byte) 38400 baud
+        cpu::outb((uint16_t)com + 1, 0x00); //                  (hi byte)
+        cpu::outb((uint16_t)com + 3, 0x03); // 8 bits, no parity, one stop bit
+        cpu::outb((uint16_t)com + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
+        cpu::outb((uint16_t)com + 4, 0x0B); // IRQs enabled, RTS/DSR set
     }
 
     void write_char(const char c)
     {
         // Wait for transit to be empty first
-        auto is_transit_empty = [&]() { return CPU::inb((uint16_t)com + 5) & 0x20; };
+        auto is_transit_empty = [&]() { return cpu::inb((uint16_t)com + 5) & 0x20; };
         while (!is_transit_empty()) {}
-        CPU::outb((uint16_t)com, (uint8_t)c);
+        cpu::outb((uint16_t)com, (uint8_t)c);
     }
 
     void write_string(const char* string)
@@ -42,15 +42,15 @@ namespace uart
     void write_number(const uint32_t number)
     {
         // Get number of digits
-        size_t nDigits = 1;
-        size_t i = number;
+        int nDigits = 1;
+        uint32_t i = number;
         while (i /= 10) ++nDigits;
 
         // Print digits "in reverse"
         const char digits[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-        for (size_t digit = nDigits-1; digit >= 0; --digit)
+        for (int digit = nDigits-1; digit >= 0; --digit)
         {
-            const size_t nthDigit = number / pow(10, digit) % 10;
+            const int nthDigit = int(number / pow(10, (size_t)digit) % 10);
             write_char(digits[nthDigit]);
         }
     }

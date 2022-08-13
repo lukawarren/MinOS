@@ -12,6 +12,8 @@ bochs/
 cmake-build-debug/
 MinOS.geany
 bochs.sh
+bochsrc
+qemu.sh
 
 build/
 kernel/build/
