@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1.3)
 project(kernel C CXX ASM)
 
 # Assembly
@@ -16,12 +16,13 @@ set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
 # linker.ld
-set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${LINKER_SCRIPT} -fuse-ld=lld")
-set_target_properties(${TARGET_NAME} PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
+add_link_options("-fuse-ld=lld")
+add_link_options("-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
+add_link_options("--target=i686-pc-none-elf")
+add_link_options("-march=i686")
 
 # Compile flags
-set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Winline -Wno-long-long -Wconversion -Werror")
+set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Winline -Wno-long-long -Wconversion")
 set (COMMON_FLAGS "-ffreestanding -nostdlib --target=i686-pc-none-elf -march=i686")
 set (CMAKE_CXX_FLAGS "-std=c++20 ${WARNINGS} ${COMMON_FLAGS} -fno-exceptions -fno-rtti -fno-use-cxa-atexit -fno-sized-deallocation")
 set (CMAKE_C_FLAGS "-std=gnu99 ${WARNINGS} ${COMMON_FLAGS}")
@@ -33,5 +34,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 file(GLOB_RECURSE C_SRCS src/*.c src/*/*.c)
 file(GLOB_RECURSE CPP_SRCS src/*.cpp src/*/*.cpp)
 file(GLOB_RECURSE ASM_SRCS src/*.S src/*/*.S)
+
+# For klib macro magic
+string(LENGTH "${CMAKE_SOURCE_DIR}/kernel/src/" SOURCE_PATH_SIZE)
+add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
 
 add_executable(${PROJECT_NAME}.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})

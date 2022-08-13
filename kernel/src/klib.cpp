@@ -71,3 +71,11 @@ void error(const char* file, unsigned int line, const char* expression)
     uart::write_string(expression);
     uart::write_string("\n");
 }
+
+void _println(const char* file, const char* message)
+{
+    uart::write_string("[");
+    uart::write_string(file);
+    uart::write_string("] ");
+    uart::write_string(message);
+}

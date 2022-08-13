@@ -1,5 +1,15 @@
+#include "gdt.h"
+#include "idt.h"
+
 namespace cpu
 {
+    extern "C"
+    {
+        void load_gdt(const GDT* gdt, const size_t size);
+        void load_tss(const uint16_t descriptor);
+        void load_idt(const IDTDescriptor* descriptor);
+    }
+
     inline void outb(uint16_t port, uint8_t data)
     {
         asm volatile ( "outb %0, %1" : : "a"(data), "d"(port) );

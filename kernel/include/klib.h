@@ -14,4 +14,13 @@ void memcpy(void *dest, void *src, size_t n);
     if (!(expr)) \
         error(__FILE__, __LINE__, #expr)
 
+// To keep intellisense happy
+#ifndef SOURCE_PATH_SIZE
+    #define SOURCE_PATH_SIZE 0
+#endif
+
+#define println(message) \
+    _println((char const*)__FILE__ + SOURCE_PATH_SIZE, message)
+
 void error(const char* file, unsigned int line, const char* expression);
+void _println(const char* file, const char* message);

@@ -1,5 +1,5 @@
 ENTRY(_start)
- 
+
 SECTIONS
 {
 	/* Begin at 1MiB */
@@ -35,10 +35,10 @@ SECTIONS
 
         /* TSS stack (growing downwards, of course)
 		. += 4k;
-		__tss_stack = .;
+		_tss_stack = .;
 
         /* End of kernel; start of heap */
 		. = ALIGN(4k);
-		__kernel_end = .;
+		_kernel_end = .;
 	}
 }
