@@ -20,11 +20,12 @@ add_link_options("-fuse-ld=lld")
 add_link_options("-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
 add_link_options("--target=i686-pc-none-elf")
 add_link_options("-march=i686")
+add_link_options("-Wno-unused-command-line-argument") # because all the C / C++ flags below apply to us too
 
 # Compile flags
 set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Winline -Wno-long-long -Wconversion")
-set (COMMON_FLAGS "-ffreestanding -nostdlib --target=i686-pc-none-elf -march=i686")
-set (CMAKE_CXX_FLAGS "-std=c++20 ${WARNINGS} ${COMMON_FLAGS} -fno-exceptions -fno-rtti -fno-use-cxa-atexit -fno-sized-deallocation")
+set (COMMON_FLAGS "-ffreestanding -nostdlib --target=i686-pc-none-elf -march=i686 -nostdinc")
+set (CMAKE_CXX_FLAGS "-std=c++20 ${WARNINGS} ${COMMON_FLAGS} -fno-exceptions -fno-rtti -fno-use-cxa-atexit -fno-sized-deallocation -nostdinc++")
 set (CMAKE_C_FLAGS "-std=gnu99 ${WARNINGS} ${COMMON_FLAGS}")
 
 # Includes

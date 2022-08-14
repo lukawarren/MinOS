@@ -1,6 +1,10 @@
 #pragma once
-#include <stdint.h>
-#include <stddef.h>
+
+typedef unsigned int size_t;
+typedef long long uint64_t;
+typedef unsigned int uint32_t;
+typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
 
 size_t strlen(const char* string);
 char* strncpy(char* dest, const char* src, size_t maxLength);

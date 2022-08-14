@@ -1,6 +1,5 @@
 #pragma once
-#include <stdint.h>
-#include <stddef.h>
+#include "klib.h"
 
 #define IDT_ENABLED(x)  ((x & 0b01) << 7)
 #define MIN_PRIV(x)     ((x & 0b11) << 5)
@@ -19,8 +18,8 @@ namespace cpu
     {
         uint16_t offsetLower = 0;
         uint16_t selector = 0;
-        uint8_t zero = 0;
-        uint8_t typeAttribute = 0;
+        uint8_t  zero = 0;
+        uint8_t  typeAttribute = 0;
         uint16_t offsetHigher = 0;
     } __attribute__((packed));
 
