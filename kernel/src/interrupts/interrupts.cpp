@@ -70,14 +70,14 @@ namespace interrupts
         pic::init(PIC_MASK_KEYBOARD, PIC_MASK_ALL);
     }
 
-    void on_interrupt(const uint32_t irq, const cpu::Registers registers)
+    void on_interrupt(const uint32_t irq, const cpu::Registers)
     {
         println("interrupt!");
         if (irq == 1) cpu::inb(0x60);
         pic::end_interrupt((uint8_t)irq);
     }
 
-    void on_exception(const uint32_t irq, const cpu::Registers registers)
+    void on_exception(const uint32_t irq, const cpu::Registers)
     {
         static char const* reasons[32] =
         {

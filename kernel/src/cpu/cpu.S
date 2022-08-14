@@ -55,3 +55,30 @@ load_idt:
     lidt [eax]
     pop eax
     ret
+
+
+global flush_tlb
+flush_tlb:
+    ; On i486 and newer, the "invlpg" instruction
+    ; makes much more sense, as what is below is
+    ; overkill for most uses. However completely
+    ; reloading cl3 should suffice for now until
+    ; we run into any performance bottlenecks...
+    push eax
+    mov eax, cr3
+    mov cr3, eax
+    pop eax
+    ret
+
+
+global enable_paging
+enable_paging:
+    ; Modify cr0 to enable paging
+    push ebp
+    mov ebp, esp
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+    mov esp, ebp
+    pop ebp
+    ret

@@ -14,4 +14,6 @@ Checks: >
   -readability-identifier-length,
   -readability-braces-around-statements,
   -readability-implicit-bool-conversion,
-  -bugprone-sizeof-expression
+  -bugprone-sizeof-expression,
+  -readability-named-parameter,
+  -performance-no-int-to-ptr,
