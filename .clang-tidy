@@ -1,0 +1,17 @@
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  linuxkernel-*,
+  misc-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -readability-magic-numbers,
+  -bugprone-easily-swappable-parameters,
+  -readability-identifier-length,
+  -readability-braces-around-statements,
+  -readability-implicit-bool-conversion,
+  -bugprone-sizeof-expression
