@@ -63,15 +63,4 @@ namespace memory
         assert(value == 0 || *table == DISABLED_PAGE);
         *table = value;
     }
-
-    constexpr bool PageFrame::is_page_aligned(size_t address)
-    {
-        return (address % PAGE_SIZE) == 0;
-    }
-
-    constexpr size_t PageFrame::memory_size()
-    {
-        return sizeof(*pageDirectories) * PAGE_DIRECTORIES +
-                sizeof(*pageTables) * PAGE_TABLES_PER_DIRECTORY * PAGE_DIRECTORIES;
-    }
 }

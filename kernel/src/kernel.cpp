@@ -1,5 +1,5 @@
 #include "interrupts/interrupts.h"
-#include "memory/pageFrame.h"
+#include "memory/allocator.h"
 #include "io/uart.h"
 #include "cpu/cpu.h"
 #include "klib.h"
@@ -17,8 +17,9 @@ void kmain(void)
     cpu::init();
     cpu::enable_interrupts();
 
-    memory::PageFrame f(10485760);
-    cpu::set_cr3(f.get_cr3());
+    // Setup paging, heap, etc.
+    memory::Allocator rootAllocator(10 * 1024 * 1024, 10 * 1024 * 1024);
+    cpu::set_cr3(rootAllocator.get_cr3());
     cpu::enable_paging();
 
     while(1) {}

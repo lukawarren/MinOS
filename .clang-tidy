@@ -17,3 +17,6 @@ Checks: >
   -bugprone-sizeof-expression,
   -readability-named-parameter,
   -performance-no-int-to-ptr,
+CheckOptions:
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 100
