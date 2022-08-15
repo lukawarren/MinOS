@@ -16,7 +16,7 @@
 #define SEG_DATA_RDEXPD    0x04 // Read-Only, expand-down
 #define SEG_DATA_RDEXPDA   0x05 // Read-Only, expand-down, accessed
 #define SEG_DATA_RDWREXPD  0x06 // Read/Write, expand-down
-#define SEG_DATA_RDWREXPDA 0x07 // Read/Write, expand-down, accessed
+#define SEG_DATA_RDW    REXPDA 0x07 // Read/Write, expand-down, accessed
 #define SEG_CODE_EX        0x08 // Execute-Only
 #define SEG_CODE_EXA       0x09 // Execute-Only, accessed
 #define SEG_CODE_EXRD      0x0A // Execute/Read
