@@ -22,8 +22,8 @@ namespace memory
         for (unsigned int i = 0; i < PAGE_TABLES_PER_DIRECTORY * PAGE_DIRECTORIES; ++i)
         {
             const auto flags = KERNEL_PAGE;
-            const PhysicalAddress pAddr = i * PAGE_SIZE;
-            pageTables[i] = pAddr | flags;
+            const PhysicalAddress p_addr = i * PAGE_SIZE;
+            pageTables[i] = p_addr | flags;
         }
 
         // Unmap first page so null pointers crash us (flushes TLB too!)

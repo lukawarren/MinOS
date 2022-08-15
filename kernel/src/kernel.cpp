@@ -19,12 +19,12 @@ void kmain(void)
     cpu::enable_interrupts();
 
     // Setup paging, heap, etc.
-    memory::Allocator rootAllocator(10 * 1024 * 1024, 10 * 1024 * 1024);
-    cpu::set_cr3(rootAllocator.get_cr3());
+    memory::Allocator root_allocator(10 * 1024 * 1024, 10 * 1024 * 1024);
+    cpu::set_cr3(root_allocator.get_cr3());
     cpu::enable_paging();
 
-    auto* a = rootAllocator.allocate_pages(1);
-    rootAllocator.free_pages((uint32_t)&a, 1);
+    auto* a = root_allocator.allocate_pages(1);
+    root_allocator.free_pages((uint32_t)&a, 1);
 
     while(1) {}
 }

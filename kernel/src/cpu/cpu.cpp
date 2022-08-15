@@ -26,11 +26,11 @@ namespace cpu
         };
 
         // TSS descriptor - offset from start of GDT OR'ed with 3 to enable RPL 3
-        const uint16_t tssDescriptor = (5 * sizeof(uint64_t)) | 3;
+        const uint16_t tss_descriptor = (5 * sizeof(uint64_t)) | 3;
 
         // Load above to CPU...
         load_gdt(gdt, sizeof(cpu::GDT) * sizeof(gdt) / sizeof(gdt[0]));
-        load_tss(tssDescriptor);
+        load_tss(tss_descriptor);
         println("loaded GDT and TSS");
 
         // ...and interrupts too
