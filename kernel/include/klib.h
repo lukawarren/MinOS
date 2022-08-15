@@ -6,6 +6,8 @@ typedef unsigned int uint32_t;
 typedef unsigned short uint16_t;
 typedef unsigned char uint8_t;
 
+typedef int int32_t;
+
 size_t strlen(const char* string);
 char* strncpy(char* dest, const char* src, size_t maxLength);
 void strcpy(char* dest, const char* source);
