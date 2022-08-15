@@ -1,17 +1,21 @@
 global _start
 
-section .multiboot
-header_start:
-    dd 0xe85250d6                                                   ; magic number (multiboot 2)
-    dd 0                                                            ; architecture 0 (protected mode i386)
-    dd header_end - header_start                                    ; header length
-    dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start)) ; checksum
+MBALIGN  equ  1 << 0            ; align loaded modules on page boundaries
+MEMINFO  equ  1 << 1            ; provide memory map
+GFXINFO  equ  1 << 2			; provide video mode table
+FLAGS    equ  MBALIGN | MEMINFO | GFXINFO ; this is the Multiboot 'flag' field
+MAGIC    equ  0x1BADB002        ; 'magic number' lets bootloader find the header
+CHECKSUM equ -(MAGIC + FLAGS)   ; checksum of above, to prove we are multiboot
 
-    ; end tag
-    dw 0    ; type
-    dw 0    ; flags
-    dd 8    ; size
-header_end:
+; Multiboot
+section .multiboot
+align 4
+	dd MAGIC
+	dd FLAGS
+	dd CHECKSUM
+	dd 0, 0, 0, 0, 0
+	dd 0  ; set graphics mode
+	dd 1024, 768, 32 ; width, height, depth
 
 ; Stack
 section .bss
@@ -26,15 +30,18 @@ bits 32
 _start:
 
     ; set up stack
+    xchg bx, bx
     mov esp, stack_top
 
     ; call main kernel (modifying esp
     ; for 16 byte stack alignment)
     sub esp, 12
-    push ebx
+    push eax ; multiboot eax magic
+    push ebx ; multiboot header address
     extern kmain
     call kmain
     pop ebx
+    pop eax
     add esp, 12
 
     ; halt if all else fails
