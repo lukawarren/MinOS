@@ -20,6 +20,22 @@ namespace memory
         println("loaded root allocator");
     }
 
+    void* Allocator::get_user_memory_at_address(const VirtualAddress address, const size_t size)
+    {
+        // Allocate
+        auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
+        void* data = allocate_pages(pages);
+
+        // Map into memory
+        for (size_t i = 0; i < pages; ++i)
+        {
+            size_t offset = PAGE_SIZE*i;
+            frame.map_page((size_t)data + offset, address + offset, USER_PAGE);
+        }
+
+        return data;
+    }
+
     void* Allocator::allocate_pages(const size_t pages)
     {
         if (pages == 1)

@@ -1,13 +1,14 @@
 #pragma once
 #include "klib.h"
+#include "allocator.h"
 
 // e_ident data
-#define ELFMAG0      0x7F   // e_ident[EI_MAG0]
-#define ELFMAG1     'E'     // e_ident[EI_MAG1]
-#define ELFMAG2     'L'     // e_ident[EI_MAG2]
-#define ELFMAG3     'F'     // e_ident[EI_MAG3]
-#define ELFDATA2LSB  1      // Little Endian
-#define ELFCLASS32   1      // 32-bit Architecture
+#define ELF_MAG_0       0x7F    // e_ident[EI_MAG0]
+#define ELF_MAG_1       'E'     // e_ident[EI_MAG1]
+#define ELF_MAG_2       'L'     // e_ident[EI_MAG2]
+#define ELF_MAG_3       'F'     // e_ident[EI_MAG3]
+#define ELF_DATA_2_LSB   1      // Little Endian
+#define ELF_CLASS_32     1      // 32-bit Architecture
 
 // Type
 #define EM_386      (3)     // x86 Machine Type
@@ -43,10 +44,10 @@ namespace memory
     // Elf e_ident
     enum ElfIdent
     {
-        EI_MAG0        = 0, // 0x7F
-        EI_MAG1        = 1, // 'E'
-        EI_MAG2        = 2, // 'L'
-        EI_MAG3        = 3, // 'F'
+        EI_MAG_0       = 0, // 0x7F
+        EI_MAG_1       = 1, // 'E'
+        EI_MAG_2       = 2, // 'L'
+        EI_MAG_3       = 3, // 'F'
         EI_CLASS       = 4, // Architecture (32/64)
         EI_DATA        = 5, // Byte Order
         EI_VERSION     = 6, // ELF Version
@@ -116,4 +117,6 @@ namespace memory
         SHF_WRITE       = 1, // Writable section
         SHF_ALLOC       = 2  // Exists in memory
     };
+
+    size_t load_elf_file(memory::Allocator& allocator, const size_t address);
 }

@@ -15,7 +15,7 @@ char* strncpy(char* dest, const char* src, size_t maxLength)
     return temp;
 }
 
-void strcpy(char* dest, const char* source) 
+void strcpy(char* dest, const char* source)
 {
     int i = 0;
     while ((dest[i] = source[i]) != '\0') i++;
@@ -41,7 +41,7 @@ size_t pow(const size_t number, const size_t power)
     return i;
 }
 
-void memset(void* b, int c, int len)
+void memset(void* b, int c, size_t len)
 {
     unsigned char* p = (unsigned char*) b;
     while(len > 0)
@@ -54,11 +54,11 @@ void memset(void* b, int c, int len)
 
 void memcpy(void *dest, void *src, size_t n)
 {
-    char *csrc = (char *)src; 
-    char *cdest = (char *)dest; 
+    char *csrc = (char *)src;
+    char *cdest = (char *)dest;
 
-    for (size_t i=0; i<n; i++) 
-        cdest[i] = csrc[i]; 
+    for (size_t i=0; i<n; i++)
+        cdest[i] = csrc[i];
 }
 
 void error(const char* file, unsigned int line, const char* expression)

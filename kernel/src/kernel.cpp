@@ -23,8 +23,5 @@ void kmain(void)
     cpu::set_cr3(root_allocator.get_cr3());
     cpu::enable_paging();
 
-    auto* a = root_allocator.allocate_pages(1);
-    root_allocator.free_pages((uint32_t)&a, 1);
-
     while(1) {}
 }
