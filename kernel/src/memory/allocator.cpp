@@ -17,7 +17,7 @@ namespace memory
 
         // ...save for the ones that're free
         free_pages(address, size / PAGE_SIZE);
-        println("loaded root allocator");
+        println("created root allocator");
     }
 
     void* Allocator::get_user_memory_at_address(const VirtualAddress address, const size_t size)

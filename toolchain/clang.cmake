@@ -34,14 +34,13 @@ set (CMAKE_C_FLAGS "-std=gnu99 ${WARNINGS} ${COMMON_FLAGS}")
 
 # Linking flags
 add_link_options("-fuse-ld=lld")
-add_link_options("-T${CMAKE_CURRENT_SOURCE_DIR}/toolchain/linker.ld")
 add_link_options("--target=i686-pc-none-elf")
 add_link_options("-march=i686")
 add_link_options("-Wno-unused-command-line-argument")
 
 # Linking
 set(CMAKE_LINKER ld.lld)
-set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+set(CMAKE_C_LINK_EXECUTABLE "clang++ <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)

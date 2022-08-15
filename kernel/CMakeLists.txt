@@ -10,6 +10,9 @@ file(GLOB_RECURSE C_SRCS src/*.c src/*/*.c)
 file(GLOB_RECURSE CPP_SRCS src/*.cpp src/*/*.cpp)
 file(GLOB_RECURSE ASM_SRCS src/*.S src/*/*.S)
 
+# linker.ld
+add_link_options("-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
+
 # For klib macro magic
 string(LENGTH "${CMAKE_SOURCE_DIR}/kernel/src/" SOURCE_PATH_SIZE)
 add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
