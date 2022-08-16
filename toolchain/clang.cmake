@@ -21,7 +21,8 @@ set(CMAKE_CXX_COMPILER_TARGET ${triple})
 # Flags
 set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align\
                 -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Winline\
-                -Wno-long-long -Wconversion")
+                -Wno-long-long -Wconversion -Wno-gnu-zero-variadic-macro-arguments\
+                -Wno-gnu-statement-expression")
 
 set (COMMON_FLAGS "-ffreestanding -nostdlib --target=i686-pc-none-elf\
                     -march=i686 -nostdinc")

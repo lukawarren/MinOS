@@ -80,3 +80,35 @@ void _println(const char* file, const char* message)
     uart::write_string(message);
     uart::write_char('\n');
 }
+
+void _println(const char* file, const char* message, const char* message_two)
+{
+    uart::write_string("[");
+    uart::write_string(file);
+    uart::write_string("] ");
+    uart::write_string(message);
+    uart::write_string(message_two);
+    uart::write_char('\n');
+}
+
+void _println(const char* file, const char* message, const size_t number)
+{
+    uart::write_string("[");
+    uart::write_string(file);
+    uart::write_string("] ");
+    uart::write_string(message);
+    uart::write_number(number);
+    uart::write_char('\n');
+}
+
+void _println(const char* file, const char* message, const size_t number, const char* message_two, const size_t number_two)
+{
+    uart::write_string("[");
+    uart::write_string(file);
+    uart::write_string("] ");
+    uart::write_string(message);
+    uart::write_number(number);
+    uart::write_string(message_two);
+    uart::write_number(number_two);
+    uart::write_char('\n');
+}

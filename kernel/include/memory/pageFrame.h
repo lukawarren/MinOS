@@ -47,6 +47,11 @@ namespace memory
             return (remainder == 0) ? size : size + PAGE_SIZE - remainder;
         }
 
+        constexpr static size_t round_address_to_next_page(const size_t size)
+        {
+            return size_t(size / PAGE_SIZE) * PAGE_SIZE;
+        }
+
     private:
         size_t* pageDirectories;
         size_t* pageTables;

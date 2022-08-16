@@ -1,22 +1,23 @@
 #include "interrupts/interrupts.h"
 #include "memory/allocator.h"
-#include "multiboot.h"
+#include "memory/multiboot_info.h"
 #include "memory/elf.h"
+#include "multiboot.h"
 #include "io/uart.h"
 #include "cpu/cpu.h"
 #include "klib.h"
 
-extern "C" { void kmain(multiboot_info_t* multiboot_info, uint32_t eax); }
+extern "C" { void kmain(multiboot_info_t* multiboot_header, uint32_t eax); }
 
-void kmain(multiboot_info_t* multiboot_info, uint32_t eax)
+extern size_t kernel_end;
+
+void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 {
     uart::init();
 
-    // Verify we're multiboot
+    // Verify we're multiboot and parse it
     assert(eax == MULTIBOOT_BOOTLOADER_MAGIC);
-    uart::write_string("Detected ");
-    uart::write_number(multiboot_info->mods_count);
-    uart::write_string(" multiboot modules\n");
+    memory::MultibootInfo info(multiboot_header);
 
     // Setup interrupts
     interrupts::load();
@@ -25,8 +26,14 @@ void kmain(multiboot_info_t* multiboot_info, uint32_t eax)
     cpu::init();
     cpu::enable_interrupts();
 
+    // Figure out where to put memory - preferably well after the kernel
+    // and all the multiboot stuff
+    size_t memory_start = MAX(info.memory_begin, (size_t) &kernel_end);
+    memory_start = MAX(memory_start, info.get_highest_module_address());
+    memory_start = memory::PageFrame::round_address_to_next_page(memory_start);
+
     // Setup paging, heap, etc.
-    memory::Allocator root_allocator(10 * 1024 * 1024, 10 * 1024 * 1024);
+    memory::Allocator root_allocator(memory_start, info.memory_end - memory_start);
     cpu::set_cr3(root_allocator.get_cr3());
     cpu::enable_paging();
 

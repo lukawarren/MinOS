@@ -16,7 +16,7 @@ namespace memory
         memset(freeGroups, 0, sizeof(freeGroups[0]) * groups);
 
         // ...save for the ones that're free
-        free_pages(address, size / PAGE_SIZE);
+        free_pages(address, size / PAGE_SIZE, false);
         println("created root allocator");
     }
 
@@ -93,12 +93,13 @@ namespace memory
         return (void*)0;
     }
 
-    void Allocator::free_pages(const size_t address, const size_t pages)
+    void Allocator::free_pages(const size_t address, const size_t pages, const bool is_user)
     {
         for (size_t i = 0; i < pages; ++i)
         {
             const auto page = address / PAGE_SIZE + i;
             set_page_as_free(page / bits_per_group, page % bits_per_group);
+            if (is_user) frame.unmap_page(page);
         }
     }
 

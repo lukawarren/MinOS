@@ -15,7 +15,7 @@ align 4
 	dd CHECKSUM
 	dd 0, 0, 0, 0, 0
 	dd 0  ; set graphics mode
-	dd 1024, 768, 32 ; width, height, depth
+	dd 640, 480, 32 ; width, height, depth
 
 ; Stack
 section .bss
