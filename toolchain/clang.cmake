@@ -38,6 +38,8 @@ add_link_options("-fuse-ld=lld")
 add_link_options("--target=i686-pc-none-elf")
 add_link_options("-march=i686")
 add_link_options("-Wno-unused-command-line-argument")
+add_link_options("-nostdlib")
+add_link_options("-ffreestanding")
 
 # Linking
 set(CMAKE_LINKER ld.lld)

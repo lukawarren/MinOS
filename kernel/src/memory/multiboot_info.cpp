@@ -39,7 +39,6 @@ namespace memory
             {
                 memory_begin = (size_t) memory_map->addr;
                 memory_end = memory_begin + (size_t) memory_map->len;
-                println("starting heap at ", memory_begin, " - ", memory_end);
                 return;
             }
 

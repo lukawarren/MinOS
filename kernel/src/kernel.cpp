@@ -30,12 +30,15 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     // and all the multiboot stuff
     size_t memory_start = MAX(info.memory_begin, (size_t) &kernel_end);
     memory_start = MAX(memory_start, info.get_highest_module_address());
-    memory_start = memory::PageFrame::round_address_to_next_page(memory_start);
+    memory_start = memory::PageFrame::round_to_next_page_size(memory_start);
 
     // Setup paging, heap, etc.
     memory::Allocator root_allocator(memory_start, info.memory_end - memory_start);
     cpu::set_cr3(root_allocator.get_cr3());
     cpu::enable_paging();
+
+    // Load program
+    memory::load_elf_file(root_allocator, info.modules[0].address);
 
     while(1) {}
 }

@@ -30,7 +30,6 @@ bits 32
 _start:
 
     ; set up stack
-    xchg bx, bx
     mov esp, stack_top
 
     ; call main kernel (modifying esp

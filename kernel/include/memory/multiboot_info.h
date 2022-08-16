@@ -23,7 +23,7 @@ namespace memory
             Module(size_t start, size_t end, char* name)
             {
                 address = start;
-                size = start - end;
+                size = end - start;
                 strncpy(this->name, name, sizeof(this->name) / sizeof(this->name[0]));
             }
         };

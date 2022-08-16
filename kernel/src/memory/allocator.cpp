@@ -13,10 +13,11 @@ namespace memory
         freeGroups = (uint32_t*)(address + PageFrame::size());
 
         // Set all pages as used...
-        memset(freeGroups, 0, sizeof(freeGroups[0]) * groups);
+        memset(freeGroups, 0, Allocator::size());
 
         // ...save for the ones that're free
-        free_pages(address, size / PAGE_SIZE, false);
+        size_t structures_end = (size_t) freeGroups + Allocator::size();
+        free_pages(structures_end, size / PAGE_SIZE, false);
         println("created root allocator");
     }
 
@@ -25,6 +26,7 @@ namespace memory
         // Allocate
         auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
         void* data = allocate_pages(pages);
+        assert(PageFrame::is_page_aligned((size_t)data));
 
         // Map into memory
         for (size_t i = 0; i < pages; ++i)
@@ -89,12 +91,14 @@ namespace memory
             }
         }
 
-        else assert(false);
+        assert(false);
         return (void*)0;
     }
 
     void Allocator::free_pages(const size_t address, const size_t pages, const bool is_user)
     {
+        assert(PageFrame::is_page_aligned(address));
+
         for (size_t i = 0; i < pages; ++i)
         {
             const auto page = address / PAGE_SIZE + i;
@@ -111,6 +115,11 @@ namespace memory
     void Allocator::set_page_as_free(const size_t group, const size_t bit)
     {
         freeGroups[group] |= (1 << bit);
+    }
+
+    constexpr size_t Allocator::size()
+    {
+        return sizeof(freeGroups[0]) * groups;
     }
 
     /*

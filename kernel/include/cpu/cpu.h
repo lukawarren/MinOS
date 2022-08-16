@@ -1,10 +1,13 @@
 #pragma once
 #include "gdt.h"
 #include "idt.h"
+#include "tss.h"
 
 namespace cpu
 {
     extern IDT idt[256];
+    extern GDT gdt[6];
+    extern TSS tss;
 
     void init();
 
