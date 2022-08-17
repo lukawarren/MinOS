@@ -107,6 +107,8 @@ namespace memory
         SHT_SYMTAB      = 2,  // Symbol table
         SHT_STRTAB      = 3,  // String table
         SHT_RELA        = 4,  // Relocation (with addend)
+        SHT_DYNAMIC     = 6,
+        SHT_NOTE        = 7,  // E.g. note.gnu.build-id
         SHT_NOBITS      = 8,  // Not present in file
         SHT_REL         = 9,  // Relocation (no addend)
         SHT_FINI_ARRAY  = 15, // Array of destructors
@@ -119,5 +121,5 @@ namespace memory
         SHF_ALLOC       = 2  // Exists in memory
     };
 
-    size_t load_elf_file(PageFrame& user_frame, const size_t address);
+    Optional<size_t> load_elf_file(PageFrame& user_frame, const size_t address);
 }

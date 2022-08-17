@@ -42,3 +42,20 @@ void _println(const char* file, const char* message, const size_t number, const 
    ({ __typeof__ (a) _a = (a); \
        __typeof__ (b) _b = (b); \
      _a > _b ? _a : _b; })
+
+
+template<typename T>
+struct Optional
+{
+    T data;
+    bool success;
+
+    Optional(T _data) : data(_data), success(true) {}
+    Optional() : success(false) {}
+
+    T require()
+    {
+        assert(success);
+        return data;
+    }
+};

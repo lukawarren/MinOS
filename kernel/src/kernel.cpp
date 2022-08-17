@@ -31,8 +31,11 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     // Load program
     using namespace memory;
     auto user_frame = PageFrame((size_t) allocate_for_kernel(PageFrame::size()), true);
-    load_elf_file(user_frame, info.modules[0].address);
+    auto result = load_elf_file(user_frame, info.modules[0].address);
     cpu::set_cr3(user_frame.get_cr3());
+
+    if (result.success) println("Loaded ELF file");
+    else println("Could not load ELF file");
 
     while(1) {}
 }

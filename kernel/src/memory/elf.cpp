@@ -1,21 +1,23 @@
 #include "memory/elf.h"
 #include "memory/memory.h"
 
-size_t memory::load_elf_file(PageFrame& user_frame, const size_t address)
+#define check(x) if (!(x)) { assert(false); return {}; }
+
+Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t address)
 {
     // Check for magic header
     auto* header = (Elf32Header*)address;
-    assert(header->e_ident[ElfIdent::EI_MAG_0] == ELF_MAG_0);
-    assert(header->e_ident[ElfIdent::EI_MAG_1] == ELF_MAG_1);
-    assert(header->e_ident[ElfIdent::EI_MAG_2] == ELF_MAG_2);
-    assert(header->e_ident[ElfIdent::EI_MAG_3] == ELF_MAG_3);
+    check(header->e_ident[ElfIdent::EI_MAG_0] == ELF_MAG_0);
+    check(header->e_ident[ElfIdent::EI_MAG_1] == ELF_MAG_1);
+    check(header->e_ident[ElfIdent::EI_MAG_2] == ELF_MAG_2);
+    check(header->e_ident[ElfIdent::EI_MAG_3] == ELF_MAG_3);
 
     // Check compatibility
-    assert(header->e_ident[EI_CLASS] == ELF_CLASS_32);
-    assert(header->e_ident[EI_DATA] == ELF_DATA_2_LSB);
-    assert(header->e_ident[EI_VERSION] == EV_CURRENT);
-    assert(header->e_machine == EM_386);
-    assert(header->e_type == ET_EXEC);
+    check(header->e_ident[EI_CLASS]   == ELF_CLASS_32);
+    check(header->e_ident[EI_DATA]    == ELF_DATA_2_LSB);
+    check(header->e_ident[EI_VERSION] == EV_CURRENT);
+    check(header->e_machine           == EM_386);
+    check(header->e_type              == ET_EXEC);
 
     // Load program headers
     for (size_t i = 0; i < header->e_phnum; ++i)
@@ -26,8 +28,8 @@ size_t memory::load_elf_file(PageFrame& user_frame, const size_t address)
         if (program_header->p_type == PT_LOAD)
         {
             // Sanity check (we're not a higher-half kernel!)
-            assert(program_header->p_vaddr >= 0x40000000);
-            assert(PageFrame::is_page_aligned(program_header->p_vaddr));
+            check(program_header->p_vaddr >= 0x40000000);
+            check(PageFrame::is_page_aligned(program_header->p_vaddr));
 
             size_t source = address + program_header->p_offset;
             size_t file_size = program_header->p_filesz;
@@ -55,18 +57,21 @@ size_t memory::load_elf_file(PageFrame& user_frame, const size_t address)
         {
             switch (section_header->sh_type)
             {
-                case SectionHeaderType::SHT_PROGBITS:
-                    // Already loaded by the program headers above (luckily)... I think.
-                    // Well it works for now and always has, so that's my story and I'm
-                    // sticking to it!
-                    break;
+                // Already loaded by the program headers above (luckily)... I think.
+                // Well it works for now and always has, so that's my story and I'm
+                // sticking to it!
+                case SectionHeaderType::SHT_PROGBITS: break;
+
+                // Depending on the toolchain, this gets appened for things like
+                // 'note.gnu.build-id'. It's easier to just ignore it for now.
+                case SectionHeaderType::SHT_NOTE: break;
 
                 default:
-                    assert(false);
+                    check(false);
             }
         }
 
-        else if (section_header->sh_flags & SHF_WRITE) assert(false);
+        else if (section_header->sh_flags & SHF_WRITE) check(false);
     }
 
     return header->e_entry;
