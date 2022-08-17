@@ -1,6 +1,7 @@
 #pragma once
 #include "klib.h"
-#include "allocator.h"
+#include "memory/allocator.h"
+#include "memory/pageFrame.h"
 
 // e_ident data
 #define ELF_MAG_0       0x7F    // e_ident[EI_MAG0]
@@ -118,5 +119,5 @@ namespace memory
         SHF_ALLOC       = 2  // Exists in memory
     };
 
-    size_t load_elf_file(memory::Allocator& allocator, const size_t address);
+    size_t load_elf_file(PageFrame& user_frame, const size_t address);
 }

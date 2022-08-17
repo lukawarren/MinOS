@@ -1,6 +1,6 @@
 #include "interrupts/interrupts.h"
-#include "memory/allocator.h"
 #include "memory/multiboot_info.h"
+#include "memory/memory.h"
 #include "memory/elf.h"
 #include "multiboot.h"
 #include "io/uart.h"
@@ -9,7 +9,6 @@
 
 extern "C" { void kmain(multiboot_info_t* multiboot_header, uint32_t eax); }
 
-extern size_t kernel_end;
 
 void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 {
@@ -26,19 +25,14 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     cpu::init();
     cpu::enable_interrupts();
 
-    // Figure out where to put memory - preferably well after the kernel
-    // and all the multiboot stuff
-    size_t memory_start = MAX(info.memory_begin, (size_t) &kernel_end);
-    memory_start = MAX(memory_start, info.get_highest_module_address());
-    memory_start = memory::PageFrame::round_to_next_page_size(memory_start);
-
-    // Setup paging, heap, etc.
-    memory::Allocator root_allocator(memory_start, info.memory_end - memory_start);
-    cpu::set_cr3(root_allocator.get_cr3());
-    cpu::enable_paging();
+    // Setup memory
+    memory::init(info);
 
     // Load program
-    memory::load_elf_file(root_allocator, info.modules[0].address);
+    using namespace memory;
+    auto user_frame = PageFrame((size_t) allocate_for_kernel(PageFrame::size()), true);
+    load_elf_file(user_frame, info.modules[0].address);
+    cpu::set_cr3(user_frame.get_cr3());
 
     while(1) {}
 }

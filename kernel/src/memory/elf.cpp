@@ -1,6 +1,7 @@
 #include "memory/elf.h"
+#include "memory/memory.h"
 
-size_t memory::load_elf_file(memory::Allocator& allocator, const size_t address)
+size_t memory::load_elf_file(PageFrame& user_frame, const size_t address)
 {
     // Check for magic header
     auto* header = (Elf32Header*)address;
@@ -32,8 +33,10 @@ size_t memory::load_elf_file(memory::Allocator& allocator, const size_t address)
             size_t file_size = program_header->p_filesz;
             size_t memory_size = program_header->p_memsz;
 
-            size_t destination = (size_t) allocator.get_user_memory_at_address(
-                program_header->p_vaddr, memory_size
+            size_t destination = (size_t) memory::allocate_for_user(
+                program_header->p_vaddr,
+                memory_size,
+                user_frame
             );
 
             // If p_memsz exceeds p_filesz, then the remaining bits are to be zeroed

@@ -1,16 +1,18 @@
 #include "memory/pageFrame.h"
 #include "cpu/cpu.h"
 
+extern size_t kernel_end;
+
 namespace memory
 {
-    PageFrame::PageFrame(const size_t address)
+    PageFrame::PageFrame(const size_t address, const bool is_userspace)
     {
         // Store first all the page directories, followed by all the page tables
         pageDirectories = (size_t*)address;
         pageTables = pageDirectories + PAGE_DIRECTORIES;
         assert(is_page_aligned(address));
 
-        // Identity map entire kernel: populate page directories...
+        // Populate page directories
         for (unsigned int i = 0; i < PAGE_DIRECTORIES; ++i)
         {
             const auto flags = USER_DIRECTORY;
@@ -18,8 +20,13 @@ namespace memory
             pageDirectories[i] = tables | flags;
         }
 
-        // ...then page tables (more strictly, identity mapped)
-        for (unsigned int i = 0; i < PAGE_TABLES_PER_DIRECTORY * PAGE_DIRECTORIES; ++i)
+        // Kernel: identify map all of memory
+        // Userspace: map only kernel code so we can still service IRQs, etc.
+        const size_t mapped_pages = is_userspace ?
+            ((size_t)&kernel_end) / PAGE_SIZE :
+            PAGE_TABLES_PER_DIRECTORY * PAGE_DIRECTORIES;
+
+        for (unsigned int i = 0; i < mapped_pages; ++i)
         {
             const auto flags = KERNEL_PAGE;
             const PhysicalAddress p_addr = i * PAGE_SIZE;

@@ -49,7 +49,7 @@ namespace memory
         assert(false);
     }
 
-    size_t MultibootInfo::get_highest_module_address()
+    size_t MultibootInfo::get_highest_module_address() const
     {
         size_t highest = 0;
         for (size_t i = 0; i < n_modules; ++i)

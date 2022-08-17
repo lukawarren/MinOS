@@ -1,4 +1,5 @@
 #include "memory/allocator.h"
+#include "memory/pageFrame.h"
 
 namespace memory
 {
@@ -7,35 +8,16 @@ namespace memory
 
     static uint32_t get_position_of_least_significant_bit(uint32_t number);
 
-    Allocator::Allocator(const size_t address, const size_t size) : frame(address)
+    Allocator::Allocator(const size_t address, const size_t size)
     {
-        // Page frame created; make bitmap of free pages straight after
-        freeGroups = (uint32_t*)(address + PageFrame::size());
-
         // Set all pages as used...
+        freeGroups = (uint32_t*)address;
         memset(freeGroups, 0, Allocator::size());
 
         // ...save for the ones that're free
         size_t structures_end = (size_t) freeGroups + Allocator::size();
-        free_pages(structures_end, size / PAGE_SIZE, false);
+        free_pages(structures_end, size / PAGE_SIZE);
         println("created root allocator");
-    }
-
-    void* Allocator::get_user_memory_at_address(const VirtualAddress address, const size_t size)
-    {
-        // Allocate
-        auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
-        void* data = allocate_pages(pages);
-        assert(PageFrame::is_page_aligned((size_t)data));
-
-        // Map into memory
-        for (size_t i = 0; i < pages; ++i)
-        {
-            size_t offset = PAGE_SIZE*i;
-            frame.map_page((size_t)data + offset, address + offset, USER_PAGE);
-        }
-
-        return data;
     }
 
     void* Allocator::allocate_pages(const size_t pages)
@@ -90,12 +72,67 @@ namespace memory
                 return (void*)address;
             }
         }
+        else
+        {
+            // Keep a running total of pages found. If a new group lets all its
+            // precursors down, we know anything before it's not gonna work either
+            // so, let's just march forward until we find a nice sequential block!
+            // NOTE: this code is approximate, and can't start mid-group, but large
+            // contiguous allocations like this should hopefully be pretty infrequent.
+
+            size_t remaining_pages = pages;
+            size_t starting_group = 0;
+
+            for (size_t i = 0; i < groups; ++i)
+            {
+                const size_t bitmap = freeGroups[i];
+
+                // If we're not the last group
+                if (remaining_pages > bits_per_group)
+                {
+                    // If the group's not all free, give up
+                    if (freeGroups[i] + 1 != 0)
+                    {
+                        remaining_pages = pages;
+                        starting_group = i + 1;
+                    }
+
+                    else remaining_pages -= bits_per_group;
+                }
+                else
+                {
+                    // We're in the last group, so our remaining pages need to be
+                    // at the *start* of the group
+                    const size_t mask = (1 << remaining_pages) - 1;
+
+                    if ((bitmap & mask) == mask)
+                    {
+                        // Success - map and return away!
+                        const size_t nth_page = starting_group * bits_per_group;
+
+                        for (size_t page = 0; page < pages; ++page)
+                        {
+                            const size_t group = (nth_page + page) / bits_per_group;
+                            const size_t bit = (nth_page + page) % bits_per_group;
+                            set_page_as_allocated(group, bit);
+                        }
+
+                        return (void*) (nth_page * PAGE_SIZE);
+                    }
+
+                    // There weren't enough free pages at the start, and
+                    // we know this one's not full, so give up and skip ahead
+                    remaining_pages = pages;
+                    starting_group = i;
+                }
+            }
+        }
 
         assert(false);
         return (void*)0;
     }
 
-    void Allocator::free_pages(const size_t address, const size_t pages, const bool is_user)
+    void Allocator::free_pages(const size_t address, const size_t pages)
     {
         assert(PageFrame::is_page_aligned(address));
 
@@ -103,7 +140,6 @@ namespace memory
         {
             const auto page = address / PAGE_SIZE + i;
             set_page_as_free(page / bits_per_group, page % bits_per_group);
-            if (is_user) frame.unmap_page(page);
         }
     }
 

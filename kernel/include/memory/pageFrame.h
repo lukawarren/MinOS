@@ -24,7 +24,8 @@ namespace memory
     class PageFrame
     {
     public:
-        PageFrame(const size_t address);
+        PageFrame(const size_t address, const bool is_userspace);
+        PageFrame() {}
 
         void map_page(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags);
         void unmap_page(VirtualAddress vAddr);
