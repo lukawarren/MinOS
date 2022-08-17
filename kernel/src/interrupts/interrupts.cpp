@@ -1,8 +1,9 @@
 #include "cpu/idt.h"
 #include "cpu/cpu.h"
-#include "cpu/pic.h"
 #include "io/uart.h"
 #include "interrupts/irq.h"
+#include "interrupts/pic.h"
+#include "interrupts/pit.h"
 #include "klib.h"
 
 namespace interrupts
@@ -66,13 +67,15 @@ namespace interrupts
         idt[29]  = create_idt_entry((uint32_t) irq_exception_29,  0x8, ENABLED_R0_INTERRUPT);
         idt[30]  = create_idt_entry((uint32_t) irq_exception_30,  0x8, ENABLED_R0_INTERRUPT);
 
-        // Set PIC masks
-        pic::init(PIC_MASK_KEYBOARD, PIC_MASK_ALL);
+        // Set PIC masks and PIT
+        pic::init(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL);
+        pit::init();
     }
 
     void on_interrupt(const uint32_t irq, const cpu::Registers)
     {
         println("interrupt!");
+        if (irq == 0) pit::reload();
         if (irq == 1) cpu::inb(0x60);
         pic::end_interrupt((uint8_t)irq);
     }

@@ -1,4 +1,4 @@
-#include "cpu/pic.h"
+#include "interrupts/pic.h"
 #include "cpu/cpu.h"
 
 namespace pic
