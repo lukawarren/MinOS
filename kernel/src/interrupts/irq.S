@@ -65,6 +65,7 @@ irq 12
 irq 13
 irq 14
 irq 15
+irq 128
 
 exception 0,  0
 exception 1,  0

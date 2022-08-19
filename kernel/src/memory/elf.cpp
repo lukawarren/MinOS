@@ -1,7 +1,7 @@
 #include "memory/elf.h"
 #include "memory/memory.h"
 
-#define check(x) if (!(x)) { assert(false); return {}; }
+#define check(x) if (!(x)) { assert(x); return {}; }
 
 Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t address)
 {
@@ -57,6 +57,17 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
         {
             switch (section_header->sh_type)
             {
+                case SectionHeaderType::SHT_NOBITS:
+                {
+                    // BSS - allocate memory and zero it
+                    void* data = memory::allocate_for_user(
+                        section_header->sh_addr,
+                        section_header->sh_size, user_frame
+                    );
+                    memset(data, 0, section_header->sh_size);
+                }
+                break;
+
                 // Already loaded by the program headers above (luckily)... I think.
                 // Well it works for now and always has, so that's my story and I'm
                 // sticking to it!
@@ -71,7 +82,8 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             }
         }
 
-        else if (section_header->sh_flags & SHF_WRITE) check(false);
+        else if (section_header->sh_size > 0 && section_header->sh_flags & SHF_WRITE)
+            check(false);
     }
 
     return header->e_entry;

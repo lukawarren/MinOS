@@ -1,5 +1,7 @@
+#include <stdio.h>
+
 void main(void)
 {
-    asm("xchg %bx, %bx");
+    printf("Hello world!\n");
     while(1) {}
 }

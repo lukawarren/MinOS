@@ -4,6 +4,7 @@
 #include "interrupts/irq.h"
 #include "interrupts/pic.h"
 #include "interrupts/pit.h"
+#include "multitask/scheduler.h"
 #include "klib.h"
 
 namespace interrupts
@@ -67,15 +68,22 @@ namespace interrupts
         idt[29]  = create_idt_entry((uint32_t) irq_exception_29,  0x8, ENABLED_R0_INTERRUPT);
         idt[30]  = create_idt_entry((uint32_t) irq_exception_30,  0x8, ENABLED_R0_INTERRUPT);
 
+        idt[0x80] = create_idt_entry((uint32_t) irq_128,  0x8, ENABLED_R3_INTERRUPT);
+
         // Set PIC masks and PIT
         pic::init(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL);
         pit::init();
     }
 
-    void on_interrupt(const uint32_t irq, const cpu::Registers)
+    void on_interrupt(const uint32_t irq, const cpu::Registers registers)
     {
         if (irq == 0) pit::reload();
-        if (irq == 1) { uart::write_number(cpu::inb(0x60)); }
+        else if (irq == 1) { uart::write_number(cpu::inb(0x60)); }
+        else if (irq == 0x80)
+        {
+            println("Syscall with eax ", registers.eax);
+            while(1) {}
+        }
         pic::end_interrupt((uint8_t)irq);
     }
 
@@ -103,8 +111,10 @@ namespace interrupts
 
         uart::write_string("\n\n---------- CPU exception ---------- \n");
         uart::write_string(reasons[irq]);
-        uart::write_char('\n');
-        uart::write_string("----------------------------------- \n\n\n");
+        uart::write_string("\nLeft kernel: ");
+        uart::write_string(multitask::left_kernel ? "true" : "false");
+        uart::write_string("\n----------------------------------- \n\n\n");
+        while(1) {}
         assert(false);
     }
 }

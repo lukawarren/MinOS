@@ -5,6 +5,7 @@
 namespace multitask
 {
     void add_process(Process process);
+    extern bool left_kernel; // For crude backtrace - TODO: improve
 
     extern "C"
     {

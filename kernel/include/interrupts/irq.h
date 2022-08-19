@@ -26,6 +26,7 @@ namespace interrupts
         extern void irq_13();
         extern void irq_14();
         extern void irq_15();
+        extern void irq_128();
 
         extern void irq_exception_0();
         extern void irq_exception_1();

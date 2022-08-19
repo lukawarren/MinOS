@@ -101,7 +101,7 @@ namespace memory
 
     // Section header sh_type
     enum SectionHeaderType
-     {
+    {
         SHT_NULL        = 0,  // Null section
         SHT_PROGBITS    = 1,  // Program information
         SHT_SYMTAB      = 2,  // Symbol table

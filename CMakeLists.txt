@@ -7,6 +7,7 @@ add_subdirectory(userspace)
 # GRUB 2
 add_custom_target(run ALL DEPENDS kernel.bin DEPENDS hello-world.bin)
 add_custom_command(TARGET run COMMAND
+                    echo "Generating iso..." &&
                     mkdir -p isodir/boot/grub &&
                     cp ../grub.cfg isodir/boot/grub &&
                     cp kernel/kernel.bin isodir/boot &&

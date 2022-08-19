@@ -34,7 +34,6 @@ extern on_scheduler
 
 global irq_0
 irq_0:
-    xchg bx, bx
     ; extract iret stack
     pop dword [iret_stack + 0]
     pop dword [iret_stack + 4]
