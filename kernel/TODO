@@ -2,3 +2,4 @@
 * ^^ same for ELFs
 * pageFrame.* --> page_frame.*
 * zero out (user) pages when allocated for security
+* avoid userspace vaddr collisions

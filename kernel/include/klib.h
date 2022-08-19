@@ -48,14 +48,14 @@ template<typename T>
 struct Optional
 {
     T data;
-    bool success;
+    bool contains_data;
 
-    Optional(T _data) : data(_data), success(true) {}
-    Optional() : success(false) {}
+    Optional(T _data) : data(_data), contains_data(true) {}
+    Optional() : contains_data(false) {}
 
     T require()
     {
-        assert(success);
+        assert(contains_data);
         return data;
     }
 };

@@ -8,7 +8,7 @@
 #define SEG_SIZE(x)      ((x) << 0x0E)              // Size (0 for 16-bit, 1 for 32)
 #define SEG_GRAN(x)      ((x) << 0x0F)              // Granularity (0 for 1B - 1MB, 1 for 4KB - 4GB)
 #define SEG_PRIV(x)      (((x) &  0x03) << 0x05)    // Set privilege level (0 - 3)
- 
+
 #define SEG_DATA_RD        0x00 // Read-Only
 #define SEG_DATA_RDA       0x01 // Read-Only, accessed
 #define SEG_DATA_RDWR      0x02 // Read/Write
@@ -25,24 +25,27 @@
 #define SEG_CODE_EXCA      0x0D // Execute-Only, conforming, accessed
 #define SEG_CODE_EXRDC     0x0E // Execute/Read, conforming
 #define SEG_CODE_EXRDCA    0x0F // Execute/Read, conforming, accessed
- 
+
 #define GDT_CODE_PL0 SEG_DESCTYPE(1) | SEG_PRES(1) | SEG_SAVL(0) | \
                      SEG_LONG(0)     | SEG_SIZE(1) | SEG_GRAN(1) | \
                      SEG_PRIV(0)     | SEG_CODE_EXRD
- 
+
 #define GDT_DATA_PL0 SEG_DESCTYPE(1) | SEG_PRES(1) | SEG_SAVL(0) | \
                      SEG_LONG(0)     | SEG_SIZE(1) | SEG_GRAN(1) | \
                      SEG_PRIV(0)     | SEG_DATA_RDWR
- 
+
 #define GDT_CODE_PL3 SEG_DESCTYPE(1) | SEG_PRES(1) | SEG_SAVL(0) | \
                      SEG_LONG(0)     | SEG_SIZE(1) | SEG_GRAN(1) | \
                      SEG_PRIV(3)     | SEG_CODE_EXRD
- 
+
 #define GDT_DATA_PL3 SEG_DESCTYPE(1) | SEG_PRES(1) | SEG_SAVL(0) | \
                      SEG_LONG(0)     | SEG_SIZE(1) | SEG_GRAN(1) | \
                      SEG_PRIV(3)     | SEG_DATA_RDWR
 
 #define TSS_PL0      SEG_PRES(1)     | SEG_SIZE(1) | SEG_CODE_EXA
+
+#define USER_CODE_SEGMENT 0x18
+#define USER_DATA_SEGMENT 0x20
 
 namespace cpu
 {

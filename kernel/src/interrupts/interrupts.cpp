@@ -74,9 +74,8 @@ namespace interrupts
 
     void on_interrupt(const uint32_t irq, const cpu::Registers)
     {
-        println("interrupt!");
         if (irq == 0) pit::reload();
-        if (irq == 1) cpu::inb(0x60);
+        if (irq == 1) { uart::write_number(cpu::inb(0x60)); }
         pic::end_interrupt((uint8_t)irq);
     }
 

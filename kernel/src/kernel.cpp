@@ -1,5 +1,6 @@
 #include "interrupts/interrupts.h"
 #include "memory/multiboot_info.h"
+#include "multitask/process.h"
 #include "memory/memory.h"
 #include "memory/elf.h"
 #include "multiboot.h"
@@ -32,10 +33,15 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     using namespace memory;
     auto user_frame = PageFrame((size_t) allocate_for_kernel(PageFrame::size()), true);
     auto result = load_elf_file(user_frame, info.modules[0].address);
+    assert(result.contains_data);
+    auto process = multitask::Process(user_frame, result.data);
     cpu::set_cr3(user_frame.get_cr3());
 
-    if (result.success) println("Loaded ELF file");
+    if (result.contains_data) println("Loaded ELF file");
     else println("Could not load ELF file");
+
+    void (*foo)(void) = (void (*)())result.data;
+    foo();
 
     while(1) {}
 }

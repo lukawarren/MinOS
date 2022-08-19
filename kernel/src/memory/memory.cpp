@@ -18,12 +18,12 @@ namespace memory
 
         // Setup paging, heap, etc.
         kernel_frame = PageFrame(memory_start, false);
-        allocator = Allocator(memory_start + kernel_frame.size(), info.memory_end - memory_start);
+        allocator = Allocator(memory_start + PageFrame::size(), info.memory_end - memory_start);
         cpu::set_cr3(kernel_frame.get_cr3());
         cpu::enable_paging();
     }
 
-    void* allocate_for_user(const VirtualAddress address, const size_t size, PageFrame& page_frame)
+    void* allocate_for_user(const Optional<VirtualAddress> address, const size_t size, PageFrame& page_frame)
     {
         // Allocate
         auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
@@ -34,10 +34,19 @@ namespace memory
         for (size_t i = 0; i < pages; ++i)
         {
             size_t offset = PAGE_SIZE*i;
-            page_frame.map_page((size_t)data + offset, address + offset, USER_PAGE);
+
+            if (address.contains_data)
+                page_frame.map_page((size_t)data + offset, address.data + offset, USER_PAGE);
+            else
+                page_frame.map_page((size_t)data + offset, (size_t)data + offset, USER_PAGE);
         }
 
         return data;
+    }
+
+    void* allocate_for_user(const size_t size, PageFrame& page_frame)
+    {
+        return allocate_for_user({}, size, page_frame);
     }
 
     void* allocate_for_kernel(const size_t size)
