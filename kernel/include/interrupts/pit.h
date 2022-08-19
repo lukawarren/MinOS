@@ -34,7 +34,4 @@ namespace pit
     void init();
     void set_frequency(const uint16_t channel, const uint16_t hertz);
     void reload();
-
-    extern uint16_t frequency;
-    extern uint16_t channel;
 }

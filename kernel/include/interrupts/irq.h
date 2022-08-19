@@ -10,7 +10,7 @@ namespace interrupts
 
         extern void blank_irq();
 
-        extern void irq_0();
+        extern void irq_0(); // Defined in multitasking code
         extern void irq_1();
         extern void irq_2();
         extern void irq_3();

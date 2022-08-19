@@ -1,5 +1,6 @@
 #include "interrupts/interrupts.h"
 #include "memory/multiboot_info.h"
+#include "multitask/scheduler.h"
 #include "multitask/process.h"
 #include "memory/memory.h"
 #include "memory/elf.h"
@@ -24,7 +25,6 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 
     // Setup GDT, TSS, IDT, etc.
     cpu::init();
-    cpu::enable_interrupts();
 
     // Setup memory
     memory::init(info);
@@ -35,13 +35,11 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     auto result = load_elf_file(user_frame, info.modules[0].address);
     assert(result.contains_data);
     auto process = multitask::Process(user_frame, result.data);
-    cpu::set_cr3(user_frame.get_cr3());
 
-    if (result.contains_data) println("Loaded ELF file");
-    else println("Could not load ELF file");
-
-    void (*foo)(void) = (void (*)())result.data;
-    foo();
+    // Add to scheduler
+    multitask::init(memory::kernel_frame.get_cr3());
+    multitask::add_process(process);
+    cpu::enable_interrupts();
 
     while(1) {}
 }

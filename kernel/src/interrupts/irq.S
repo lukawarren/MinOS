@@ -49,7 +49,7 @@ exception_handle_%1:
     iret
 %endmacro
 
-irq 0
+; irq 0 is defined in multitasking code
 irq 1
 irq 2
 irq 3
