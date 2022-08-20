@@ -1,6 +1,7 @@
 #include "interrupts/interrupts.h"
 #include "memory/multiboot_info.h"
 #include "multitask/scheduler.h"
+#include "multitask/syscalls.h"
 #include "multitask/process.h"
 #include "memory/memory.h"
 #include "memory/elf.h"
@@ -29,6 +30,10 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     // Setup memory
     memory::init(info);
 
+    // Registers syscalls, etc.
+    multitask::init_syscalls();
+    multitask::init_scheduler(memory::kernel_frame.get_cr3());
+
     // Load program
     using namespace memory;
     auto user_frame = PageFrame((size_t) allocate_for_kernel(PageFrame::size()), true);
@@ -37,7 +42,6 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     auto process = multitask::Process(user_frame, result.data);
 
     // Add to scheduler
-    multitask::init(memory::kernel_frame.get_cr3());
     multitask::add_process(process);
     cpu::enable_interrupts();
 

@@ -40,7 +40,7 @@ namespace multitask
         *--stack = USER_DATA_SEGMENT | 3;   // gs
         *--stack = page_frame.get_cr3();    // cr3
 
-        // Save esp itself!
+        // Save esp itself, and other info for syscalls, etc.
         esp = (size_t)stack;
         thread_id = ++id_pool;
     }

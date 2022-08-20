@@ -80,7 +80,7 @@ namespace interrupts
         switch (irq)
         {
             case 0: pit::reload(); break;
-            case 1: cpu::inb(0x60); break;
+            case 1: uart::write_number(cpu::inb(0x60)); break;
             default:
                 assert(false);
         };
@@ -112,8 +112,6 @@ namespace interrupts
 
         uart::write_string("\n\n---------- CPU exception ---------- \n");
         uart::write_string(reasons[irq]);
-        uart::write_string("\nLeft kernel: ");
-        uart::write_string(multitask::left_kernel ? "true" : "false");
         uart::write_string("\n----------------------------------- \n\n\n");
         while(1) {}
         assert(false);

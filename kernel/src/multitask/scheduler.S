@@ -9,7 +9,6 @@ new_stack_address: dd 0
 
 global old_stack_address
 old_stack_address: dd 0
-
 ; ----------------- set from C++ -----------------
 
 ; When switching rings, the kernel esp is loaded instead of the current task's.
@@ -50,16 +49,16 @@ irq_0:
     mov cr3, eax
     pop eax
 
-    ; call our trusty scheduler, clearing df as per the SysV ABI
-    ; (popad later so we don't clobber eflags with our cmp)
+    ; call our trusty scheduler, clearing df as per the SysV ABI (popad later
+    ; so we don't clobber eflags with our cmp)
     pushad
     cld
     call on_scheduler
     popad
 
 save_old_task:
-    ; Get the userspace stack from the iret frame (as our
-    ; current esp is the kernel one set in the TSS)
+    ; Get the userspace stack from the iret frame (as our current esp is the
+    ; kernel one set in the TSS)
     mov esp, [iret_stack + 12]
 
     ; save iret frame
@@ -89,8 +88,8 @@ save_old_task:
 
     ; finally, save the task's esp (we've taken a pointer to it)... unless we've
     ; come from the kernel, since it's just given us a nullptr on purpose (we
-    ; have just skipped straight to loading the new task if we knew earlier, but
-    ; a cmp would have clobbered eflags)
+    ; would've just skipped straight to loading the new task if we knew earlier,
+    ; but a cmp would've clobbered eflags)
     mov eax, [old_stack_address]
     cmp eax, 0
     je load_new_task

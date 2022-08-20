@@ -2,7 +2,6 @@ section data
 
 return_eax_storage: dd 0
 cr3_storage: dd 0
-extern kernel_cr3
 
 section text
 extern on_syscall

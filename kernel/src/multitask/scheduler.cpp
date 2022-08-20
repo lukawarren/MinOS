@@ -11,14 +11,15 @@ namespace multitask
         extern size_t old_stack_address;
     }
 
-    // House-keeping
+    // Process list
     constexpr size_t max_processes = 128;
     Process processes[max_processes];
     size_t n_processes = 0;
-    bool left_kernel = false;
+
+    // External state
     Process* current_process = nullptr;
 
-    void init(const size_t _kernel_cr3)
+    void init_scheduler(const size_t _kernel_cr3)
     {
         kernel_cr3 = _kernel_cr3;
     }
@@ -32,10 +33,10 @@ namespace multitask
     {
         assert(n_processes == 1);
 
-        if (!left_kernel)
+        // If we've never been here before, we shouldn't save the old stack
+        if (current_process == nullptr)
         {
             old_stack_address = 0;
-            left_kernel = true;
         } else
             old_stack_address = (size_t) &processes[0].esp;
 
