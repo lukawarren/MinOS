@@ -12,6 +12,9 @@ CC=clang CFLAGS='--target=i686-pc-none-elf -march=i686 -DSYSCALL_NO_TLS' LDFLAGS
 make -j 16
 ```
 
+## Musl changes
+* i386/__set_thread_area.s has been commented out, and a stub provided in __init_tls.c instead (which avoids manipulating segment registers)
+
 ## History
 * MinOS 1 - mostly written in the summer of 2021, C and C++
 * MinOS 2 - written a few months ago (mid 2022), in Rust

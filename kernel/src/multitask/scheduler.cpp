@@ -16,6 +16,7 @@ namespace multitask
     Process processes[max_processes];
     size_t n_processes = 0;
     bool left_kernel = false;
+    Process* current_process = nullptr;
 
     void init(const size_t _kernel_cr3)
     {
@@ -39,6 +40,7 @@ namespace multitask
             old_stack_address = (size_t) &processes[0].esp;
 
         new_stack_address = (size_t) &processes[0].esp;
+        current_process = &processes[0];
         pic::end_interrupt(0);
     }
 }

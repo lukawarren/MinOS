@@ -1,3 +1,4 @@
+/*
 .text
 .global __set_thread_area
 .hidden __set_thread_area
@@ -45,3 +46,4 @@ __set_thread_area:
 .data
 	.align 4
 4:	.long -1
+*/

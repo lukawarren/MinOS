@@ -37,6 +37,9 @@ irq_exception_%1:
     je exception_handle_%1
     add esp, 4
 
+    xchg bx, bx
+    iret
+
 exception_handle_%1:
     ; Push error code and registers, call
     ; Rust, then half for now
@@ -49,7 +52,7 @@ exception_handle_%1:
     iret
 %endmacro
 
-; irq 0 is defined in multitasking code
+; irq 0 and 128 are defined in multitasking code
 irq 1
 irq 2
 irq 3
@@ -65,7 +68,6 @@ irq 12
 irq 13
 irq 14
 irq 15
-irq 128
 
 exception 0,  0
 exception 1,  0

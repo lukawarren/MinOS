@@ -11,6 +11,12 @@
 
 volatile int __thread_list_lock;
 
+// MinOS hack
+int __set_thread_area(void* p)
+{
+	return __syscall(SYS_set_thread_area, p);
+}
+
 int __init_tp(void *p)
 {
 	pthread_t td = p;

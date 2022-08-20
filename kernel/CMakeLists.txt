@@ -4,6 +4,10 @@ enable_language(ASM_NASM)
 
 # Includes
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/musl/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/musl/obj/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/musl/arch/i386)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/musl/arch/generic)
 
 # Add source files
 file(GLOB_RECURSE C_SRCS src/*.c src/*/*.c)

@@ -75,15 +75,16 @@ namespace interrupts
         pit::init();
     }
 
-    void on_interrupt(const uint32_t irq, const cpu::Registers registers)
+    void on_interrupt(const uint32_t irq, const cpu::Registers)
     {
-        if (irq == 0) pit::reload();
-        else if (irq == 1) { uart::write_number(cpu::inb(0x60)); }
-        else if (irq == 0x80)
+        switch (irq)
         {
-            println("Syscall with eax ", registers.eax);
-            while(1) {}
-        }
+            case 0: pit::reload(); break;
+            case 1: cpu::inb(0x60); break;
+            default:
+                assert(false);
+        };
+
         pic::end_interrupt((uint8_t)irq);
     }
 
