@@ -4,7 +4,7 @@
 
 namespace multitask
 {
-    constexpr size_t stack_size = 8192;
+    constexpr size_t stack_size = 32 * 1024;
     static pid_t id_pool = 0;
 
     Process::Process(memory::PageFrame page_frame, const size_t entrypoint) : frame(page_frame)

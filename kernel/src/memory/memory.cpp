@@ -95,4 +95,13 @@ namespace memory
         memset((void*)*data, 0, pages * PAGE_SIZE);
         return data;
     }
+
+    void free_for_user(const size_t address, const size_t size, PageFrame& page_frame)
+    {
+        // Free from allocator...
+        allocator.free_pages(address, size / PAGE_SIZE);
+
+        // ...then unmap
+        page_frame.unmap_pages(address, size / PAGE_SIZE);
+    }
 }

@@ -11,6 +11,7 @@ namespace multitask
     int ioctl(int fd, unsigned long request, char* argp);
     void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
     int mprotect(void* addr, size_t length, int prot);
+    int munmap(void* addr, size_t len);
     int set_thread_area();
     int set_tid_address();
     ssize_t writev(int fd, const iovec* iov, int iovcnt);
@@ -25,6 +26,7 @@ namespace multitask
         syscalls[SYS_ioctl] = (size_t)&ioctl;
         syscalls[SYS_mmap2] = (size_t)&mmap;
         syscalls[SYS_mprotect] = (size_t)&mprotect;
+        syscalls[SYS_munmap] = (size_t)&munmap;
         syscalls[SYS_set_thread_area] = (size_t)&set_thread_area;
         syscalls[SYS_set_tid_address] = (size_t)&set_tid_address;
         syscalls[SYS_writev] = (size_t)&writev;
@@ -97,6 +99,12 @@ namespace multitask
         // them later here. That's a bit too much effort right now, so instead we
         // always map them as READ | WRITE, meaning we've nothing to do here.
         assert(prot == (PROT_READ | PROT_WRITE));
+        return 0;
+    }
+
+    int munmap(void* addr, size_t len)
+    {
+        memory::free_for_user((size_t)addr, len, multitask::current_process->frame);
         return 0;
     }
 

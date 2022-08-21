@@ -31,6 +31,7 @@ namespace memory
         void map_page(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags);
         void map_pages(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags, size_t pages);
         void unmap_page(VirtualAddress vAddr);
+        void unmap_pages(VirtualAddress vAddr, size_t pages);
 
         size_t virtual_address_to_physical(VirtualAddress vAddr) const;
         size_t get_cr3() const;

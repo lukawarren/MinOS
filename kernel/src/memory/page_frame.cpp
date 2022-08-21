@@ -58,6 +58,12 @@ namespace memory
         cpu::flush_tlb();
     }
 
+    void PageFrame::unmap_pages(VirtualAddress vAddr, size_t pages)
+    {
+        for (size_t i = 0; i < pages; ++i)
+            unmap_page(vAddr + i*PAGE_SIZE);
+    }
+
     size_t PageFrame::virtual_address_to_physical(VirtualAddress vAddr) const
     {
         // Read entry from page table

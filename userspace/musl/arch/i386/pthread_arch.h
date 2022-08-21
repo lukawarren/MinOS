@@ -1,5 +1,5 @@
-#include "syscall.h"
-extern struct pthread mainThread; // defined in crt1.c
+#include "pthread_impl.h"
+extern struct __pthread falseThread; // defined in crt1.c
 
 static inline uintptr_t __get_tp()
 {
@@ -9,8 +9,8 @@ static inline uintptr_t __get_tp()
 	return tp;
 	*/
 
-	struct pthread* self;
-	self = &mainThread;
+	struct __pthread* self;
+	self = &falseThread;
 	return self;
 }
 
