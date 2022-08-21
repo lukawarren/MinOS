@@ -1,7 +1,7 @@
 #pragma once
 #include "klib.h"
 #include "memory/allocator.h"
-#include "memory/pageFrame.h"
+#include "memory/page_frame.h"
 
 // e_ident data
 #define ELF_MAG_0       0x7F    // e_ident[EI_MAG0]

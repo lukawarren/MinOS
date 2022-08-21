@@ -1,5 +1,5 @@
 #include "memory/allocator.h"
-#include "memory/pageFrame.h"
+#include "memory/page_frame.h"
 #include "memory/multiboot_info.h"
 
 namespace memory
