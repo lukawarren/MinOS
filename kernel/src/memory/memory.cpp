@@ -36,10 +36,16 @@ namespace memory
             size_t offset = PAGE_SIZE*i;
 
             if (address.contains_data)
+            {
+                assert(*address >= memory::user_base_address);
                 page_frame.map_page(*data + offset, *address + offset, USER_PAGE);
+            }
             else
                 page_frame.map_page(*data + offset, *data + offset, USER_PAGE);
         }
+
+        // Zero out
+        memset((void*)*data, 0, pages * PAGE_SIZE);
 
         return data;
     }
@@ -52,6 +58,11 @@ namespace memory
     Optional<size_t> allocate_for_kernel(const size_t size)
     {
         auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
-        return allocator.allocate_pages(pages);
+        auto data = allocator.allocate_pages(pages);
+        if (!data) return {};
+
+        // Zero out
+        memset((void*)*data, 0, pages * PAGE_SIZE);
+        return data;
     }
 }

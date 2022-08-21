@@ -1,5 +1,0 @@
-* Return optionals for mallocing and sanitise user vaddrs
-* ^^ same for ELFs
-* pageFrame.* --> page_frame.*
-* zero out (user) pages when allocated for security
-* avoid userspace vaddr collisions

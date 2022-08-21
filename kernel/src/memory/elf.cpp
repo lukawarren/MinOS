@@ -28,7 +28,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
         if (program_header->p_type == PT_LOAD)
         {
             // Sanity check (we're not a higher-half kernel!)
-            check(program_header->p_vaddr >= 0x40000000);
+            check(program_header->p_vaddr >= memory::user_base_address);
             check(PageFrame::is_page_aligned(program_header->p_vaddr));
 
             size_t source = address + program_header->p_offset;

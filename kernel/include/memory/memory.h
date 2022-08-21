@@ -4,6 +4,7 @@
 
 namespace memory
 {
+    constexpr size_t user_base_address = 0x40000000;
     extern PageFrame kernel_frame;
     extern Allocator allocator;
 
