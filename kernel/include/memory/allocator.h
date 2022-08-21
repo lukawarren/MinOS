@@ -10,6 +10,7 @@ namespace memory
         Allocator() {}
 
         Optional<size_t> allocate_pages(const size_t pages);
+        void reserve_pages(const size_t address, const size_t pages);
         void free_pages(const size_t address, const size_t pages);
 
     private:

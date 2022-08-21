@@ -13,8 +13,6 @@ namespace multitask
 
         size_t esp;
         pid_t thread_id;
-
-    private:
         memory::PageFrame frame;
     };
 }

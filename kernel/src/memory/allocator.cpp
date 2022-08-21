@@ -131,6 +131,17 @@ namespace memory
         return {};
     }
 
+    void Allocator::reserve_pages(const size_t address, const size_t pages)
+    {
+        assert(PageFrame::is_page_aligned(address));
+
+        for (size_t i = 0; i < pages; ++i)
+        {
+            const auto page = address / PAGE_SIZE + i;
+            set_page_as_allocated(page / bits_per_group, page % bits_per_group);
+        }
+    }
+
     void Allocator::free_pages(const size_t address, const size_t pages)
     {
         assert(PageFrame::is_page_aligned(address));

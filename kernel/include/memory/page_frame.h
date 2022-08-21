@@ -8,6 +8,7 @@
 #define KERNEL_PAGE                 (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(0))
 #define USER_PAGE                   (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1))
 #define USER_DIRECTORY              (PD_PRESENT(1) | PD_READWRITE(1) | PD_GLOBALACCESS(1))
+#define KERNEL_PAGE_READ_ONLY       (PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(0))
 #define USER_PAGE_READ_ONLY         (PD_PRESENT(1) | PD_READWRITE(0) | PD_GLOBALACCESS(1))
 #define DISABLED_PAGE               0
 
@@ -24,12 +25,15 @@ namespace memory
     class PageFrame
     {
     public:
-        PageFrame(const size_t address, const bool is_userspace);
+        PageFrame(const size_t addres);
         PageFrame() {}
 
         void map_page(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags);
+        void map_pages(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags, size_t pages);
         void unmap_page(VirtualAddress vAddr);
-        size_t get_cr3();
+
+        size_t virtual_address_to_physical(VirtualAddress vAddr) const;
+        size_t get_cr3() const;
 
         constexpr static size_t size()
         {

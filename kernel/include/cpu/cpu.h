@@ -34,7 +34,7 @@ namespace cpu
 
     inline void enable_interrupts()
     {
-        asm("sti");
+        asm volatile("sti");
     }
 
     inline void outb(uint16_t port, uint8_t data)

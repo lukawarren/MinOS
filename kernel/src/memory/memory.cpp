@@ -16,9 +16,39 @@ namespace memory
         memory_start = MAX(memory_start, info.get_highest_module_address());
         memory_start = memory::PageFrame::round_to_next_page_size(memory_start);
 
-        // Setup paging, heap, etc.
-        kernel_frame = PageFrame(memory_start, false);
+        // Setup paging
+        kernel_frame = PageFrame(memory_start);
+
+        // Map in heap
+        const size_t heap_address = memory_start + PageFrame::size();
+        for (size_t i = 0; i < heap_address / PAGE_SIZE; ++i)
+        {
+            kernel_frame.map_page(
+                heap_address + i*PAGE_SIZE,
+                heap_address + i*PAGE_SIZE,
+                KERNEL_PAGE
+            );
+        }
+
+        // Create heap
         allocator = Allocator(memory_start + PageFrame::size(), info.memory_end - memory_start);
+
+        // Reserve modules then map them in
+        for (size_t i = 0; i < info.n_modules; ++i)
+        {
+            allocator.reserve_pages(
+                info.modules[i].address,
+                info.modules[i].size / PAGE_SIZE
+            );
+            kernel_frame.map_pages(
+                info.modules[i].address,
+                info.modules[i].address,
+                KERNEL_PAGE_READ_ONLY,
+                info.modules[i].size / PAGE_SIZE
+            );
+        }
+
+        // Enable paging
         cpu::set_cr3(kernel_frame.get_cr3());
         cpu::enable_paging();
     }

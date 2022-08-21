@@ -39,9 +39,9 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 
     // Load program
     using namespace memory;
-    auto user_frame = PageFrame(*allocate_for_kernel(PageFrame::size()), true);
-    auto entry_poinnt = *load_elf_file(user_frame, info.modules[0].address);
-    auto process = multitask::Process(user_frame, entry_poinnt);
+    auto user_frame = PageFrame(*allocate_for_kernel(PageFrame::size()));
+    auto entry_point = *load_elf_file(user_frame, info.modules[0].address);
+    auto process = multitask::Process(user_frame, entry_point);
 
     // Add to scheduler
     multitask::add_process(process);

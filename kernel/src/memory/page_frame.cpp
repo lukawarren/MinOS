@@ -5,7 +5,7 @@ extern size_t kernel_end;
 
 namespace memory
 {
-    PageFrame::PageFrame(const size_t address, const bool is_userspace)
+    PageFrame::PageFrame(const size_t address)
     {
         // Store first all the page directories, followed by all the page tables
         pageDirectories = (size_t*)address;
@@ -13,25 +13,19 @@ namespace memory
         assert(is_page_aligned(address));
 
         // Populate page directories
-        for (unsigned int i = 0; i < PAGE_DIRECTORIES; ++i)
+        for (size_t i = 0; i < PAGE_DIRECTORIES; ++i)
         {
             const auto flags = USER_DIRECTORY;
             const auto tables = (size_t)&pageTables[i * PAGE_TABLES_PER_DIRECTORY];
             pageDirectories[i] = tables | flags;
         }
 
-        // Kernel: identify map all of memory
-        // Userspace: map only kernel code so we can still service IRQs, etc.
-        const size_t mapped_pages = is_userspace ?
-            ((size_t)&kernel_end) / PAGE_SIZE :
-            PAGE_TABLES_PER_DIRECTORY * PAGE_DIRECTORIES;
+        // Map kernel code (regardless of ring) so we can still service IRQs, etc.
+        const size_t mapped_pages = ((size_t)&kernel_end) / PAGE_SIZE;
+        map_pages(0, 0, KERNEL_PAGE, mapped_pages);
 
-        for (unsigned int i = 0; i < mapped_pages; ++i)
-        {
-            const auto flags = KERNEL_PAGE;
-            const PhysicalAddress p_addr = i * PAGE_SIZE;
-            pageTables[i] = p_addr | flags;
-        }
+        // Map in ourselves!
+        map_pages(address, address, KERNEL_PAGE, size() / PAGE_SIZE);
 
         // Unmap first page so null pointers crash us (flushes TLB too!)
         unmap_page(0);
@@ -50,6 +44,12 @@ namespace memory
         cpu::flush_tlb();
     }
 
+    void PageFrame::map_pages(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags, size_t pages)
+    {
+        for (size_t i = 0; i < pages; ++i)
+            map_page(pAddr + i*PAGE_SIZE, vAddr + i*PAGE_SIZE, flags);
+    }
+
     void PageFrame::unmap_page(VirtualAddress vAddr)
     {
         // Revert back to disabled
@@ -58,7 +58,15 @@ namespace memory
         cpu::flush_tlb();
     }
 
-    size_t PageFrame::get_cr3()
+    size_t PageFrame::virtual_address_to_physical(VirtualAddress vAddr) const
+    {
+        // Read entry from page table
+        const size_t offset = vAddr % PAGE_SIZE;
+        size_t table = pageTables[vAddr == 0 ? 0 : vAddr / PAGE_SIZE];
+        return (table & 0xfffff000) + offset;
+    }
+
+    size_t PageFrame::get_cr3() const
     {
         return (size_t) &pageDirectories[0];
     }

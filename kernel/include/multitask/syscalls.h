@@ -5,10 +5,11 @@
 // is consistent with that Musl wants (just quietens down my intellisense).
 // Such is our reliance upon Musl that userspace must ironically be built
 // before the kernel is...
+#include <errno.h>
 #include <unistd.h>
 #include <sys/uio.h>
+#include <sys/mman.h>
 #include <bits/syscall.h>
-#include <errno.h>
 
 namespace multitask
 {

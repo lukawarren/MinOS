@@ -13,7 +13,10 @@ make -j 16
 ```
 
 ## Musl changes
-* i386/__set_thread_area.s has been commented out, and a stub provided in __init_tls.c instead (which avoids manipulating segment registers)
+* src/thread/i386/__set_thread_area.s has been commented out, and a stub provided in __init_tls.c instead (which avoids manipulating segment registers)
+* arch/i386/pthred_arch.h has been stubbed out (for the same reason as above)
+* crt/crt1.c supports the change above with a false pthread
+* this all means that TLS is not supported yet
 
 ## History
 * MinOS 1 - mostly written in the summer of 2021, C and C++

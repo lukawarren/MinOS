@@ -1,4 +1,5 @@
 #include "memory/multiboot_info.h"
+#include "memory/page_frame.h"
 
 extern size_t kernel_end;
 
@@ -17,8 +18,12 @@ namespace memory
 
         for (size_t i = 0; i < n_modules; ++i)
         {
-            // Copy over module
-            modules[i] = Module(module->mod_start, module->mod_end, (char*)module->cmdline);
+            // Copy over module info
+            modules[i] = Module(
+                module->mod_start,
+                PageFrame::round_to_next_page_size(module->mod_end),
+                (char*)module->cmdline
+            );
             println("found module ", modules[i].name);
 
             // Proceed to next one

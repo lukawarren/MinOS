@@ -30,6 +30,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             // Sanity check (we're not a higher-half kernel!)
             check(program_header->p_vaddr >= memory::user_base_address);
             check(PageFrame::is_page_aligned(program_header->p_vaddr));
+            check(program_header->p_align == PAGE_SIZE);
 
             size_t source = address + program_header->p_offset;
             size_t file_size = program_header->p_filesz;
@@ -52,8 +53,8 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
     // Load section headers
     for (size_t i = 0; i < header->e_shnum; ++i)
     {
-        size_t header_adderess = address + header->e_shoff + sizeof(ElfSectionHeader) * i;
-        auto* section_header = (ElfSectionHeader*)header_adderess;
+        size_t header_address = address + header->e_shoff + sizeof(ElfSectionHeader) * i;
+        auto* section_header = (ElfSectionHeader*)header_address;
 
         if (section_header->sh_size > 0 && (section_header->sh_flags & SHF_ALLOC))
         {
@@ -62,6 +63,8 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
                 case SectionHeaderType::SHT_NOBITS:
                 {
                     // BSS - allocate memory and zero it
+                    check(PageFrame::is_page_aligned(section_header->sh_addr));
+                    check(section_header->sh_addralign == PAGE_SIZE);
                     Optional<size_t> data = memory::allocate_for_user(
                         section_header->sh_addr,
                         section_header->sh_size,
