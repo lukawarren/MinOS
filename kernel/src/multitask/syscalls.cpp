@@ -41,7 +41,7 @@ namespace multitask
         {
             println("Unknown syscall ", id);
             assert(false);
-            while(1) {}
+            halt();
         }
 
         int ret;
@@ -76,7 +76,9 @@ namespace multitask
         return 0;
     }
 
-    void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
+    // NOTE: the way we call our syscalls means flags (the last argument) wasn't
+    //       pushed. Be careful to rectify that should it be needed!
+    void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t)
     {
         // If addr is NULL, then we get to choose :)
         assert(addr == 0);
@@ -87,7 +89,6 @@ namespace multitask
         // Check flags - anonymous = no fd, and requires offset be 0
         assert(flags == (MAP_PRIVATE | MAP_ANONYMOUS));
         assert(fd == -1);
-        assert(offset == 0);
 
         auto memory = memory::allocate_for_user(length, multitask::current_process->frame);
         return memory.contains_data ? (void*) *memory : (void*) MAP_FAILED;

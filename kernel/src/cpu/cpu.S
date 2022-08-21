@@ -5,7 +5,6 @@ gdtr DW 0 ; limit
 
 global load_gdt
 load_gdt:
-
     push eax
 
     ; Load GDT

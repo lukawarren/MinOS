@@ -113,7 +113,7 @@ namespace interrupts
         uart::write_string("\n\n---------- CPU exception ---------- \n");
         uart::write_string(reasons[irq]);
         uart::write_string("\n----------------------------------- \n\n\n");
-        while(1) {}
+        halt();
         assert(false);
     }
 }

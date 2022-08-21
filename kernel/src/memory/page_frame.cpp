@@ -7,10 +7,14 @@ namespace memory
 {
     PageFrame::PageFrame(const size_t address)
     {
-        // Store first all the page directories, followed by all the page tables
+        // Store first all the page directories, followed by all the page tables...
         pageDirectories = (size_t*)address;
         pageTables = pageDirectories + PAGE_DIRECTORIES;
         assert(is_page_aligned(address));
+        assert((size_t)&kernel_end);
+
+        // ...taking care to clear out memory first
+        memset((void*)address, 0, size());
 
         // Populate page directories
         for (size_t i = 0; i < PAGE_DIRECTORIES; ++i)
@@ -29,6 +33,7 @@ namespace memory
 
         // Unmap first page so null pointers crash us (flushes TLB too!)
         unmap_page(0);
+        println("created page frame");
     }
 
     void PageFrame::map_page(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags)

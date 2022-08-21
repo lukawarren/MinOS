@@ -67,3 +67,5 @@ struct Optional
         return !contains_data;
     }
 };
+
+#define halt() asm volatile("hlt")
