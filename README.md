@@ -1,7 +1,11 @@
 # MinOS
 The third rewrite of MinOS
 
-# Builing musl
+# Ports
+* Musl 1.2.3
+* Lua 5.4.4
+
+## Builing musl
 ```
 cd musl &&
 mkdir -p /tmp/musl-alias &&

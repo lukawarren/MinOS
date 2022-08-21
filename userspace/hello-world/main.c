@@ -1,10 +1,23 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 
-void main(void)
+int main()
 {
-    void* result = malloc(1024);
-    printf("Hello world! I just malloc'd %d\n", (int)result);
-    free(result);
+    // Open lua
+    lua_State *L = luaL_newstate();
+
+    // Load the libraries
+    luaL_openlibs(L);
+
+    // Run lua
+    luaL_dostring(L, "print \"Hello world from Lua!\"");
+    luaL_dostring(L, "print (\"Lua just told me 5 * 4 = \" .. 5*4 .. \"!\")");
+
+    // Close lua
+    lua_close (L);
+
     while(1) {}
+    return 0;
 }

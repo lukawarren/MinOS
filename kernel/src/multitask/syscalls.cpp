@@ -8,6 +8,7 @@ namespace multitask
     static size_t syscalls[512] = {};
 
     int brk(void *addr);
+    uint64_t clock_gettime64(clockid_t clk_id, struct timespec* tp);
     int ioctl(int fd, unsigned long request, char* argp);
     void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
     int mprotect(void* addr, size_t length, int prot);
@@ -23,6 +24,7 @@ namespace multitask
 
         // ...then register what we have
         syscalls[SYS_brk] = (size_t)&brk;
+        syscalls[__NR_clock_gettime64] = (size_t)&clock_gettime64;
         syscalls[SYS_ioctl] = (size_t)&ioctl;
         syscalls[SYS_mmap2] = (size_t)&mmap;
         syscalls[SYS_mprotect] = (size_t)&mprotect;
@@ -68,6 +70,11 @@ namespace multitask
         // Musl is pretty insistent on using brk instead of mmap, but if we
         // just return an error code, it'll give up and use mmap anyway!
         return -1;
+    }
+
+    uint64_t clock_gettime64(clockid_t, struct timespec*)
+    {
+        return 0;
     }
 
     int ioctl(int, unsigned long, char*)
