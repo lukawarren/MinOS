@@ -8,6 +8,7 @@
 #include "multiboot.h"
 #include "io/uart.h"
 #include "cpu/cpu.h"
+#include "fs/fs.h"
 #include "klib.h"
 
 extern "C" { void kmain(multiboot_info_t* multiboot_header, uint32_t eax); }
@@ -28,6 +29,9 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 
     // Setup memory
     memory::init(info);
+
+    // Setup filesystem
+    fs::init();
 
     // Registers syscalls, etc.
     multitask::init_syscalls();

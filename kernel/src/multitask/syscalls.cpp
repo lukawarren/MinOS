@@ -1,10 +1,9 @@
 #include "multitask/syscalls.h"
 #include "multitask/scheduler.h"
-#include "io/uart.h"
+#include "fs/fs.h"
 
 namespace multitask
 {
-    constexpr int fd_stdout = 1;
     static size_t syscalls[512] = {};
 
     int ioctl(int fd, unsigned long request, char* argp);
@@ -55,6 +54,12 @@ namespace multitask
         return (size_t) ret;
     }
 
+    int ioctl(int, unsigned long, char*)
+    {
+        // stub
+        return 0;
+    }
+
     int set_thread_area()
     {
         // stub
@@ -66,17 +71,15 @@ namespace multitask
         return current_process->thread_id;
     }
 
-    int ioctl(int fd, unsigned long request, char* argp)
-    {
-        assert(fd == fd_stdout);
-        return 0;
-    }
-
     ssize_t writev(int fd, const iovec* iov, int iovcnt)
     {
-        assert(fd == fd_stdout);
-        assert(iovcnt == 2);
-        uart::write_string((const char*)iov[1].iov_base);
-        return iov[0].iov_len + iov[1].iov_len;
+        Optional<fs::DeviceFile*> file = fs::get_file(fd);
+        if (!file) { return EBADF; }
+
+        ssize_t len = 0;
+        for (int i = 0; i < iovcnt; ++i)
+            len += (ssize_t) (*(*file)).write(iov[i].iov_base, iov[i].iov_len);
+
+        return len;
     }
 }

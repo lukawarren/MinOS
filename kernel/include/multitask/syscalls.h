@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/uio.h>
 #include <bits/syscall.h>
+#include <errno.h>
 
 namespace multitask
 {

@@ -18,6 +18,8 @@ extern "C"
     size_t pow(const size_t number, const size_t power);
     void memset(void* b, int c, size_t len);
     void memcpy(void *dest, void *src, size_t n);
+    void __cxa_pure_virtual();
+    void atexit();
 }
 
 // To keep intellisense happy
@@ -35,6 +37,7 @@ extern "C"
 void error(const char* file, unsigned int line, const char* expression);
 void _println(const char* file, const char* message);
 void _println(const char* file, const char* message, const char* message_two);
+void _println(const char* file, const char* message, const int number);
 void _println(const char* file, const char* message, const size_t number);
 void _println(const char* file, const char* message, const size_t number, const char* message_two, const size_t number_two);
 

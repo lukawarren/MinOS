@@ -61,6 +61,9 @@ void memcpy(void *dest, void *src, size_t n)
         cdest[i] = csrc[i];
 }
 
+void __cxa_pure_virtual() { assert(false); }
+void atexit() { assert(false); }
+
 void error(const char* file, unsigned int line, const char* expression)
 {
     uart::write_string("Assertion failed in ");
@@ -89,6 +92,12 @@ void _println(const char* file, const char* message, const char* message_two)
     uart::write_string(message);
     uart::write_string(message_two);
     uart::write_char('\n');
+}
+
+void _println(const char* file, const char* message, const int number)
+{
+    // TODO: support signs
+    _println(file, message, (size_t)number);
 }
 
 void _println(const char* file, const char* message, const size_t number)

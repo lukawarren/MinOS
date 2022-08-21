@@ -37,9 +37,6 @@ irq_exception_%1:
     je exception_handle_%1
     add esp, 4
 
-    xchg bx, bx
-    iret
-
 exception_handle_%1:
     ; Push error code and registers, call
     ; Rust, then half for now
