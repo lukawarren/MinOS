@@ -10,7 +10,7 @@ namespace multitask
     Process::Process(memory::PageFrame page_frame, const size_t entrypoint) : frame(page_frame)
     {
         // Allocate stack (minus X for alignment)
-        size_t stack_start_address = (size_t) memory::allocate_for_user(stack_size, page_frame);
+        size_t stack_start_address = *memory::allocate_for_user(stack_size, page_frame);
         size_t stack_after_restore = stack_start_address + stack_size - 16;
         size_t* stack = (size_t*) stack_after_restore;
 

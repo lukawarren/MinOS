@@ -9,7 +9,7 @@ namespace memory
 
     void init(const MultibootInfo& info);
 
-    void* allocate_for_user(const Optional<VirtualAddress> address, const size_t size, PageFrame& page_frame);
-    void* allocate_for_user(const size_t size, PageFrame& page_frame);
-    void* allocate_for_kernel(const size_t size);
+    Optional<size_t> allocate_for_user(const Optional<VirtualAddress> address, const size_t size, PageFrame& page_frame);
+    Optional<size_t> allocate_for_user(const size_t size, PageFrame& page_frame);
+    Optional<size_t> allocate_for_kernel(const size_t size);
 }

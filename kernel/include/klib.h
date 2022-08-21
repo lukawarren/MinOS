@@ -53,9 +53,14 @@ struct Optional
     Optional(T _data) : data(_data), contains_data(true) {}
     Optional() : contains_data(false) {}
 
-    T require()
+    T operator*() const
     {
         assert(contains_data);
         return data;
+    }
+
+    bool operator!() const
+    {
+        return !contains_data;
     }
 };

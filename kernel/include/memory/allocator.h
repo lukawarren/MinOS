@@ -9,7 +9,7 @@ namespace memory
         Allocator(const size_t address, const size_t size);
         Allocator() {}
 
-        void* allocate_pages(const size_t pages);
+        Optional<size_t> allocate_pages(const size_t pages);
         void free_pages(const size_t address, const size_t pages);
 
     private:

@@ -23,12 +23,12 @@ namespace memory
         cpu::enable_paging();
     }
 
-    void* allocate_for_user(const Optional<VirtualAddress> address, const size_t size, PageFrame& page_frame)
+    Optional<size_t> allocate_for_user(const Optional<VirtualAddress> address, const size_t size, PageFrame& page_frame)
     {
         // Allocate
         auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
-        void* data = allocator.allocate_pages(pages);
-        assert(PageFrame::is_page_aligned((size_t)data));
+        auto data = allocator.allocate_pages(pages);
+        if (!data.contains_data) return {};
 
         // Map into memory
         for (size_t i = 0; i < pages; ++i)
@@ -36,24 +36,22 @@ namespace memory
             size_t offset = PAGE_SIZE*i;
 
             if (address.contains_data)
-                page_frame.map_page((size_t)data + offset, address.data + offset, USER_PAGE);
+                page_frame.map_page(*data + offset, *address + offset, USER_PAGE);
             else
-                page_frame.map_page((size_t)data + offset, (size_t)data + offset, USER_PAGE);
+                page_frame.map_page(*data + offset, *data + offset, USER_PAGE);
         }
 
         return data;
     }
 
-    void* allocate_for_user(const size_t size, PageFrame& page_frame)
+    Optional<size_t> allocate_for_user(const size_t size, PageFrame& page_frame)
     {
         return allocate_for_user({}, size, page_frame);
     }
 
-    void* allocate_for_kernel(const size_t size)
+    Optional<size_t> allocate_for_kernel(const size_t size)
     {
         auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
-        void* data = allocator.allocate_pages(pages);
-        assert(PageFrame::is_page_aligned((size_t)data));
-        return data;
+        return allocator.allocate_pages(pages);
     }
 }

@@ -20,7 +20,7 @@ namespace memory
         println("created root allocator");
     }
 
-    void* Allocator::allocate_pages(const size_t pages)
+    Optional<size_t> Allocator::allocate_pages(const size_t pages)
     {
         if (pages == 1)
         {
@@ -34,7 +34,7 @@ namespace memory
                     auto address = nth_page * PAGE_SIZE;
 
                     set_page_as_allocated(i, nth_bit);
-                    return (void*)address;
+                    return address;
                 }
             }
         }
@@ -69,7 +69,7 @@ namespace memory
                 for (size_t j = 0; j < pages; ++j)
                     set_page_as_allocated(i, nth_bit + j);
 
-                return (void*)address;
+                return address;
             }
         }
         else
@@ -117,7 +117,7 @@ namespace memory
                             set_page_as_allocated(group, bit);
                         }
 
-                        return (void*) (nth_page * PAGE_SIZE);
+                        return nth_page * PAGE_SIZE;
                     }
 
                     // There weren't enough free pages at the start, and
@@ -128,8 +128,7 @@ namespace memory
             }
         }
 
-        assert(false);
-        return (void*)0;
+        return {};
     }
 
     void Allocator::free_pages(const size_t address, const size_t pages)

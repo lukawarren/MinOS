@@ -12,7 +12,6 @@
 
 extern "C" { void kmain(multiboot_info_t* multiboot_header, uint32_t eax); }
 
-
 void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 {
     uart::init();
@@ -36,10 +35,9 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 
     // Load program
     using namespace memory;
-    auto user_frame = PageFrame((size_t) allocate_for_kernel(PageFrame::size()), true);
-    auto result = load_elf_file(user_frame, info.modules[0].address);
-    assert(result.contains_data);
-    auto process = multitask::Process(user_frame, result.data);
+    auto user_frame = PageFrame(*allocate_for_kernel(PageFrame::size()), true);
+    auto entry_poinnt = *load_elf_file(user_frame, info.modules[0].address);
+    auto process = multitask::Process(user_frame, entry_poinnt);
 
     // Add to scheduler
     multitask::add_process(process);
