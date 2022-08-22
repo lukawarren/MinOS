@@ -4,11 +4,20 @@ section data
 global kernel_cr3
 kernel_cr3: dd 0
 
+global old_stack_address
+old_stack_address: dd 0
+
+global old_fxsave_address
+align 16
+old_fxsave_address: dd 0
+
 global new_stack_address
 new_stack_address: dd 0
 
-global old_stack_address
-old_stack_address: dd 0
+global new_fxsave_address
+align 16
+new_fxsave_address: dd 0
+
 ; ----------------- set from C++ -----------------
 
 ; When switching rings, the kernel esp is loaded instead of the current task's.
@@ -41,6 +50,17 @@ irq_0:
     pop dword [iret_stack + 16]
     pop dword [iret_stack + 20]
 
+    ; save old FPU before we stich task frames and lose access to it... if the
+    ; address is non-0 (nullptr is used in C++ to indicate a "don't save")
+    pushad
+    cmp [old_fxsave_address], dword 0
+    je switch_frames
+    mov eax, [old_fxsave_address]
+    fxsave [eax]
+
+switch_frames:
+    popad
+
     ; use kernel cr3, save old one
     push eax
     mov eax, cr3
@@ -48,6 +68,7 @@ irq_0:
     mov eax, [kernel_cr3]
     mov cr3, eax
     pop eax
+
 
     ; call our trusty scheduler, clearing df as per the SysV ABI (popad later
     ; so we don't clobber eflags with our cmp)
@@ -104,6 +125,10 @@ load_new_task:
     ; restore cr3
     pop eax
     mov cr3, eax
+
+    ; restore FPU state
+    mov eax, [new_fxsave_address]
+    fxrstor [eax]
 
     ; restore segment registers
     pop eax

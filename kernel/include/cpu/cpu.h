@@ -31,6 +31,7 @@ namespace cpu
         void flush_tlb();
         void enable_paging();
         void enable_fpu();
+        void init_fpu_storage(char* storage);
     }
 
     inline void enable_interrupts()

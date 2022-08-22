@@ -82,6 +82,7 @@ enable_paging:
     pop ebp
     ret
 
+
 global enable_fpu
 enable_fpu:
     push eax
@@ -96,7 +97,7 @@ enable_fpu:
     and eax, ~(1 << 2) ; EM: disable x87 FPU emulation
     and eax, ~(1 << 3) ; TS: disable FPU operations causing a #NM exception
     or  eax,  (1 << 4) ; ET: use 1 for 387 or later
-    or  eax,  (1 << 5) ; NE: uUse CPU exceptions instead of interrupts
+    or  eax,  (1 << 5) ; NE: use CPU exceptions instead of interrupts
     mov cr0, eax
 
     ; Set FPU to a known state
@@ -104,3 +105,19 @@ enable_fpu:
 
     pop eax
     ret
+
+
+global init_fpu_storage
+init_fpu_storage:
+    fxsave [kernel_temp_fpu_storage]
+    fninit
+    push eax
+    mov eax, [esp+8]
+    fxsave [eax]
+    pop eax
+    fxrstor [kernel_temp_fpu_storage]
+    ret
+
+section data
+align 16
+kernel_temp_fpu_storage: times 512 db 0

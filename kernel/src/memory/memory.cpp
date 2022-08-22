@@ -53,7 +53,8 @@ namespace memory
         cpu::enable_paging();
     }
 
-    Optional<size_t> allocate_for_user(const Optional<VirtualAddress> address, const size_t size, PageFrame& page_frame)
+    Optional<size_t> allocate_for_user(const Optional<VirtualAddress> address,
+                const size_t size, PageFrame& page_frame, const uint32_t flags)
     {
         // Allocate
         auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
@@ -61,18 +62,13 @@ namespace memory
         if (!data.contains_data) return {};
 
         // Map into memory
-        for (size_t i = 0; i < pages; ++i)
+        if (address.contains_data)
         {
-            size_t offset = PAGE_SIZE*i;
-
-            if (address.contains_data)
-            {
-                assert(*address >= memory::user_base_address);
-                page_frame.map_page(*data + offset, *address + offset, USER_PAGE);
-            }
-            else
-                page_frame.map_page(*data + offset, *data + offset, USER_PAGE);
+            assert(*address >= memory::user_base_address);
+            page_frame.map_pages(*data, *address, flags, pages);
         }
+        else
+            page_frame.map_pages(*data, *data, flags, pages);
 
         // Zero out
         memset((void*)*data, 0, pages * PAGE_SIZE);
@@ -80,9 +76,9 @@ namespace memory
         return data;
     }
 
-    Optional<size_t> allocate_for_user(const size_t size, PageFrame& page_frame)
+    Optional<size_t> allocate_for_user(const size_t size, PageFrame& page_frame, const size_t flags)
     {
-        return allocate_for_user({}, size, page_frame);
+        return allocate_for_user({}, size, page_frame, flags);
     }
 
     Optional<size_t> allocate_for_kernel(const size_t size)

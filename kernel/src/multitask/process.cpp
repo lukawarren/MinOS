@@ -1,6 +1,7 @@
 #include "multitask/process.h"
 #include "memory/memory.h"
 #include "cpu/gdt.h"
+#include "cpu/cpu.h"
 
 namespace multitask
 {
@@ -43,5 +44,10 @@ namespace multitask
         // Save esp itself, and other info for syscalls, etc.
         esp = (size_t)stack;
         thread_id = ++id_pool;
+
+        // Create storage for FPU, etc. - must be 16 byte aligned, 512 bytes large
+        fxsave_storage = (char*) *memory::allocate_for_user(512, page_frame, KERNEL_PAGE);
+        assert((size_t)&fxsave_storage[0] % 16 == 0);
+        cpu::init_fpu_storage(fxsave_storage);
     }
 }

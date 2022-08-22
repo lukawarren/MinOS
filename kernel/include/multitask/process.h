@@ -11,8 +11,12 @@ namespace multitask
         Process(memory::PageFrame page_frame, const size_t entrypoint);
         Process() {}
 
-        size_t esp;
-        pid_t thread_id;
+        // Kernel + syscalls
         memory::PageFrame frame;
+        pid_t thread_id;
+
+        // Scheduler variables
+        size_t esp;
+        char* fxsave_storage; // for fxsave and fxrstor
     };
 }

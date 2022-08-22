@@ -7,8 +7,10 @@ namespace multitask
     extern "C"
     {
         extern size_t kernel_cr3;
-        extern size_t new_stack_address;
         extern size_t old_stack_address;
+        extern size_t old_fxsave_address;
+        extern size_t new_stack_address;
+        extern size_t new_fxsave_address;
     }
 
     // Process list
@@ -37,10 +39,16 @@ namespace multitask
         if (current_process == nullptr)
         {
             old_stack_address = 0;
-        } else
+            old_fxsave_address = 0;
+        }
+        else
+        {
             old_stack_address = (size_t) &processes[0].esp;
+            old_fxsave_address = (size_t) &processes[0].fxsave_storage[0];
+        }
 
         new_stack_address = (size_t) &processes[0].esp;
+        new_fxsave_address = (size_t) &processes[0].fxsave_storage[0];
         current_process = &processes[0];
         pic::end_interrupt(0);
     }
