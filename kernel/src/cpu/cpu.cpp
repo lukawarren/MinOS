@@ -36,5 +36,8 @@ namespace cpu
         const IDTDescriptor descriptor(idt);
         load_idt(&descriptor);
         println("loaded IDT");
+
+        // Setup FPU
+        enable_fpu();
     }
 }

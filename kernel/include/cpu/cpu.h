@@ -30,6 +30,7 @@ namespace cpu
         void load_idt(const IDTDescriptor* descriptor);
         void flush_tlb();
         void enable_paging();
+        void enable_fpu();
     }
 
     inline void enable_interrupts()

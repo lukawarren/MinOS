@@ -81,3 +81,26 @@ enable_paging:
     mov esp, ebp
     pop ebp
     ret
+
+global enable_fpu
+enable_fpu:
+    push eax
+
+    ; OSFXSR: enable FXSAVE and FXRSTOR
+    mov eax, cr4
+    or eax, (1 << 9)
+    mov cr4, eax
+
+    mov eax, cr0
+    or  eax,  (1 << 1) ; MP: make FWAIT synchronous
+    and eax, ~(1 << 2) ; EM: disable x87 FPU emulation
+    and eax, ~(1 << 3) ; TS: disable FPU operations causing a #NM exception
+    or  eax,  (1 << 4) ; ET: use 1 for 387 or later
+    or  eax,  (1 << 5) ; NE: uUse CPU exceptions instead of interrupts
+    mov cr0, eax
+
+    ; Set FPU to a known state
+    fninit
+
+    pop eax
+    ret
