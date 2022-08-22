@@ -25,7 +25,7 @@ set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align\
                 -Wno-gnu-statement-expression")
 
 set (COMMON_FLAGS "-ffreestanding -nostdlib --target=i686-pc-none-elf\
-                    -march=i686 -nostdinc -O2")
+                    -march=i686 -nostdinc -O2 -fcolor-diagnostics")
 
 set (CMAKE_CXX_FLAGS "-std=c++20 ${WARNINGS} ${COMMON_FLAGS} -fno-exceptions\
                     -fno-rtti -fno-use-cxa-atexit -fno-sized-deallocation\
