@@ -22,10 +22,13 @@ namespace memory
     typedef size_t PhysicalAddress;
     typedef size_t VirtualAddress;
 
+    constexpr size_t user_base_address = 0x40000000;
+    constexpr size_t user_framebuffer_address = 0x30000000;
+
     class PageFrame
     {
     public:
-        PageFrame(const size_t addres);
+        PageFrame(const size_t address, const size_t framebuffer_address, const size_t framebufffer_size);
         PageFrame() {}
 
         void map_page(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags);

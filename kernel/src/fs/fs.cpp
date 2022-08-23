@@ -3,7 +3,7 @@
 
 namespace fs
 {
-    DeviceFile files[4];
+    DeviceFile files[5];
     constexpr size_t stdout = 1;
     constexpr size_t stderr = 2;
     constexpr size_t keyboard = 3;

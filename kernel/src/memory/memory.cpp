@@ -17,7 +17,7 @@ namespace memory
         memory_start = memory::PageFrame::round_to_next_page_size(memory_start);
 
         // Setup paging
-        kernel_frame = PageFrame(memory_start);
+        kernel_frame = PageFrame(memory_start, info.framebuffer_address, info.framebuffer_size);
 
         // Map in heap
         const size_t heap_address = memory_start + PageFrame::size();

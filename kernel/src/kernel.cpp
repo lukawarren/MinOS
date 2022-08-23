@@ -20,6 +20,7 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     // Verify we're multiboot and parse it
     assert(eax == MULTIBOOT_BOOTLOADER_MAGIC);
     memory::MultibootInfo info(multiboot_header);
+    assert(info.n_modules == 1);
 
     // Setup interrupts
     interrupts::load();
@@ -39,7 +40,11 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 
     // Load program
     using namespace memory;
-    auto user_frame = PageFrame(*allocate_for_kernel(PageFrame::size()));
+    auto user_frame = PageFrame(
+        *allocate_for_kernel(PageFrame::size()),
+        info.framebuffer_address,
+        info.framebuffer_size
+    );
     auto entry_point = *load_elf_file(user_frame, info.modules[0].address);
     auto process = multitask::Process(user_frame, entry_point);
 

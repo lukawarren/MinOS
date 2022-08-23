@@ -9,6 +9,7 @@ namespace memory
     {
         parse_modules(info);
         parse_memory(info);
+        parse_framebuffer(info);
     }
 
     void MultibootInfo::parse_modules(const multiboot_info_t* info)
@@ -52,6 +53,13 @@ namespace memory
         }
 
         assert(false);
+    }
+
+    void MultibootInfo::parse_framebuffer(const multiboot_info_t* info)
+    {
+        framebuffer_address = (size_t) info->framebuffer_addr;
+        framebuffer_size = info->framebuffer_pitch * info->framebuffer_height;
+        println("loading framebuffer with resolution ", info->framebuffer_width, "x", info->framebuffer_height);
     }
 
     size_t MultibootInfo::get_highest_module_address() const

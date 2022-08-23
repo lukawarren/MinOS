@@ -5,7 +5,7 @@ extern size_t kernel_end;
 
 namespace memory
 {
-    PageFrame::PageFrame(const size_t address)
+    PageFrame::PageFrame(const size_t address, const size_t framebuffer_address, const size_t framebufffer_size)
     {
         // Store first all the page directories, followed by all the page tables...
         pageDirectories = (size_t*)address;
@@ -31,9 +31,16 @@ namespace memory
         // Map in ourselves!
         map_pages(address, address, KERNEL_PAGE, size() / PAGE_SIZE);
 
+        // Map in framebuffer
+        map_pages(
+            framebuffer_address,
+            user_framebuffer_address,
+            USER_PAGE,
+            round_to_next_page_size(framebufffer_size) / PAGE_SIZE
+        );
+
         // Unmap first page so null pointers crash us (flushes TLB too!)
         unmap_page(0);
-        println("created page frame");
     }
 
     void PageFrame::map_page(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags)

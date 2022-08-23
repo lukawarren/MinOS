@@ -29,14 +29,17 @@ namespace memory
         };
 
         Module modules[MAX_MODULES];
-        size_t n_modules = 0;
+        size_t n_modules;
 
-        size_t memory_begin = 0;
-        size_t memory_end = 0;
+        size_t memory_begin;
+        size_t memory_end;
+
+        size_t framebuffer_address;
+        size_t framebuffer_size;
 
     private:
-
         void parse_modules(const multiboot_info_t* info);
         void parse_memory(const multiboot_info_t* info);
+        void parse_framebuffer(const multiboot_info_t* info);
     };
 }
