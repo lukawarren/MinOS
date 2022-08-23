@@ -13,6 +13,7 @@ namespace multitask
     void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
     int mprotect(void* addr, size_t length, int prot);
     int munmap(void* addr, size_t len);
+    ssize_t read(int fd, void* buf, size_t count);
     int set_thread_area();
     int set_tid_address();
     ssize_t writev(int fd, const iovec* iov, int iovcnt);
@@ -29,6 +30,7 @@ namespace multitask
         syscalls[SYS_mmap2] = (size_t)&mmap;
         syscalls[SYS_mprotect] = (size_t)&mprotect;
         syscalls[SYS_munmap] = (size_t)&munmap;
+        syscalls[SYS_read] = (size_t)&read;
         syscalls[SYS_set_thread_area] = (size_t)&set_thread_area;
         syscalls[SYS_set_tid_address] = (size_t)&set_tid_address;
         syscalls[SYS_writev] = (size_t)&writev;
@@ -79,7 +81,6 @@ namespace multitask
 
     int ioctl(int, unsigned long, char*)
     {
-        // stub
         return 0;
     }
 
@@ -116,9 +117,18 @@ namespace multitask
         return 0;
     }
 
+    ssize_t read(int fd, void* buf, size_t count)
+    {
+        Optional<fs::DeviceFile*> file = fs::get_file(fd);
+        if (!file) return EBADF;
+
+        auto& frame = multitask::current_process->frame;
+        size_t address = frame.virtual_address_to_physical((size_t)buf);
+        return (ssize_t) file->read((void*)address, count);
+    }
+
     int set_thread_area()
     {
-        // stub
         return 0;
     }
 
@@ -130,14 +140,14 @@ namespace multitask
     ssize_t writev(int fd, const iovec* iov, int iovcnt)
     {
         Optional<fs::DeviceFile*> file = fs::get_file(fd);
-        if (!file) { return EBADF; }
+        if (!file) return EBADF;
 
         ssize_t len = 0;
         for (int i = 0; i < iovcnt; ++i)
         {
             auto& frame = multitask::current_process->frame;
             size_t address = frame.virtual_address_to_physical((size_t) iov[i].iov_base);
-            len += (ssize_t) (*(*file)).write((void*)address, iov[i].iov_len);
+            len += (ssize_t) file->write((void*)address, iov[i].iov_len);
         }
 
         return len;

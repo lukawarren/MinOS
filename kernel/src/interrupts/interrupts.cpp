@@ -1,10 +1,12 @@
+#include "interrupts/interrupts.h"
+#include "multitask/scheduler.h"
+#include "interrupts/irq.h"
+#include "interrupts/pit.h"
+#include "interrupts/pic.h"
 #include "cpu/idt.h"
 #include "cpu/cpu.h"
 #include "io/uart.h"
-#include "interrupts/irq.h"
-#include "interrupts/pic.h"
-#include "interrupts/pit.h"
-#include "multitask/scheduler.h"
+#include "fs/fs.h"
 #include "klib.h"
 
 namespace interrupts

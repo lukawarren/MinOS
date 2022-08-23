@@ -6,7 +6,7 @@ namespace fs
     class DeviceFile
     {
     public:
-        DeviceFile(void (*on_read)(void*, size_t), size_t (*on_write)(void*, size_t))
+        DeviceFile(size_t (*on_read)(void*, size_t), size_t (*on_write)(void*, size_t))
         {
             this->on_read = on_read;
             this->on_write = on_write;
@@ -15,9 +15,9 @@ namespace fs
         DeviceFile() {}
         ~DeviceFile() {}
 
-        void read(void* data, size_t len)
+        size_t read(void* data, size_t len)
         {
-            on_read(data, len);
+            return on_read(data, len);
         }
 
         size_t write(void* data, size_t len)
@@ -25,7 +25,7 @@ namespace fs
             return on_write(data, len);
         }
 
-        void (*on_read)(void*, size_t);
+        size_t (*on_read)(void*, size_t);
         size_t (*on_write)(void*, size_t);
     };
 }

@@ -46,6 +46,11 @@ void _println(const char* file, const char* message, const size_t number, const 
        __typeof__ (b) _b = (b); \
      _a > _b ? _a : _b; })
 
+#define MIN(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
 
 template<typename T>
 struct Optional
@@ -57,6 +62,12 @@ struct Optional
     Optional() : contains_data(false) {}
 
     T operator*() const
+    {
+        assert(contains_data);
+        return data;
+    }
+
+    T operator->() const
     {
         assert(contains_data);
         return data;
