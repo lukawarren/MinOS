@@ -29,12 +29,17 @@ bool shift = false;
 
 char get_key();
 void draw_border();
+void clear_text();
 
 int main()
 {
     // Setup UI
     draw_border();
     set_background_colour(background_colour);
+
+    // Setup Lua
+    lua_State *L = luaL_newstate();
+    luaL_openlibs(L);
 
     // Begin prompt
     draw_string(prompt, ui_row + padding, padding);
@@ -48,15 +53,20 @@ int main()
         // Enter
         if (key == '\n')
         {
-            // Run command
-            lua_State *L = luaL_newstate();
-            luaL_openlibs(L);
-            luaL_dostring(L, input);
-            lua_close(L);
+            // Run command...
+            if (luaL_dostring(L, input) != 0)
+                printf("Error: %s\n", lua_tostring(L, -1));
+
+            // Check we haven't filled the screen
+            ui_row++;
+            if (ui_row >= ui_rows-padding)
+            {
+                ui_row = 0;
+                clear_text();
+            }
 
             // Reset state
             memset(input, '\0', sizeof(input));
-            ui_row++;
             ui_col = strlen(prompt);
             draw_string(prompt, ui_row + padding, padding);
             input_length = 0;
@@ -83,6 +93,7 @@ int main()
         }
     }
 
+    lua_close(L);
     return 0;
 }
 
@@ -106,7 +117,7 @@ void draw_border()
         draw_char(' ', y, columns-1);
     }
 
-    const char* title = "MinOS - minshell";
+    const char* title = "MinOS - minshell running Lua 5.4.4";
     draw_string(title, 0, columns/2 - strlen(title)/2);
 }
 
@@ -124,14 +135,14 @@ char get_key()
         return '\0';
     }
 
-    static char const* topNumbers =   "!\"#$%^&*(";
-    static char const* numbers =      "123456789";
+    static char const* topNumbers =   "!\"#$%^&*()_+";
+    static char const* numbers =      "1234567890-=";
     static char const* qwertzuiop =   "qwertyuiopQWERTYUIOP";
     static char const* asdfghjkl =    "asdfghjklASDFGHJKL";
     static char const* yxcvbnm =      "zxcvbnmZXCVBNM";
 
     // Standard characters
-    if (scancode >= 0x2 && scancode <= 0xa)
+    if (scancode >= 0x2 && scancode <= 0xd)
     {
         if (shift) return topNumbers[scancode - 0x2];
         else return numbers[scancode - 0x2];
@@ -146,5 +157,13 @@ char get_key()
     else if (scancode == 52) return shift ? '>' : '.';
     else if (scancode == 28) return '\n';
     else if (scancode == 14) return '\b';
+    else if (scancode == 39) return ';';
     return '\0';
+}
+
+void clear_text()
+{
+    for (size_t y = padding * CHAR_HEIGHT; y < height - padding * CHAR_HEIGHT - 1; ++y)
+        for (size_t x = padding * CHAR_WIDTH; x < width - padding * CHAR_HEIGHT - 1; ++x)
+            set_pixel(background_colour, x, y);
 }
