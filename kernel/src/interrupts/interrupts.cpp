@@ -82,7 +82,12 @@ namespace interrupts
         switch (irq)
         {
             case 0: pit::reload(); break;
-            case 1: uart::write_number(cpu::inb(0x60)); break;
+
+            case 1:
+                if (fs::keyboard_buffer_index < sizeof(fs::keyboard_buffer) / sizeof(fs::keyboard_buffer[0]))
+                    fs::keyboard_buffer[fs::keyboard_buffer_index++] = cpu::inb(0x60);
+            break;
+
             default:
                 assert(false);
         };
