@@ -4,7 +4,13 @@
 #include <unistd.h>
 #include "framebuffer.h"
 
-extern "C" { int main(); }
+extern "C"
+{
+    #include "lua.h"
+    #include "lualib.h"
+    #include "lauxlib.h"
+    int main();
+}
 
 constexpr Pixel text_colour = pixel_from_colour(255, 255, 255);
 constexpr Pixel background_colour = pixel_from_colour(0, 0, 0);
@@ -18,6 +24,7 @@ size_t ui_col = 0;
 
 const char* prompt = "minshell %  ";
 char input[columns - padding*2] = {};
+size_t input_length = 0;
 bool shift = false;
 
 char get_key();
@@ -25,10 +32,13 @@ void draw_border();
 
 int main()
 {
+    // Setup UI
     draw_border();
     set_background_colour(background_colour);
 
-    draw_string("minshell %  ls", padding, padding);
+    // Begin prompt
+    draw_string(prompt, ui_row + padding, padding);
+    ui_col = strlen(prompt);
 
     while(1)
     {
@@ -38,19 +48,28 @@ int main()
         // Enter
         if (key == '\n')
         {
-            printf("%s\n", input);
+            // Run command
+            lua_State *L = luaL_newstate();
+            luaL_openlibs(L);
+            luaL_dostring(L, input);
+            lua_close(L);
+
+            // Reset state
             memset(input, '\0', sizeof(input));
             ui_row++;
-            ui_col = 0;
+            ui_col = strlen(prompt);
+            draw_string(prompt, ui_row + padding, padding);
+            input_length = 0;
         }
 
         // Backspace
         else if (key == '\b')
         {
-            if (ui_col == 0) continue;
+            if (input_length == 0) continue;
             draw_char(' ', padding + ui_row, padding + ui_col - 1);
-            input[ui_col-1] = ' ';
             ui_col--;
+            input[input_length-1] = '\0';
+            input_length--;
         }
 
         else
@@ -58,8 +77,9 @@ int main()
             // Genuine keypress; too long? Too bad!
             if (ui_col >= ui_cols-padding) continue;
             draw_char(key, padding + ui_row, padding + ui_col);
-            input[ui_col] = key;
+            input[input_length] = key;
             ui_col++;
+            input_length++;
         }
     }
 
