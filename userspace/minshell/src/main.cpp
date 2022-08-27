@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 #include "framebuffer.h"
+#include "keyboard.h"
 
 extern "C"
 {
@@ -22,12 +22,10 @@ constexpr size_t ui_cols = columns - padding;
 size_t ui_row = 0;
 size_t ui_col = 0;
 
-const char* prompt = "minshell %  ";
+const char* prompt = "minshell % ";
 char input[columns - padding*2] = {};
 size_t input_length = 0;
-bool shift = false;
 
-char get_key();
 void draw_border();
 void clear_text();
 
@@ -44,10 +42,12 @@ int main()
     // Begin prompt
     draw_string(prompt, ui_row + padding, padding);
     ui_col = strlen(prompt);
+    Keyboard keyboard;
 
     while(1)
     {
-        char key = get_key();
+        char key = '\0';
+        keyboard.poll(&key);
         if (key == '\0') continue;
 
         // Enter
@@ -119,46 +119,6 @@ void draw_border()
 
     const char* title = "MinOS - minshell running Lua 5.4.4";
     draw_string(title, 0, columns/2 - strlen(title)/2);
-}
-
-char get_key()
-{
-    // Read from kernel
-    char scancode;
-    read(3, &scancode, sizeof(char));
-    if (scancode == 0) return '\0';
-
-    // Shifts
-    if (scancode == 42 || scancode == -86)
-    {
-        shift = !shift;
-        return '\0';
-    }
-
-    static char const* topNumbers =   "!\"#$%^&*()_+";
-    static char const* numbers =      "1234567890-=";
-    static char const* qwertzuiop =   "qwertyuiopQWERTYUIOP";
-    static char const* asdfghjkl =    "asdfghjklASDFGHJKL";
-    static char const* yxcvbnm =      "zxcvbnmZXCVBNM";
-
-    // Standard characters
-    if (scancode >= 0x2 && scancode <= 0xd)
-    {
-        if (shift) return topNumbers[scancode - 0x2];
-        else return numbers[scancode - 0x2];
-    }
-    else if(scancode >= 0x10 && scancode <= 0x1b) return qwertzuiop[scancode - 0x10 + shift*10];
-    else if(scancode >= 0x1E && scancode <= 0x26) return asdfghjkl[scancode - 0x1E + shift*9];
-    else if(scancode >= 0x2C && scancode <= 0x32) return yxcvbnm[scancode - 0x2C + shift*7];
-
-    // Special characters
-    else if (scancode == 57) return ' ';
-    else if (scancode == 51) return shift ? '<' : ',';
-    else if (scancode == 52) return shift ? '>' : '.';
-    else if (scancode == 28) return '\n';
-    else if (scancode == 14) return '\b';
-    else if (scancode == 39) return ';';
-    return '\0';
 }
 
 void clear_text()
