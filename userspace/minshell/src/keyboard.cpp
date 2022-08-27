@@ -2,7 +2,11 @@
 #include <unistd.h>
 #include <stdio.h>
 
-Keyboard::Keyboard() : shift(false) {}
+Keyboard::Keyboard(void (*function1)(), void (*function2)()) : shift(false)
+{
+    functions[0] = function1;
+    functions[1] = function2;
+}
 
 void Keyboard::poll(char* key)
 {
@@ -17,6 +21,10 @@ void Keyboard::poll(char* key)
         shift = !shift;
         return;
     }
+
+    // F1, F2, etc.
+    if (scancode == 59) { functions[0](); return; }
+    if (scancode == 60) { functions[1](); return; }
 
     // Released keys
     if (scancode & 0x80) return;

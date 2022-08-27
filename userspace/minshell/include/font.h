@@ -139,6 +139,6 @@ inline const uint8_t* get_char_from_font(int c)
 		{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }    // U+007F
 	};
 
-    assert(c > 0);
+    assert(c >= 0);
 	return (uint8_t *)f[c];
 }

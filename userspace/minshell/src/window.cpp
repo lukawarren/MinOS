@@ -5,16 +5,13 @@
 EditorWindow::EditorWindow(unsigned int width, unsigned int height, void (*draw_char)(char, unsigned int, unsigned int)) :
         Window(width, height, draw_char)
 {
-    input = (char*) malloc(sizeof(char) * width * height);
+    const size_t size = sizeof(char) * width * height;
+    input = (char*) malloc(size);
+    memset(input, 0, size);
 }
 
-void EditorWindow::draw()
+void EditorWindow::draw(const char key)
 {
-    // Get key (if any)
-    char key = '\0';
-    keyboard.poll(&key);
-    if (key == '\0') return;
-
     // Enter
     if (key == '\n')
     {
@@ -47,7 +44,37 @@ void EditorWindow::draw()
     cursor_x++;
 }
 
+void EditorWindow::redraw()
+{
+    for (unsigned int y = 0; y < height; ++y)
+        for (unsigned int x = 0; x < width; ++x)
+            draw_char(input[y * width + x], x, y);
+}
+
 EditorWindow::~EditorWindow()
 {
     free(input);
+}
+
+
+OutputWindow::OutputWindow(unsigned int width, unsigned int height, void (*draw_char)(char, unsigned int, unsigned int)) :
+        Window(width, height, draw_char) {}
+
+void OutputWindow::redraw()
+{
+    for (unsigned int y = 0; y < height; ++y)
+        for (unsigned int x = 0; x < width; ++x)
+            draw_char('-', x, y);
+}
+
+BarWindow::BarWindow(unsigned int width, unsigned int height, void (*draw_char)(char, unsigned int, unsigned int)) :
+        Window(width, height, draw_char)
+{
+    for (unsigned int i = 0; i < width; ++i)
+        draw_char(' ', i, 0);
+
+    const char* title = "F1 - Editor    F2 - Output";
+    const auto len = strlen(title);
+    for (size_t i = 0; i < len; ++i)
+        draw_char(title[i], width/2-len/2+i, 0);
 }
