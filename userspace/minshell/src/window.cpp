@@ -58,14 +58,45 @@ EditorWindow::~EditorWindow()
 
 
 OutputWindow::OutputWindow(unsigned int width, unsigned int height, void (*draw_char)(char, unsigned int, unsigned int)) :
-        Window(width, height, draw_char) {}
+        Window(width, height, draw_char)
+{
+    output_size = sizeof(char) * width * height;
+    output = (char*) malloc(output_size);
+    memset(output, ' ', output_size);
+}
 
 void OutputWindow::redraw()
 {
+    // Clear window
     for (unsigned int y = 0; y < height; ++y)
         for (unsigned int x = 0; x < width; ++x)
-            draw_char('-', x, y);
+            draw_char(' ', x, y);
+
+    unsigned int x = 0;
+    unsigned int y = 0;
+    size_t i = 0;
+
+    while (output[i] != '\0')
+    {
+        draw_char(output[i], x++, y);
+
+        // Wrap output
+        if (x >= width || output[i] == '\n') {
+            x = 0;
+            y++;
+        }
+        i++;
+
+        // No scrolling for now
+        if (y >= height) break;
+    }
 }
+
+OutputWindow::~OutputWindow()
+{
+    free(output);
+}
+
 
 BarWindow::BarWindow(unsigned int width, unsigned int height, void (*draw_char)(char, unsigned int, unsigned int)) :
         Window(width, height, draw_char)
@@ -73,7 +104,7 @@ BarWindow::BarWindow(unsigned int width, unsigned int height, void (*draw_char)(
     for (unsigned int i = 0; i < width; ++i)
         draw_char(' ', i, 0);
 
-    const char* title = "F1 - Editor    F2 - Output";
+    const char* title = "F1 - Editor    F2 - Output    F3 - Run";
     const auto len = strlen(title);
     for (size_t i = 0; i < len; ++i)
         draw_char(title[i], width/2-len/2+i, 0);

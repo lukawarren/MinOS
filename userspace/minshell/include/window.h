@@ -1,5 +1,6 @@
 #pragma once
 #include "keyboard.h"
+#include <stddef.h>
 
 class Window
 {
@@ -24,9 +25,9 @@ public:
 
     void draw(const char key);
     void redraw();
+    char* input;
 
 private:
-    char* input;
     unsigned int cursor_x;
     unsigned int cursor_y;
 };
@@ -35,8 +36,13 @@ class OutputWindow : public Window
 {
 public:
     OutputWindow(unsigned int width, unsigned int height, void (*write_char)(char, unsigned int, unsigned int));
+    ~OutputWindow();
+
     void draw(const char) {}
     void redraw();
+
+    char* output;
+    size_t output_size;
 };
 
 class BarWindow : public Window
