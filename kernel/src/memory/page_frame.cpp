@@ -5,13 +5,13 @@ extern size_t kernel_end;
 
 namespace memory
 {
-    PageFrame::PageFrame(const size_t address, const size_t framebuffer_address, const size_t framebufffer_size)
+    PageFrame::PageFrame(const size_t address, const size_t framebuffer_address, const size_t framebufffer_size, const bool kernel)
     {
         // Store first all the page directories, followed by all the page tables...
         pageDirectories = (size_t*)address;
         pageTables = pageDirectories + PAGE_DIRECTORIES;
         assert(is_page_aligned(address));
-        assert((size_t)&kernel_end);
+        assert(is_page_aligned((size_t)&kernel_end));
 
         // ...taking care to clear out memory first
         memset((void*)address, 0, size());
@@ -28,8 +28,8 @@ namespace memory
         const size_t mapped_pages = ((size_t)&kernel_end) / PAGE_SIZE;
         map_pages(0, 0, KERNEL_PAGE, mapped_pages);
 
-        // Map in ourselves!
-        map_pages(address, address, KERNEL_PAGE, size() / PAGE_SIZE);
+        // If we're the kernel, we need to map in ourselves too
+        if (kernel) map_pages(address, address, KERNEL_PAGE, size() / PAGE_SIZE);
 
         // Map in framebuffer
         map_pages(
@@ -39,7 +39,7 @@ namespace memory
             round_to_next_page_size(framebufffer_size) / PAGE_SIZE
         );
 
-        // Unmap first page so null pointers crash us (flushes TLB too!)
+        // Unmap first page so null pointers crash us
         unmap_page(0);
     }
 

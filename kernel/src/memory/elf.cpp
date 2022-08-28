@@ -48,6 +48,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             memset((void*)*destination, 0, memory_size);
             memcpy((void*)*destination, (void*)source, file_size);
         }
+        else println("unknown program header type ", program_header->p_type);
     }
 
     // Load section headers

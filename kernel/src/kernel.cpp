@@ -43,7 +43,8 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     auto user_frame = PageFrame(
         *allocate_for_kernel(PageFrame::size()),
         info.framebuffer_address,
-        info.framebuffer_size
+        info.framebuffer_size,
+        false
     );
     auto entry_point = *load_elf_file(user_frame, info.modules[0].address);
     auto process = multitask::Process(user_frame, entry_point);

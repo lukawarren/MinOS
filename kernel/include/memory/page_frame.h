@@ -28,7 +28,7 @@ namespace memory
     class PageFrame
     {
     public:
-        PageFrame(const size_t address, const size_t framebuffer_address, const size_t framebufffer_size);
+        PageFrame(const size_t address, const size_t framebuffer_address, const size_t framebufffer_size, const bool kernel);
         PageFrame() {}
 
         void map_page(PhysicalAddress pAddr, VirtualAddress vAddr, uint32_t flags);

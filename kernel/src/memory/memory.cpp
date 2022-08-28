@@ -14,37 +14,34 @@ namespace memory
         // and all the multiboot stuff
         size_t memory_start = MAX(info.memory_begin, (size_t) &kernel_end);
         memory_start = MAX(memory_start, info.get_highest_module_address());
-        memory_start = memory::PageFrame::round_to_next_page_size(memory_start);
+        memory_start = PageFrame::round_to_next_page_size(memory_start);
 
         // Setup paging
-        kernel_frame = PageFrame(memory_start, info.framebuffer_address, info.framebuffer_size);
+        kernel_frame = PageFrame(memory_start, info.framebuffer_address, info.framebuffer_size, true);
 
         // Map in heap
         const size_t heap_address = memory_start + PageFrame::size();
-        for (size_t i = 0; i < heap_address / PAGE_SIZE; ++i)
-        {
-            kernel_frame.map_page(
-                heap_address + i*PAGE_SIZE,
-                heap_address + i*PAGE_SIZE,
-                KERNEL_PAGE
-            );
-        }
+        const size_t heap_size = PageFrame::round_to_next_page_size(Allocator::size());
+        kernel_frame.map_pages(heap_address, heap_address, KERNEL_PAGE, heap_size / PAGE_SIZE);
 
         // Create heap
-        allocator = Allocator(memory_start + PageFrame::size(), info.memory_end - memory_start);
+        allocator = Allocator(heap_address, info.memory_end - memory_start);
 
         // Reserve modules then map them in
         for (size_t i = 0; i < info.n_modules; ++i)
         {
+            const auto pages = PageFrame::round_to_next_page_size(info.modules[i].size) / PAGE_SIZE;
+
             allocator.reserve_pages(
                 info.modules[i].address,
-                info.modules[i].size / PAGE_SIZE
+                pages
             );
+
             kernel_frame.map_pages(
                 info.modules[i].address,
                 info.modules[i].address,
                 KERNEL_PAGE_READ_ONLY,
-                info.modules[i].size / PAGE_SIZE
+                pages
             );
         }
 
@@ -53,8 +50,11 @@ namespace memory
         cpu::enable_paging();
     }
 
-    Optional<size_t> allocate_for_user(const Optional<VirtualAddress> address,
-                const size_t size, PageFrame& page_frame, const uint32_t flags)
+    Optional<size_t> allocate_for_user(
+        const Optional<VirtualAddress> address,
+        const size_t size, PageFrame& page_frame,
+        const uint32_t flags
+    )
     {
         // Allocate
         auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
@@ -70,9 +70,9 @@ namespace memory
         else
             page_frame.map_pages(*data, *data, flags, pages);
 
-        // Zero out
+        // Map into kernel too then zero out
+        kernel_frame.map_pages(*data, *data, KERNEL_PAGE, pages);
         memset((void*)*data, 0, pages * PAGE_SIZE);
-
         return data;
     }
 
@@ -88,6 +88,7 @@ namespace memory
         if (!data) return {};
 
         // Zero out
+        kernel_frame.map_pages(*data, *data, KERNEL_PAGE, pages);
         memset((void*)*data, 0, pages * PAGE_SIZE);
         return data;
     }

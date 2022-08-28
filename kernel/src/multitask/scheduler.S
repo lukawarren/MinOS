@@ -69,12 +69,17 @@ switch_frames:
     mov cr3, eax
     pop eax
 
-
     ; call our trusty scheduler, clearing df as per the SysV ABI (popad later
     ; so we don't clobber eflags with our cmp)
     pushad
     cld
     call on_scheduler
+
+    ; a nullptr means we've come from the kernel - we don't care about
+    ; preserving registers, so clobbering eflags should be fine
+    mov eax, [old_stack_address]
+    cmp eax, 0
+    je load_new_task
     popad
 
 save_old_task:
@@ -107,13 +112,8 @@ save_old_task:
     mov eax, [old_cr3]
     push eax
 
-    ; finally, save the task's esp (we've taken a pointer to it)... unless we've
-    ; come from the kernel, since it's just given us a nullptr on purpose (we
-    ; would've just skipped straight to loading the new task if we knew earlier,
-    ; but a cmp would've clobbered eflags)
+    ; finally, save the task's esp (we've taken a pointer to it)
     mov eax, [old_stack_address]
-    cmp eax, 0
-    je load_new_task
     mov [eax], esp
 
 load_new_task:

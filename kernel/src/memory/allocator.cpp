@@ -1,11 +1,7 @@
 #include "memory/allocator.h"
-#include "memory/page_frame.h"
 
 namespace memory
 {
-    constexpr size_t bits_per_group = 32;
-    constexpr size_t groups = MAX_PAGES / bits_per_group;
-
     static uint32_t get_position_of_least_significant_bit(uint32_t number);
 
     Allocator::Allocator(const size_t address, const size_t size)
@@ -161,11 +157,6 @@ namespace memory
     void Allocator::set_page_as_free(const size_t group, const size_t bit)
     {
         freeGroups[group] |= (1 << bit);
-    }
-
-    constexpr size_t Allocator::size()
-    {
-        return sizeof(freeGroups[0]) * groups;
     }
 
     /*

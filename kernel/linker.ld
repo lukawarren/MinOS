@@ -35,7 +35,6 @@ SECTIONS
 
         /* TSS stack (growing downwards, of course)
 		. += 4k;
-		_tss_stack = .;
 
         /* End of kernel; start of heap */
 		. = ALIGN(4k);
