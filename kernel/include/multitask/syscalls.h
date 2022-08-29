@@ -12,6 +12,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <bits/syscall.h>
+#include <fcntl.h>
 
 namespace multitask
 {

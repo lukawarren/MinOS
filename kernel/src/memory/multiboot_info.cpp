@@ -22,13 +22,12 @@ namespace memory
             // Copy over module info
             modules[i] = Module(
                 module->mod_start,
-                PageFrame::round_to_next_page_size(module->mod_end),
+                module->mod_end,
                 (char*)module->cmdline
             );
-            println("found module ", modules[i].name);
 
-            // Proceed to next one
-            module = (multiboot_module_t*) module->mod_end;
+            println("found module ", modules[i].name);
+            module++;
         }
     }
 

@@ -30,16 +30,17 @@ namespace memory
         // Reserve modules then map them in
         for (size_t i = 0; i < info.n_modules; ++i)
         {
+            const auto aligned_address = size_t(info.modules[i].address / PAGE_SIZE) * PAGE_SIZE;
             const auto pages = PageFrame::round_to_next_page_size(info.modules[i].size) / PAGE_SIZE;
 
             allocator.reserve_pages(
-                info.modules[i].address,
+                aligned_address,
                 pages
             );
 
             kernel_frame.map_pages(
-                info.modules[i].address,
-                info.modules[i].address,
+                aligned_address,
+                aligned_address,
                 KERNEL_PAGE_READ_ONLY,
                 pages
             );

@@ -3,16 +3,22 @@
 
 namespace fs
 {
-    DeviceFile files[5];
+    DeviceFile files[6];
     constexpr size_t stdout = 1;
     constexpr size_t stderr = 2;
     constexpr size_t keyboard = 3;
+    constexpr size_t doom_wad = 4;
 
     // Temporary! Remember to remove from fs.h too :)
     char keyboard_buffer[256] = {};
     size_t keyboard_buffer_index = 0;
 
-    void init()
+    // Temporary! DOOM wad file
+    size_t wad_address;
+    size_t wad_size;
+    size_t wad_seek;
+
+    void init(const memory::MultibootInfo& info)
     {
         auto on_read = [](void*, size_t) { return (size_t)0; };
 
@@ -34,11 +40,21 @@ namespace fs
             keyboard_buffer_index -= r_len;
             return r_len;
         }, [](void*, size_t){ return (size_t) 0; });
+
+        // DOOM wad hack
+        wad_address = info.modules[1].address;
+        wad_size = info.modules[1].size;
+        wad_seek = 0;
+        files[doom_wad] = DeviceFile([](void* data, size_t len){
+            size_t size = MIN(len, wad_size-wad_seek);
+            memcpy(data, (void*)(wad_address+wad_seek), size);
+            return size;
+        }, [](void*, size_t){ return (size_t) 0; });
     }
 
     Optional<DeviceFile*> get_file(const descriptor fd)
     {
-        if (fd != stdout && fd != stderr && fd != keyboard)
+        if (fd != stdout && fd != stderr && fd != keyboard && fd != doom_wad)
         {
             println("unknown fd ", fd);
             return {};
