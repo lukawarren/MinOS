@@ -6,7 +6,7 @@
 
 const uint32_t framebuffer_width = 640;
 const uint32_t framebuffer_height = 480;
-const uint32_t framebuffer_x = 0;
+const uint32_t framebuffer_x = (framebuffer_width - DOOMGENERIC_RESX) / 2;
 const uint32_t framebuffer_y = (framebuffer_height - DOOMGENERIC_RESY) / 2;
 
 static uint32_t* framebuffer = (uint32_t*)0x30000000;
@@ -29,7 +29,7 @@ void DG_DrawFrame()
     // Copy output over row-by-row from DG_ScreenBuffer
     for (uint32_t y = 0; y < DOOMGENERIC_RESY; ++y)
     {
-        uint32_t fb_offset = (framebuffer_y+y)*DOOMGENERIC_RESX + framebuffer_x;
+        uint32_t fb_offset = (framebuffer_y+y)*framebuffer_width + framebuffer_x;
         uint32_t dg_offset = y*DOOMGENERIC_RESX;
         uint32_t size = DOOMGENERIC_RESX*sizeof(framebuffer[0]);
         memcpy(framebuffer + fb_offset, DG_ScreenBuffer + dg_offset, size);
