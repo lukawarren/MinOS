@@ -85,7 +85,7 @@ namespace interrupts
 
             case 1:
             {
-                auto scancode = cpu::inb(0x60);
+                auto scancode = (char) cpu::inb(0x60);
 
                 if (fs::keyboard_buffer_index < sizeof(fs::keyboard_buffer) / sizeof(fs::keyboard_buffer[0]))
                     fs::keyboard_buffer[fs::keyboard_buffer_index++] = scancode;

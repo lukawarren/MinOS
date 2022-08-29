@@ -192,7 +192,7 @@ namespace multitask
             auto* data = read_from_user<void>(iov[i].iov_base);
             const auto bytes = (ssize_t) file->read((void*)data, iov[i].iov_len);
             len += bytes;
-            fs::wad_seek += bytes;
+            fs::wad_seek += (size_t) bytes;
         }
 
         return len;
