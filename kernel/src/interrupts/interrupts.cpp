@@ -84,9 +84,16 @@ namespace interrupts
             case 0: pit::reload(); break;
 
             case 1:
+            {
+                auto scancode = cpu::inb(0x60);
+
                 if (fs::keyboard_buffer_index < sizeof(fs::keyboard_buffer) / sizeof(fs::keyboard_buffer[0]))
-                    fs::keyboard_buffer[fs::keyboard_buffer_index++] = cpu::inb(0x60);
-            break;
+                    fs::keyboard_buffer[fs::keyboard_buffer_index++] = scancode;
+                else
+                    println("keyboard buffer full");
+
+                break;
+            }
 
             default:
                 assert(false);
