@@ -111,7 +111,7 @@ namespace multitask
     {
         assert(fd == 4);
 
-        uint64_t offset = ((uint64_t)offset_high << 32) | offset_low;
+        off_t offset = ((off_t)offset_high << 32) | offset_low;
         auto* target = read_from_user<off_t>(result);
 
         if (whence == SEEK_SET) *target = offset;
