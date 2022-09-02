@@ -163,7 +163,9 @@ namespace multitask
     int open(const char* pathname, int flags, mode_t)
     {
         assert(flags == O_LARGEFILE);
-        const auto result = current_process->open_file(pathname);
+        const auto result = current_process->open_file(
+            read_from_user<const char>(pathname)
+        );
         if (result.contains_data) return result.data;
         return -EBADF;
     }

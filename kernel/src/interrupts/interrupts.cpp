@@ -11,6 +11,9 @@
 
 namespace interrupts
 {
+    uint8_t keyboard_buffer[keyboard_buffer_size];
+    size_t keyboard_buffer_keys = 0;
+
     void load()
     {
         using namespace cpu;
@@ -85,8 +88,13 @@ namespace interrupts
 
             case 1:
             {
-                auto scancode = cpu::inb(0x60);
-                uart::write_number(scancode);
+                uint8_t scancode = cpu::inb(0x60);
+
+                if (keyboard_buffer_keys < keyboard_buffer_size)
+                    keyboard_buffer[keyboard_buffer_keys++] = scancode;
+                else
+                    println("keyboard buffer is too full to accept scancode ", scancode);
+
                 break;
             }
 

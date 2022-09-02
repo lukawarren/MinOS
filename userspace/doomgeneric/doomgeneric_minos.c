@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 #include "doomgeneric.h"
 #include "doomkeys.h"
 
@@ -13,16 +15,21 @@ static uint32_t* framebuffer = (uint32_t*)0x30000000;
 static uint32_t time = 0;
 static char key_buffer[256] = {};
 static uint32_t key_index = 0;
+static FILE* keyboard_file;
 
 static unsigned char scancode_to_doom_key(unsigned char scancode);
 
-void DG_Init() {}
+void DG_Init()
+{
+    keyboard_file = fopen("keyboard", "r");
+    assert(keyboard_file);
+}
 
 void DG_DrawFrame()
 {
     // Add input to queue
     char scancode = 0;
-    read(0xbeef, &scancode, sizeof(char));
+    read(fileno(keyboard_file), &scancode, 1);
     if (scancode != -1 && scancode != 0 && key_index < 256)
         key_buffer[++key_index] = scancode;
 

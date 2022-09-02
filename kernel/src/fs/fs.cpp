@@ -1,5 +1,4 @@
 #include "fs/fs.h"
-#include "fs/device_fs.h"
 #include "fs/module_fs.h"
 #include "dev/uart.h"
 
@@ -8,7 +7,7 @@ namespace fs
     static DeviceFileSystem device_fs;
     static ModuleFileSystem module_fs;
 
-    void init(const memory::MultibootInfo& info)
+    void init(const memory::MultibootInfo& info, void(*register_devices)(DeviceFileSystem&))
     {
         auto on_read = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
         auto on_write = [](void* data, uint64_t, uint64_t len)
@@ -22,6 +21,9 @@ namespace fs
         device_fs.install(DeviceFile(on_read, on_write, "stdin"));
         device_fs.install(DeviceFile(on_read, on_write, "stdout"));
         device_fs.install(DeviceFile(on_read, on_write, "stderr"));
+
+        // Other kernel devices may be registered here
+        register_devices(device_fs);
 
         module_fs = ModuleFileSystem(info);
     }
