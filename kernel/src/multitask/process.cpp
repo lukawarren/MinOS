@@ -49,5 +49,58 @@ namespace multitask
         fxsave_storage = (char*) *memory::allocate_for_user(512, page_frame, KERNEL_PAGE);
         assert((size_t)&fxsave_storage[0] % 16 == 0);
         cpu::init_fpu_storage(fxsave_storage);
+
+        // Setup files
+        assert(max_files >= 3);
+        open_files[fs::get_stdin().fd] = { fs::get_stdin(), 0 };
+        open_files[fs::get_stdout().fd] = { fs::get_stdout(), 0 };
+        open_files[fs::get_stderr().fd] = { fs::get_stderr(), 0 };
+        n_files = 3;
+    }
+
+    Optional<fs::FileDescriptor> Process::open_file(const fs::FileHandle handle)
+    {
+        if (n_files >= max_files) return {};
+        open_files[n_files] = { handle, 0 };
+        return n_files++;
+    }
+
+    Optional<fs::FileDescriptor> Process::open_file(const char* path)
+    {
+        const auto result = fs::get_file(path);
+        if (result.contains_data) return open_file(result.data);
+        return {};
+    }
+
+    Optional<uint64_t> Process::seek_file(const fs::FileDescriptor fd, const uint64_t offset, const Process::SeekMode mode)
+    {
+        if (!is_fd_valid(fd)) return {};
+        auto& file = open_files[fd];
+
+        switch (mode)
+        {
+            case SET: file.offset = offset; break;
+            case CURRENT: file.offset += offset; break;
+            case END: file.offset = file.size() + offset; break;
+            default: return {};
+        }
+
+        return file.offset;
+    }
+
+    bool Process::close_file(const fs::FileDescriptor fd)
+    {
+        if (!is_fd_valid(fd)) return false;
+
+        // Move all elements above ours downwards by 1, if need be
+        for (auto i = fd; i < n_files-1; ++i)
+            open_files[i] = open_files[i+1];
+
+        return true;
+    }
+
+    bool Process::is_fd_valid(const fs::FileDescriptor fd) const
+    {
+        return !(fd >= n_files || fd < 0);
     }
 }

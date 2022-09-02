@@ -6,7 +6,7 @@
 #include "memory/memory.h"
 #include "memory/elf.h"
 #include "multiboot.h"
-#include "io/uart.h"
+#include "dev/uart.h"
 #include "cpu/cpu.h"
 #include "fs/fs.h"
 #include "klib.h"

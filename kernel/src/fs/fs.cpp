@@ -1,64 +1,60 @@
 #include "fs/fs.h"
-#include "io/uart.h"
+#include "fs/device_fs.h"
+#include "fs/module_fs.h"
+#include "dev/uart.h"
 
 namespace fs
 {
-    DeviceFile files[6];
-    constexpr size_t stdout = 1;
-    constexpr size_t stderr = 2;
-    constexpr size_t keyboard = 3;
-    constexpr size_t doom_wad = 4;
-
-    // Temporary! Remember to remove from fs.h too :)
-    char keyboard_buffer[256] = {};
-    size_t keyboard_buffer_index = 0;
-
-    // Temporary! DOOM wad file
-    size_t wad_address;
-    size_t wad_size;
-    size_t wad_seek;
+    static DeviceFileSystem device_fs;
+    static ModuleFileSystem module_fs;
 
     void init(const memory::MultibootInfo& info)
     {
-        auto on_read = [](void*, size_t) { return (size_t)0; };
-
-        auto on_write = [](void* data, size_t len)
+        auto on_read = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
+        auto on_write = [](void* data, uint64_t, uint64_t len)
         {
             for (size_t i = 0; i < len; ++i)
                 uart::write_char(*((char*)data + i));
-            return len;
+            return Optional<uint64_t>(len);
         };
 
-        // Setup stdout and stderr
-        files[stdout] = DeviceFile(on_read, on_write);
-        files[stderr] = DeviceFile(on_read, on_write);
+        // UART devices - stdin, stdout and stderr
+        device_fs.install(DeviceFile(on_read, on_write, "stdin"));
+        device_fs.install(DeviceFile(on_read, on_write, "stdout"));
+        device_fs.install(DeviceFile(on_read, on_write, "stderr"));
 
-        // Very basic keyboard input
-        files[keyboard] = DeviceFile([](void* data, size_t len){
-            size_t r_len = MIN(len, keyboard_buffer_index);
-            memcpy(data, keyboard_buffer, r_len);
-            keyboard_buffer_index -= r_len;
-            return r_len;
-        }, [](void*, size_t){ return (size_t) 0; });
-
-        // DOOM wad hack
-        wad_address = info.modules[1].address;
-        wad_size = info.modules[1].size;
-        wad_seek = 0;
-        files[doom_wad] = DeviceFile([](void* data, size_t len){
-            size_t size = MIN(len, wad_size-wad_seek);
-            memcpy(data, (void*)(wad_address+wad_seek), size);
-            return size;
-        }, [](void*, size_t){ return (size_t) 0; });
+        module_fs = ModuleFileSystem(info);
     }
 
-    Optional<DeviceFile*> get_file(const descriptor fd)
+    Optional<uint64_t> write(FileHandle handle, void* data, uint64_t offset, uint64_t length)
     {
-        if (fd != stdout && fd != stderr && fd != keyboard && fd != doom_wad)
-        {
-            println("unknown fd ", fd);
-            return {};
-        }
-        return &files[fd];
+        if(handle.file_system == 0) return device_fs.write(handle.fd, data, offset, length);
+        if(handle.file_system == 1) return module_fs.write(handle.fd, data, offset, length);
+        return {};
+    }
+
+    Optional<uint64_t> read(FileHandle handle, void* data, uint64_t offset, uint64_t length)
+    {
+        if(handle.file_system == 0) return device_fs.read(handle.fd, data, offset, length);
+        if(handle.file_system == 1) return module_fs.read(handle.fd, data, offset, length);
+        return {};
+    }
+
+    Optional<uint64_t> get_size(FileHandle handle)
+    {
+        if(handle.file_system == 0) return device_fs.get_size(handle.fd);
+        if(handle.file_system == 1) return module_fs.get_size(handle.fd);
+        return {};
+    }
+
+    Optional<FileHandle> get_file(const char* path)
+    {
+        auto result = device_fs.get_file(path);
+        if (result.contains_data) return FileHandle { 0, *result };
+
+        result = module_fs.get_file(path);
+        if (result.contains_data) return FileHandle { 1, *result };
+
+        return {};
     }
 }

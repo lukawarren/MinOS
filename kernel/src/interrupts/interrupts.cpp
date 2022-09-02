@@ -3,9 +3,9 @@
 #include "interrupts/irq.h"
 #include "interrupts/pit.h"
 #include "interrupts/pic.h"
+#include "dev/uart.h"
 #include "cpu/idt.h"
 #include "cpu/cpu.h"
-#include "io/uart.h"
 #include "fs/fs.h"
 #include "klib.h"
 
@@ -85,13 +85,8 @@ namespace interrupts
 
             case 1:
             {
-                auto scancode = (char) cpu::inb(0x60);
-
-                if (fs::keyboard_buffer_index < sizeof(fs::keyboard_buffer) / sizeof(fs::keyboard_buffer[0]))
-                    fs::keyboard_buffer[fs::keyboard_buffer_index++] = scancode;
-                else
-                    println("keyboard buffer full");
-
+                auto scancode = cpu::inb(0x60);
+                uart::write_number(scancode);
                 break;
             }
 

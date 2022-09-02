@@ -1,4 +1,5 @@
 ENTRY(_start)
+OUTPUT_FORMAT(elf32-i386)
 
 SECTIONS
 {
@@ -20,7 +21,7 @@ SECTIONS
 		*(.rodata)
 	}
 
-	/* Read-write data (initialized) */
+	/* Read-write data (initialised) */
 	.data : ALIGN(4K)
 	{
 		*(.data)

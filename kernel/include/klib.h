@@ -15,9 +15,10 @@ extern "C"
     char* strncpy(char* dest, const char* src, size_t maxLength);
     void strcpy(char* dest, const char* source);
     size_t strcmp(const char* x, const char* y);
-    size_t pow(const size_t number, const size_t power);
+    uint64_t pow(const uint64_t number, const uint64_t power);
     void memset(void* b, int c, size_t len);
-    void memcpy(void *dest, void *src, size_t n);
+    void memcpy(void *dest, void *src, size_t n); // has to be size_t as compiler uses it internally
+    void memcpy_large(void *dest, void *src, uint64_t n);
     void __cxa_pure_virtual();
     void atexit();
 }
@@ -38,8 +39,9 @@ void error(const char* file, unsigned int line, const char* expression);
 void _println(const char* file, const char* message);
 void _println(const char* file, const char* message, const char* message_two);
 void _println(const char* file, const char* message, const int number);
-void _println(const char* file, const char* message, const size_t number);
-void _println(const char* file, const char* message, const size_t number, const char* message_two, const size_t number_two);
+void _println(const char* file, const char* message, const uint32_t number);
+void _println(const char* file, const char* message, const uint64_t number);
+void _println(const char* file, const char* message, const uint64_t number, const char* message_two, const uint64_t number_two);
 
 #define MAX(a,b) \
    ({ __typeof__ (a) _a = (a); \
@@ -76,6 +78,12 @@ struct Optional
     bool operator!() const
     {
         return !contains_data;
+    }
+
+    T value_or(T or_value) const
+    {
+        if (contains_data) return data;
+        return or_value;
     }
 };
 

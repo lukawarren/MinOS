@@ -21,9 +21,9 @@ void DG_Init() {}
 void DG_DrawFrame()
 {
     // Add input to queue
-    char scancode;
-    read(3, &scancode, sizeof(char));
-    if (scancode != 0 && key_index < 256)
+    char scancode = 0;
+    read(0xbeef, &scancode, sizeof(char));
+    if (scancode != -1 && scancode != 0 && key_index < 256)
         key_buffer[++key_index] = scancode;
 
     // Copy output over row-by-row from DG_ScreenBuffer

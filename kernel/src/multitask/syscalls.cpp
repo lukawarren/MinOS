@@ -97,9 +97,9 @@ namespace multitask
         return 0;
     }
 
-    int close(int)
+    int close(int fd)
     {
-        return 0;
+        return current_process->close_file(fd) ? 0 : -1;
     }
 
     int ioctl(int, unsigned long, char*)
@@ -109,17 +109,16 @@ namespace multitask
 
     int llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, off_t* result, unsigned int whence)
     {
-        assert(fd == 4);
+        uint64_t offset = (uint64_t(offset_high) << 32) | offset_low;
 
-        off_t offset = ((off_t)offset_high << 32) | offset_low;
-        auto* target = read_from_user<off_t>(result);
+        auto seek_result = current_process->seek_file(
+            (fs::FileDescriptor)fd,
+            offset,
+            (Process::SeekMode)whence
+        );
+        if (!seek_result) return -1;
 
-        if (whence == SEEK_SET) *target = offset;
-        else if (whence == SEEK_CUR) *target += offset;
-        else if (whence == SEEK_END) *target = fs::wad_size + offset;
-        else assert(false);
-
-        fs::wad_seek = (size_t)*target;
+        *read_from_user<off_t>(result) = (off_t)seek_result.data;
         return 0;
     }
 
@@ -163,39 +162,51 @@ namespace multitask
 
     int open(const char* pathname, int flags, mode_t)
     {
-        // Stub for DOOM :)
         assert(flags == O_LARGEFILE);
-        const auto* filename = read_from_user<const char>(pathname);
-        if (strcmp(filename, "DOOM1.WAD") != 0) return 4;
+        const auto result = current_process->open_file(pathname);
+        if (result.contains_data) return result.data;
         return -EBADF;
     }
 
     ssize_t read(int fd, void* buf, size_t count)
     {
-        assert(fd != 4);
-        Optional<fs::DeviceFile*> file = fs::get_file(fd);
-        if (!file) return -EBADF;
+        if (!current_process->is_fd_valid(fd)) return -EBADF;
+        auto& file = current_process->open_files[fd];
 
-        void* data = read_from_user<void>(buf);
-        return (ssize_t) file->read(data, count);
+        const auto result = fs::read(
+            file.handle,
+            read_from_user<void>(buf),
+            file.offset,
+            count
+        );
+
+        if (!result) return -1;
+
+        file.offset += result.data;
+        return (ssize_t)result.data;
     }
 
     ssize_t readv(int fd, const struct iovec* iov, int iovcnt)
     {
-        assert(fd == 4);
-        Optional<fs::DeviceFile*> file = fs::get_file(fd);
-        if (!file) return EBADF;
+        if (!current_process->is_fd_valid(fd)) return -EBADF;
+        auto& file = current_process->open_files[fd];
 
-        ssize_t len = 0;
+        size_t len = 0;
         for (int i = 0; i < iovcnt; ++i)
         {
-            auto* data = read_from_user<void>(iov[i].iov_base);
-            const auto bytes = (ssize_t) file->read((void*)data, iov[i].iov_len);
-            len += bytes;
-            fs::wad_seek += (size_t) bytes;
+            const auto result = fs::read(
+                file.handle,
+                read_from_user<void>(iov[i].iov_base),
+                file.offset,
+                iov[i].iov_len
+            );
+
+            if (!result) continue;
+            len += result.data;
+            file.offset += result.data;
         }
 
-        return len;
+        return (ssize_t)len;
     }
 
     int set_thread_area()
@@ -210,16 +221,24 @@ namespace multitask
 
     ssize_t writev(int fd, const iovec* iov, int iovcnt)
     {
-        Optional<fs::DeviceFile*> file = fs::get_file(fd);
-        if (!file) return EBADF;
+        if (!current_process->is_fd_valid(fd)) return -EBADF;
+        auto& file = current_process->open_files[fd];
 
-        ssize_t len = 0;
+        size_t len = 0;
         for (int i = 0; i < iovcnt; ++i)
         {
-            auto* data = read_from_user<void>(iov[i].iov_base);
-            len += (ssize_t) file->write((void*)data, iov[i].iov_len);
+            auto result = fs::write(
+                file.handle,
+                read_from_user<void>(iov[i].iov_base),
+                file.offset,
+                iov[i].iov_len
+            );
+
+            if (!result) continue;
+            len += result.data;
+            file.offset += result.data;
         }
 
-        return len;
+        return (ssize_t)len;
     }
 }

@@ -9,6 +9,7 @@ namespace memory
     class MultibootInfo
     {
     public:
+        MultibootInfo() {}
         MultibootInfo(const multiboot_info_t* info);
         size_t get_highest_module_address() const;
 

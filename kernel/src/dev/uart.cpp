@@ -1,4 +1,4 @@
-#include "io/uart.h"
+#include "dev/uart.h"
 #include "cpu/cpu.h"
 #include "klib.h"
 
@@ -39,18 +39,18 @@ namespace uart
             write_char(string[i]);
     }
 
-    void write_number(const uint32_t number)
+    void write_number(const uint64_t number)
     {
         // Get number of digits
         int n_digits = 1;
-        uint32_t i = number;
+        uint64_t i = number;
         while (i /= 10) ++n_digits;
 
         // Print digits "in reverse"
         const char digits[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
         for (int digit = n_digits-1; digit >= 0; --digit)
         {
-            const int nth_digit = int(number / pow(10, (size_t)digit) % 10);
+            const int nth_digit = int(number / pow(10, (uint64_t)digit) % 10);
             write_char(digits[nth_digit]);
         }
     }

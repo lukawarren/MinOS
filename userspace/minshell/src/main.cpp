@@ -33,6 +33,7 @@ void draw_border();
 int main()
 {
     // Setup UI
+    printf("[minshell] starting...\n");
     draw_border();
     Keyboard keyboard(
         []() { view = View::EDITOR;   }, // F1
@@ -76,6 +77,7 @@ int main()
     }, 2);
     lua_setglobal(L, "print");
 
+    printf("[minshell] running...\n");
     while(1)
     {
         // Run Lua if need be
