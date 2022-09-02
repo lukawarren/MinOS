@@ -5,9 +5,16 @@ The third rewrite of MinOS
 * Musl 1.2.3
 * Lua 5.4.4
 
+## Building with Docker
+This will build Musl too.
+```
+docker build -t minos:3.0 .
+docker run --rm --volume  $(pwd):/code minos:3.0
+```
+
 ## Builing musl
 ```
-cd musl &&
+cd userspace/musl &&
 mkdir -p /tmp/musl-alias &&
 ln -sf `which ar` /tmp/musl-alias/i686-ar &&
 ln -sf `which ranlib` /tmp/musl-alias/i686-ranlib &&
@@ -21,6 +28,9 @@ make -j 16
 * arch/i386/pthred_arch.h has been stubbed out (for the same reason as above)
 * crt/crt1.c supports the change above with a false pthread
 * this all means that TLS is not supported yet
+
+## Running with Qemu
+`qemu-system-i386 -cdrom build/MinOS.iso -serial mon:stdio`
 
 ## History
 * MinOS 1 - mostly written in the summer of 2021, C and C++

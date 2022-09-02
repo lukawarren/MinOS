@@ -27,7 +27,7 @@ namespace fs
         return files[fd].read(data, offset, length);
     }
 
-    Optional<uint64_t> DeviceFileSystem::get_size(FileDescriptor fd)
+    Optional<uint64_t> DeviceFileSystem::get_size(FileDescriptor)
     {
         assert(false);
         return __UINT64_MAX__;
