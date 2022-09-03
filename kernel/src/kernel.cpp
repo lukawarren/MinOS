@@ -4,6 +4,7 @@
 #include "multitask/syscalls.h"
 #include "multitask/process.h"
 #include "memory/memory.h"
+#include "memory/smbios.h"
 #include "memory/elf.h"
 #include "multiboot.h"
 #include "dev/uart.h"
@@ -29,6 +30,7 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     cpu::init();
 
     // Setup memory
+    memory::smbios::parse();
     memory::init(info);
 
     // Setup filesystem, installing keyboard device
