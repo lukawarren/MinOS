@@ -9,7 +9,7 @@ The third rewrite of MinOS
 This will build Musl too.
 ```
 docker build -t minos:3.0 .
-docker run --rm --volume  $(pwd):/code minos:3.0
+docker run --rm --volume $(pwd):/code minos:3.0
 ```
 
 ## Builing musl
