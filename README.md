@@ -2,6 +2,8 @@
 A x86 operating system written in modern(ish) C++, a bit of C, and Assembly.<br/>
 <img alt="Screenshot of the window manager, with Snake and Notepad running" src="screenshots/window%20manager.png" width="512px"/>
 
+# please refer to the "rewrite-three" branch for current changes - currently rewriting everything with Musl, more idiomatic C++ and a more POSIX-y feel
+
 ## Features
 * Userspace with newlibc standard library (with old sbrk-style malloc replaced with liballoc)
 * Pre-emptive multitaksing
