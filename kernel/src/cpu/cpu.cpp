@@ -30,12 +30,10 @@ namespace cpu
         // Load above to CPU...
         load_gdt(gdt, sizeof(cpu::GDT) * sizeof(gdt) / sizeof(gdt[0]));
         load_tss(tss_descriptor);
-        println("loaded GDT and TSS");
 
         // ...and interrupts too
         const IDTDescriptor descriptor(idt);
         load_idt(&descriptor);
-        println("loaded IDT");
 
         // Setup FPU
         enable_fpu();
