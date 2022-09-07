@@ -1,0 +1,11 @@
+# Scalable Screen Font 2.0
+
+This is a stripped-down port of bzt's excellent [font rendering library](https://gitlab.com/bztsrc/scalable-font2/).
+Please see the LICENSE file for details.
+
+## Authors
+* SSFN format, converter, editor and renderers: bzt
+* STBI (PD, original zlib decoder): Sean Barrett
+* potrace (GPL): Peter Selinger
+* libimagequant (GPL): Jef Poskanzer, Greg Roelofs, Kornel Lesiński
+* freetype2 (GPL): David Turner, Robert Wilhelm, Werner Lemberg

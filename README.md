@@ -5,6 +5,7 @@ The third rewrite of MinOS
 * Musl 1.2.3
 * Lua 5.4.4
 * [Doom :-)](https://github.com/ozkl/doomgeneric)
+* [Scalable Screen Font 2.0](https://gitlab.com/bztsrc/scalable-font2/)
 
 ## Building with Docker
 This will build Musl too.

@@ -1,4 +1,5 @@
 add_subdirectory(lua)
 add_subdirectory(hello-world)
+add_subdirectory(scalable-font2)
 add_subdirectory(minshell)
 add_subdirectory(doomgeneric)
