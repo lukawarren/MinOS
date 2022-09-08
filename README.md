@@ -34,6 +34,9 @@ make -j 16
 ## Running with Qemu
 `qemu-system-i386 -cdrom build/MinOS.iso -serial mon:stdio`
 
+## Attributions
+* Uses the [Gidole font](https://github.com/larsenwork/Gidole)
+
 ## History
 * MinOS 1 - mostly written in the summer of 2021, C and C++
 * MinOS 2 - written a few months ago (mid 2022), in Rust
