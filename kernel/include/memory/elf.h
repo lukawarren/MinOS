@@ -82,6 +82,11 @@ namespace memory
     {
         PT_NULL = 0,    // Unused
         PT_LOAD = 1,    // Loadable segment
+        PT_DYNAMIC = 2, // Dynamic linking information
+        PT_INTERP = 3,  // More linking stuff
+        PT_NOTE = 4,
+        PT_GNU_STACK = 0x6474e551, // Controls executable permissions of stack segment
+        PT_GNU_RELRO = 0x6474e552 // May be made read-only after relocation shave been processed
     };
 
     // Section header

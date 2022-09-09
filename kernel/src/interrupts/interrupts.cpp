@@ -105,7 +105,7 @@ namespace interrupts
         pic::end_interrupt((uint8_t)irq);
     }
 
-    void on_exception(const uint32_t irq, const cpu::Registers)
+    void on_exception(const uint32_t irq, const cpu::Registers registers)
     {
         static char const* reasons[32] =
         {
@@ -128,8 +128,16 @@ namespace interrupts
         };
 
         uart::write_string("\n\n---------- CPU exception ---------- \n");
-        uart::write_string(reasons[irq]);
-        uart::write_string("\n----------------------------------- \n\n\n");
+        println(reasons[irq]);
+        println("eax = ", registers.eax);
+        println("ebx = ", registers.ebx);
+        println("ecx = ", registers.ecx);
+        println("edx = ", registers.edx);
+        println("esp = ", registers.esp);
+        println("ebp = ", registers.ebp);
+        println("esi = ", registers.esi);
+        println("edi = ", registers.edi);
+        uart::write_string("----------------------------------- \n\n\n");
         halt();
         assert(false);
     }

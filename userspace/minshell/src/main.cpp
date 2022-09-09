@@ -10,6 +10,7 @@ extern "C"
     #include "lualib.h"
     #include "lauxlib.h"
     int main();
+    void __cxa_pure_virtual() { assert(false); }
 }
 
 // Styling

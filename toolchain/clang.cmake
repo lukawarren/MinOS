@@ -42,6 +42,7 @@ add_link_options("-nostdlib")
 add_link_options("-ffreestanding")
 add_link_options("-static-libgcc")
 add_link_options("-lgcc")
+add_link_options("-static")
 
 # Linking
 set(CMAKE_LINKER ld.lld)

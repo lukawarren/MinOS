@@ -25,8 +25,13 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
         size_t header_address = address + header->e_phoff + sizeof(ElfProgramHeader) * i;
         auto* program_header = (ElfProgramHeader*)header_address;
 
-        if (program_header->p_type == PT_LOAD)
+        if (program_header->p_type == PT_LOAD ||
+            program_header->p_type == PT_GNU_STACK ||
+            program_header->p_type == PT_GNU_RELRO)
         {
+            if (program_header->p_filesz == 0 || program_header->p_memsz == 0)
+                continue;
+
             // Sanity check (we're not a higher-half kernel!)
             check(program_header->p_vaddr >= memory::user_base_address);
             check(PageFrame::is_page_aligned(program_header->p_vaddr));
@@ -48,7 +53,33 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             memset((void*)*destination, 0, memory_size);
             memcpy((void*)*destination, (void*)source, file_size);
         }
-        else println("unknown program header type ", program_header->p_type);
+
+        else if (program_header->p_type == PT_NOTE)
+        {
+            // Stuff for conformance, compatibility, etc.
+            // Too bad.
+        }
+
+        else if (program_header->p_type == PT_GNU_STACK)
+        {
+            // "The p_flags member specifies the permissions on the segment containing the stack
+            // and is used to indicate wether the stack should be executable. The absense of this
+            // header indicates that the stack will be executable."
+            // Too bad.
+        }
+
+        else if (program_header->p_type == PT_GNU_RELRO)
+        {
+            // "The array element specifies the location and size of a segment which may be made
+            // read-only after relocation shave been processed."
+            // Too bad.
+        }
+
+        else
+        { 
+            println("unknown program header type ", program_header->p_type);
+            return {};
+        }
     }
 
     // Load section headers
