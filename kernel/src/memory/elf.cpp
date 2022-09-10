@@ -48,8 +48,8 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             if (!destination) return {};
 
             // If p_memsz exceeds p_filesz, then the remaining bits are to be zeroed
-            memset((void*)(*destination).p_addr, 0, memory_size);
-            memcpy((void*)(*destination).p_addr, (void*)source, file_size);
+            memset((void*)destination->p_addr, 0, memory_size);
+            memcpy((void*)destination->p_addr, (void*)source, file_size);
         }
 
         else if (program_header->p_type == PT_NOTE)

@@ -141,8 +141,8 @@ namespace multitask
         assert(flags == (MAP_PRIVATE | MAP_ANONYMOUS));
         assert(fd == -1);
 
-        auto memory = memory::allocate_for_user(length, multitask::current_process->frame);
-        return memory.contains_data ? (void*) (*memory).v_addr : (void*) MAP_FAILED;
+        const auto memory = memory::allocate_for_user(length, multitask::current_process->frame);
+        return memory.contains_data ? (void*) memory->v_addr : (void*) MAP_FAILED;
     }
 
     int mprotect(void*, size_t, int prot)

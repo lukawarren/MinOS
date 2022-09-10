@@ -69,10 +69,10 @@ struct Optional
         return data;
     }
 
-    T operator->() const
+    const T* operator->() const
     {
         assert(contains_data);
-        return data;
+        return &data;
     }
 
     bool operator!() const

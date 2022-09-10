@@ -11,7 +11,7 @@ namespace multitask
     Process::Process(memory::PageFrame page_frame, const size_t entrypoint) : frame(page_frame)
     {
         // Allocate stack (minus X for alignment) - assume virtual address = physical address as identity mapped
-        size_t stack_start_address = (*memory::allocate_for_user(stack_size, page_frame)).p_addr;
+        size_t stack_start_address = memory::allocate_for_user(stack_size, page_frame)->p_addr;
         size_t stack_after_restore = stack_start_address + stack_size - 16;
         size_t* stack = (size_t*) stack_after_restore;
 
@@ -46,7 +46,7 @@ namespace multitask
         thread_id = ++id_pool;
 
         // Create storage for FPU, etc. - must be 16 byte aligned, 512 bytes large
-        fxsave_storage = (char*) (*memory::allocate_for_user(512, page_frame, KERNEL_PAGE)).v_addr;
+        fxsave_storage = (char*) memory::allocate_for_user(512, page_frame, KERNEL_PAGE)->v_addr;
         assert((size_t)&fxsave_storage[0] % 16 == 0);
         cpu::init_fpu_storage(fxsave_storage);
 
