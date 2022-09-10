@@ -50,4 +50,13 @@ SECTIONS
         KEEP (*(.dtor*))
         __fini_array_end = .;
     }
+
+    /* remove unnecessary bits */
+    /DISCARD/ :
+	{
+		*(.comment)
+		*(.eh_frame)
+		*(.note.gnu.build-id)
+		*(.gnu.build.attributes)
+	}
 }

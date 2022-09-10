@@ -25,9 +25,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
         size_t header_address = address + header->e_phoff + sizeof(ElfProgramHeader) * i;
         auto* program_header = (ElfProgramHeader*)header_address;
 
-        if (program_header->p_type == PT_LOAD ||
-            program_header->p_type == PT_GNU_STACK ||
-            program_header->p_type == PT_GNU_RELRO)
+        if (program_header->p_type == PT_LOAD)
         {
             if (program_header->p_filesz == 0 || program_header->p_memsz == 0)
                 continue;
@@ -66,6 +64,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             // and is used to indicate wether the stack should be executable. The absense of this
             // header indicates that the stack will be executable."
             // Too bad.
+            check(program_header->p_memsz == 0 && program_header->p_filesz == 0);
         }
 
         else if (program_header->p_type == PT_GNU_RELRO)
@@ -73,10 +72,22 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             // "The array element specifies the location and size of a segment which may be made
             // read-only after relocation shave been processed."
             // Too bad.
+            check(program_header->p_memsz == 0 && program_header->p_filesz == 0);
+        }
+
+        else if (program_header->p_type == PT_GNU_EH_FRAME)
+        {
+            // Exception handling stuff - too bad!
+        }
+
+        else if (program_header->p_type == PT_INTERP)
+        {
+            // Used for dyanmic linking - shouldn't be there, but can ignore
+            assert(false);
         }
 
         else
-        { 
+        {
             println("unknown program header type ", program_header->p_type);
             return {};
         }

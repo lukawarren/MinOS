@@ -31,6 +31,9 @@
 #ifndef _SSFN_H_
 #define _SSFN_H_
 
+/* silence warnings */
+#pragma GCC system_header
+
 #define SSFN_VERSION 0x0200
 
 #ifdef  __cplusplus

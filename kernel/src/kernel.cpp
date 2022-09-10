@@ -64,7 +64,7 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     auto process = multitask::Process(user_frame, entry_point);
 
     // Add to scheduler
-    println("switching to userspace...");
+    println("Loading ", info.modules[0].name);
     multitask::add_process(process);
     cpu::enable_interrupts();
 
