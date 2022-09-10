@@ -142,7 +142,7 @@ namespace multitask
         assert(fd == -1);
 
         auto memory = memory::allocate_for_user(length, multitask::current_process->frame);
-        return memory.contains_data ? (void*) *memory : (void*) MAP_FAILED;
+        return memory.contains_data ? (void*) (*memory).v_addr : (void*) MAP_FAILED;
     }
 
     int mprotect(void*, size_t, int prot)

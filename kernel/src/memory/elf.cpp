@@ -39,7 +39,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             size_t file_size = program_header->p_filesz;
             size_t memory_size = program_header->p_memsz;
 
-            Optional<size_t> destination = memory::allocate_for_user(
+            auto destination = memory::allocate_for_user(
                 program_header->p_vaddr,
                 memory_size,
                 user_frame
@@ -48,8 +48,8 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             if (!destination) return {};
 
             // If p_memsz exceeds p_filesz, then the remaining bits are to be zeroed
-            memset((void*)*destination, 0, memory_size);
-            memcpy((void*)*destination, (void*)source, file_size);
+            memset((void*)(*destination).p_addr, 0, memory_size);
+            memcpy((void*)(*destination).p_addr, (void*)source, file_size);
         }
 
         else if (program_header->p_type == PT_NOTE)
@@ -105,16 +105,11 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             {
                 case SectionHeaderType::SHT_NOBITS:
                 {
-                    // BSS - allocate memory and zero it
+                    // BSS - allocate memory and zero it - TODO: sanitise
                     check(PageFrame::is_page_aligned(section_header->sh_addr));
                     check(section_header->sh_addralign == PAGE_SIZE);
-                    Optional<size_t> data = memory::allocate_for_user(
-                        section_header->sh_addr,
-                        section_header->sh_size,
-                        user_frame
-                    );
-                    if (!data) return {};
-                    memset((void*)*data, 0, section_header->sh_size);
+                    const PhysicalAddress a = user_frame.virtual_address_to_physical(section_header->sh_addr);
+                    memset((void*)a, 0, section_header->sh_size);
                 }
                 break;
 

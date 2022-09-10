@@ -51,9 +51,10 @@ namespace memory
         cpu::enable_paging();
     }
 
-    Optional<size_t> allocate_for_user(
+    Optional<AddressPair> allocate_for_user(
         const Optional<VirtualAddress> address,
-        const size_t size, PageFrame& page_frame,
+        const size_t size,
+        PageFrame& page_frame,
         const uint32_t flags
     )
     {
@@ -74,10 +75,12 @@ namespace memory
         // Map into kernel too then zero out
         kernel_frame.map_pages(*data, *data, KERNEL_PAGE, pages);
         memset((void*)*data, 0, pages * PAGE_SIZE);
-        return data;
+        
+        return address.contains_data ? AddressPair { .p_addr = *data, .v_addr = *address} : 
+            AddressPair { *data, *data };
     }
 
-    Optional<size_t> allocate_for_user(const size_t size, PageFrame& page_frame, const size_t flags)
+    Optional<AddressPair> allocate_for_user(const size_t size, PageFrame& page_frame, const size_t flags)
     {
         return allocate_for_user({}, size, page_frame, flags);
     }

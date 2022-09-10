@@ -22,6 +22,12 @@ namespace memory
     typedef size_t PhysicalAddress;
     typedef size_t VirtualAddress;
 
+    struct AddressPair
+    {
+        PhysicalAddress p_addr;
+        VirtualAddress v_addr;
+    };
+
     constexpr size_t user_base_address = 0x40000000;
     constexpr size_t user_framebuffer_address = 0x30000000;
 
