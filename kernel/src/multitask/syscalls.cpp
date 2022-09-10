@@ -12,6 +12,7 @@ namespace multitask
     int close(int fd);
     int ioctl(int fd, unsigned long request, char* argp);
     int llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, off_t* result, unsigned int whence);
+    int madvise(void* addr, size_t length, int advice);
     int mkdir(const char* path, mode_t mode);
     void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
     int mprotect(void* addr, size_t length, int prot);
@@ -34,6 +35,7 @@ namespace multitask
         syscalls[SYS_close] = (size_t)&close;
         syscalls[SYS_ioctl] = (size_t)&ioctl;
         syscalls[SYS__llseek] = (size_t)&llseek;
+        syscalls[SYS_madvise] = (size_t)&madvise;
         syscalls[SYS_mkdir] = (size_t)&mkdir;
         syscalls[SYS_mmap2] = (size_t)&mmap;
         syscalls[SYS_mprotect] = (size_t)&mprotect;
@@ -122,6 +124,14 @@ namespace multitask
         return 0;
     }
 
+    int madvise(void*, size_t, int)
+    {
+        // "Advises" the kernel how the memory is expected to be read,
+        // allowing read-ahead to be better informed. We don't care
+        // about this advice.
+        return 0;
+    }
+
     int mkdir(const char*, mode_t)
     {
         return -1;
@@ -156,6 +166,7 @@ namespace multitask
 
     int munmap(void* addr, size_t len)
     {
+        // TODO: sanitise (trivial to unmap kernel code for the kernel itself as I'm writing this)
         memory::free_for_user((size_t)addr, len, multitask::current_process->frame);
         return 0;
     }

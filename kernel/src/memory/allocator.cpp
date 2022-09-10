@@ -7,11 +7,11 @@ namespace memory
     Allocator::Allocator(const size_t address, const size_t size)
     {
         // Set all pages as used...
-        freeGroups = (uint32_t*)address;
-        memset(freeGroups, 0, Allocator::size());
+        free_groups = (uint32_t*)address;
+        memset(free_groups, 0, Allocator::size());
 
         // ...save for the ones that're free
-        size_t structures_end = (size_t) freeGroups + Allocator::size();
+        size_t structures_end = (size_t) free_groups + Allocator::size();
         free_pages(structures_end, size / PAGE_SIZE);
         println("created root allocator - free pages = ", size / PAGE_SIZE);
     }
@@ -23,11 +23,11 @@ namespace memory
             // Search for first non-zero page group; page found!
             for (size_t i = 0; i < groups; ++i)
             {
-                if (freeGroups[i] != 0)
+                if (free_groups[i] != 0)
                 {
-                    auto nth_bit = get_position_of_least_significant_bit(freeGroups[i]);
-                    auto nth_page = i * bits_per_group + nth_bit;
-                    auto address = nth_page * PAGE_SIZE;
+                    const auto nth_bit = get_position_of_least_significant_bit(free_groups[i]);
+                    const auto nth_page = i * bits_per_group + nth_bit;
+                    const auto address = nth_page * PAGE_SIZE;
 
                     set_page_as_allocated(i, nth_bit);
                     return address;
@@ -40,17 +40,17 @@ namespace memory
             for (size_t i = 0; i < groups; ++i)
             {
                 // ...which won't happen if the group's full
-                if (freeGroups[i] == 0) continue;
+                if (free_groups[i] == 0) continue;
 
                 // Skip if there aren't enough consecutive bits (except the code
                 // below won't work with a fully empty group, though thankfully
                 // we can just skip that)
-                auto bits = freeGroups[i];
-                if (freeGroups[i] + 1 != 0)
+                auto bits = free_groups[i];
+                if (free_groups[i] + 1 != 0)
                 {
                     // Do "bits & (bits >> 1)" for 2 pages, "bits & (bits >> 1) & (bits >> 2)" for 3, etc
                     for (size_t j = 1; j < pages; ++j)
-                        bits &= freeGroups[j] >> j;
+                        bits &= free_groups[j] >> j;
 
                     // Any non-zero value means we've found a valid group!
                     if (bits == 0) continue;
@@ -81,13 +81,13 @@ namespace memory
 
             for (size_t i = 0; i < groups; ++i)
             {
-                const size_t bitmap = freeGroups[i];
+                const size_t bitmap = free_groups[i];
 
                 // If we're not the last group
                 if (remaining_pages > bits_per_group)
                 {
                     // If the group's not all free, give up
-                    if (freeGroups[i] + 1 != 0)
+                    if (free_groups[i] + 1 != 0)
                     {
                         remaining_pages = pages;
                         starting_group = i + 1;
@@ -151,12 +151,12 @@ namespace memory
 
     void Allocator::set_page_as_allocated(const size_t group, const size_t bit)
     {
-        freeGroups[group] &= ~(1 << bit);
+        free_groups[group] &= ~(1 << bit);
     }
 
     void Allocator::set_page_as_free(const size_t group, const size_t bit)
     {
-        freeGroups[group] |= (1 << bit);
+        free_groups[group] |= (1 << bit);
     }
 
     /*

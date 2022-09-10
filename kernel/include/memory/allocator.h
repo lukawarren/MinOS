@@ -19,11 +19,11 @@ namespace memory
 
         constexpr static size_t size()
         {
-            return sizeof(freeGroups[0]) * groups;
+            return sizeof(free_groups[0]) * groups;
         }
 
     private:
-        uint32_t* freeGroups; // 0 = allocated, 1 = free
+        uint32_t* free_groups; // 0 = allocated, 1 = free
 
         void set_page_as_allocated(const size_t group, const size_t bit);
         void set_page_as_free(const size_t group, const size_t bit);
