@@ -1,20 +1,16 @@
-#include "font.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <assert.h>
 
 #define SSFN_IMPLEMENTATION
 #include <ssfn.h>
 
-#define CHARS 255
-#define SIZE 64
-
 void* font;
-ssfn_buf_t** glyphs;
 ssfn_t ctx = { 0 };
 
-void init_font(const char* path)
+void init_font(const char* path, int font_size)
 {
     // Open file and get size
     FILE* file = fopen(path, "r");
@@ -31,34 +27,35 @@ void init_font(const char* path)
     // Load
     memset(&ctx, 0, sizeof(ssfn_t));
     ssfn_load(&ctx, font);
-    ssfn_select(&ctx, SSFN_FAMILY_ANY, NULL, SSFN_STYLE_REGULAR, SIZE);
+    ssfn_select(&ctx, SSFN_FAMILY_ANY, NULL, SSFN_STYLE_REGULAR, font_size);
+    printf("[minwm] Loaded font %s\n", path);
+}
 
-    // Pre-render each glyph
-    glyphs = malloc(sizeof(ssfn_buf_t*) * (size_t)CHARS);
-    for (int i = 0; i < CHARS; ++i)
+void draw_font(const char* message, uint32_t colour, unsigned int x, unsigned int y)
+{
+    ssfn_buf_t* buffer = ssfn_text(&ctx, message, colour);
+
+    for (unsigned int text_y = 0; text_y < (unsigned int)buffer->h; ++text_y)
     {
-        char string[2] =  { (char)i, '\0' };
-        glyphs[i] = ssfn_text(&ctx, string, 0xffffffff);
+        // Copy row
+        uint8_t* out = (uint8_t*) 0x30000000 + (y+text_y) * 640 * 4 + x * 4;
+        uint8_t* in = buffer->ptr + text_y * buffer->p;
+        memcpy(out, in, buffer->p);
     }
 
-    printf("[minwm] Loaded font %s\n", path);
+    free(buffer->ptr);
+    free(buffer);
 }
 
 void free_font()
 {
-    for (int i = 0; i < CHARS; ++i) free(glyphs[i]);
-    free(glyphs);
     free(font);
     ssfn_free(&ctx);
     printf("[minwm] Unloaded font\n");
 }
 
-int main()
+void set_pixel(const uint32_t colour, const size_t x, const size_t y)
 {
-    init_font("Gidole-Regular.sfn");
-    free_font();
-
-    volatile int hang = 1;
-    while(hang) { hang = 1; }
-    return 0;
+    uint32_t* framebuffer = (uint32_t*)0x30000000;
+    framebuffer[y * 640 + x] = colour;
 }
