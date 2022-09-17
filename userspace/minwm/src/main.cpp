@@ -1,28 +1,50 @@
 #include "font.h"
 #include "common.h"
 
-constexpr Colour window_background = to_colour(255, 255, 255);
-constexpr Colour window_bar = to_colour(0, 0, 0);
-
 void fill_rect(Position position, Size size, Colour colour)
 {
-    for (uint y = 0; y < size.y; ++y)
-        for (uint x = 0; x < size.x; ++x)
+    for (Unit y = 0; y < size.y; ++y)
+        for (Unit x = 0; x < size.x; ++x)
             framebuffer[(position.y + y) * 640 + position.x + x] = colour;
 }
 
+struct Window
+{
+    char title[32] = "Doom Shareware";
+
+    Position position;
+    Size size;
+
+    Window(Position _position, Size _size) : position(_position), size(_size) {}
+
+    constexpr Unit bar_height() const { return 32; }
+    constexpr Colour background() const { return to_colour(100, 100, 100); }
+    constexpr Colour bar_background() const { return to_colour(0, 0, 0); }
+    constexpr Colour bar_foreground() const { return to_colour(255, 255, 255); }
+
+    void draw_bar() const
+    {
+        fill_rect(position + Position { 0, bar_height() }, size, background());
+        fill_rect(position, { size.x, bar_height() }, bar_background());
+        draw_font_centered(
+            title,
+            bar_foreground(),
+            position.x,
+            position.y,
+            size.x,
+            bar_height()
+        );
+    }
+};
+
 int main()
 {
-    Position window_pos = { 10, 10 };
-    Position window_size = { 500, 300 };
-    uint bar_height = 32;
-    uint bar_padding = 5;
-
-    fill_rect(window_pos + Position { 0, bar_height }, window_size, window_background);
-    fill_rect(window_pos, { window_size.x, bar_height }, window_bar);
-
+    Size screen_size = { 640, 480 };
     init_font("Gidole-Regular.sfn", 16);
-    draw_font("Doom Shareware", window_background, window_pos.x + bar_padding, window_pos.y + bar_padding);
+    fill_rect({}, screen_size, 0xffffffff);
+
+    Window({100, 100}, {320, 240}).draw_bar();
+    
     free_font();
 
     volatile int hang = 1;

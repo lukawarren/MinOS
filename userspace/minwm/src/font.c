@@ -47,6 +47,19 @@ void draw_font(const char* message, uint32_t colour, unsigned int x, unsigned in
     free(buffer);
 }
 
+void draw_font_centered(const char* message, uint32_t colour, unsigned int x, unsigned int y, unsigned int boundsX, unsigned int boundsY)
+{
+    // int ssfn_bbox(ssfn_t *ctx, const char *str, int *w, int *h, int *left, int *top);
+    int width, height, left, top;
+    ssfn_bbox(&ctx, message, &width, &height, &left, &top);
+    draw_font(
+        message,
+        colour,
+        x + boundsX / 2 - (unsigned int)width / 2,
+        y + boundsY / 2 - (unsigned int)height / 2
+    );
+}
+
 void free_font()
 {
     free(font);
