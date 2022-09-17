@@ -4,8 +4,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define DOOMGENERIC_RESX 640
-#define DOOMGENERIC_RESY 400
+/* the size of the available framebuffer, thus dictating the default scaling */
+#define DOOMGENERIC_RESX 640/2
+#define DOOMGENERIC_RESY 400/2
 
 
 extern uint32_t* DG_ScreenBuffer;

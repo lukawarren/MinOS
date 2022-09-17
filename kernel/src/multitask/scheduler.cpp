@@ -1,5 +1,6 @@
 #include "multitask/scheduler.h"
 #include "interrupts/pic.h"
+#include "interrupts/pit.h"
 
 namespace multitask
 {
@@ -17,6 +18,7 @@ namespace multitask
     constexpr size_t max_processes = 128;
     Process processes[max_processes];
     size_t n_processes = 0;
+    size_t n_current_process = 0;
 
     // External state
     Process* current_process = nullptr;
@@ -33,23 +35,30 @@ namespace multitask
 
     void on_scheduler()
     {
-        assert(n_processes == 1);
+        assert(n_processes > 0);
 
-        // If we've never been here before, we shouldn't save the old stack
         if (current_process == nullptr)
         {
+            // If we've never been here before, we shouldn't save the old stack
             old_stack_address = 0;
             old_fxsave_address = 0;
         }
         else
         {
-            old_stack_address = (size_t) &processes[0].esp;
-            old_fxsave_address = (size_t) &processes[0].fxsave_storage[0];
+            // Preserve old process
+            old_stack_address = (size_t) &processes[n_current_process].esp;
+            old_fxsave_address = (size_t) &processes[n_current_process].fxsave_storage[0];
+
+            // Pick new process; round robin
+            ++n_current_process %= n_processes;
         }
 
-        new_stack_address = (size_t) &processes[0].esp;
-        new_fxsave_address = (size_t) &processes[0].fxsave_storage[0];
-        current_process = &processes[0];
+        // Load new process
+        new_stack_address = (size_t) &processes[n_current_process].esp;
+        new_fxsave_address = (size_t) &processes[n_current_process].fxsave_storage[0];
+        current_process = &processes[n_current_process];
+
+        pit::reload();
         pic::end_interrupt(0);
     }
 }

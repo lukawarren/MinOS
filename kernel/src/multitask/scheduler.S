@@ -52,10 +52,14 @@ irq_0:
 
     ; save old FPU before we stich task frames and lose access to it... if the
     ; address is non-0 (nullptr is used in C++ to indicate a "don't save")
+    ;
+    ; NOTE: we actually use the *new* fxsave address because we've set this
+    ;       variable in the C++ code *the previvous iteration*, meaning
+    ;       that although it's old now, it was actually new then!
     pushad
-    cmp [old_fxsave_address], dword 0
+    cmp [new_fxsave_address], dword 0
     je switch_frames
-    mov eax, [old_fxsave_address]
+    mov eax, [new_fxsave_address]
     fxsave [eax]
 
 switch_frames:

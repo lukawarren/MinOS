@@ -43,7 +43,7 @@ int main()
     init_font("Gidole-Regular.sfn", 16);
     fill_rect({}, screen_size, 0xffffffff);
 
-    Window({100, 100}, {320, 240}).draw_bar();
+    Window({640/2-320/2, 480/2-200/2-32}, {320, 200}).draw_bar();
 
     free_font();
 

@@ -13,8 +13,9 @@ namespace cpu
 
     void init()
     {
-        // Create TSS
-        tss = create_tss((size_t)&kernel_end, 0x10);
+        // Create TSS - subtract a bit from where the kernel ends
+        // so the first push won't page fault
+        tss = create_tss((size_t)&kernel_end-4, 0x10);
 
         // Create GDT
         gdt[0] = create_gdt_entry(0,            0,           0);            // GDT entry at 0x0 cannot be used
