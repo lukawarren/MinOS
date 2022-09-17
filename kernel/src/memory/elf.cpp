@@ -1,5 +1,6 @@
 #include "memory/elf.h"
 #include "memory/memory.h"
+#include "multitask/scheduler.h"
 
 #define check(x) if (!(x)) { assert(x); return {}; }
 
@@ -132,4 +133,34 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
     }
 
     return header->e_entry;
+}
+
+void memory::add_elf_from_module(const memory::MultibootInfo& info, const char* name)
+{
+    // Find module...
+    Optional<size_t> address = {};
+    for (size_t i = 0; i < info.n_modules; ++i)
+    {
+        if (strcmp(info.modules[i].name, name) != 0)
+        {
+            address = info.modules[i].address;
+            break;
+        }
+    }
+
+    // ...assuming there is one
+    if (!address) assert(false);
+    println("Loading ", name);
+
+    // Create page frame
+    using namespace memory;
+    auto user_frame = PageFrame(
+        *allocate_for_kernel(PageFrame::size()),
+        info.framebuffer_address,
+        info.framebuffer_size,
+        false
+    );
+
+    const auto entry_point = *load_elf_file(user_frame, *address);
+    multitask::add_process(multitask::Process(user_frame, entry_point));
 }

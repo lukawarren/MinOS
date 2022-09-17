@@ -2,6 +2,8 @@
 
 namespace fs
 {
+    #define VALID_FD (fd >= 0 && size_t(fd) < info.n_modules)
+
     ModuleFileSystem::ModuleFileSystem(const memory::MultibootInfo& _info) :
         info(_info) {}
 
@@ -12,7 +14,7 @@ namespace fs
 
     Optional<uint64_t> ModuleFileSystem::read(FileDescriptor fd, void* data, uint64_t offset, uint64_t length)
     {
-        if (fd >= 0 && size_t(fd) < info.n_modules)
+        if (VALID_FD)
         {
             const auto& module = info.modules[fd];
             const auto offset_clamped = MIN(module.size, offset);
@@ -25,7 +27,7 @@ namespace fs
 
     Optional<uint64_t> ModuleFileSystem::get_size(FileDescriptor fd)
     {
-        if (fd >= 0 && size_t(fd) < info.n_modules)
+        if (VALID_FD)
         {
             const auto& module = info.modules[fd];
             return module.size;

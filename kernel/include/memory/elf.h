@@ -2,6 +2,8 @@
 #include "klib.h"
 #include "memory/allocator.h"
 #include "memory/page_frame.h"
+#include "memory/multiboot_info.h"
+#include "multitask/process.h"
 
 // e_ident data
 #define ELF_MAG_0       0x7F    // e_ident[EI_MAG0]
@@ -128,4 +130,5 @@ namespace memory
     };
 
     Optional<size_t> load_elf_file(PageFrame& user_frame, const size_t address);
+    void add_elf_from_module(const memory::MultibootInfo& info, const char* name);
 }

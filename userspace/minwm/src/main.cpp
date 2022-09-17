@@ -44,7 +44,7 @@ int main()
     fill_rect({}, screen_size, 0xffffffff);
 
     Window({100, 100}, {320, 240}).draw_bar();
-    
+
     free_font();
 
     volatile int hang = 1;

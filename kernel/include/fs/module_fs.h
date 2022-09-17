@@ -9,6 +9,7 @@ namespace fs
     public:
         ModuleFileSystem() {}
         ModuleFileSystem(const memory::MultibootInfo& info);
+
         Optional<uint64_t> write(FileDescriptor fd, void* data, uint64_t offset, uint64_t length) override;
         Optional<uint64_t> read(FileDescriptor fd, void* data, uint64_t offset, uint64_t length) override;
         Optional<uint64_t> get_size(FileDescriptor fd) override;

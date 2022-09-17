@@ -61,7 +61,7 @@ struct Optional
     bool contains_data;
 
     Optional(T _data) : data(_data), contains_data(true) {}
-    Optional() : contains_data(false) {}
+    Optional() : data(), contains_data(false) {}
 
     T operator*() const
     {
