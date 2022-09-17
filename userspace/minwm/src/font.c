@@ -53,9 +53,3 @@ void free_font()
     ssfn_free(&ctx);
     printf("[minwm] Unloaded font\n");
 }
-
-void set_pixel(const uint32_t colour, const size_t x, const size_t y)
-{
-    uint32_t* framebuffer = (uint32_t*)0x30000000;
-    framebuffer[y * 640 + x] = colour;
-}
