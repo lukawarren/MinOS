@@ -8,8 +8,8 @@
 
 const uint32_t framebuffer_width = 640;
 const uint32_t framebuffer_height = 480;
-const uint32_t framebuffer_x = (framebuffer_width - DOOMGENERIC_RESX) / 2;
-const uint32_t framebuffer_y = (framebuffer_height - DOOMGENERIC_RESY) / 2;
+const uint32_t framebuffer_x = (framebuffer_width - DOOMGENERIC_RESX) / 2 + 5;
+const uint32_t framebuffer_y = (framebuffer_height - DOOMGENERIC_RESY) / 2 + 5;
 
 static uint32_t* framebuffer = (uint32_t*)0x30000000;
 static uint32_t time = 0;

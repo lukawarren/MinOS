@@ -3,6 +3,9 @@
 
 extern "C" { int main(); }
 
+typedef uint32_t Unit;
+typedef uint32_t Colour;
+
 template <typename T>
 struct Vector
 {
@@ -14,6 +17,11 @@ struct Vector
     Vector operator*(const Vector& rhs) const { return { x * rhs.x, y * rhs.y }; }
     Vector operator/(const Vector& rhs) const { return { x / rhs.x, y / rhs.y }; }
 
+    Vector operator+(const Unit& rhs) const { return { x + rhs, y + rhs }; }
+    Vector operator-(const Unit& rhs) const { return { x - rhs, y - rhs }; }
+    Vector operator*(const Unit& rhs) const { return { x * rhs, y * rhs }; }
+    Vector operator/(const Unit& rhs) const { return { x / rhs, y / rhs }; }
+
     void operator+=(const Vector& rhs) { x += rhs.x; y += rhs.y; }
     void operator-=(const Vector& rhs) { x -= rhs.x; y -= rhs.y; }
     void operator*=(const Vector& rhs) { x *= rhs.x; y *= rhs.y; }
@@ -21,8 +29,6 @@ struct Vector
 
 };
 
-typedef uint32_t Unit;
-typedef uint32_t Colour;
 typedef Vector<Unit> Position;
 typedef Vector<Unit> Size;
 
