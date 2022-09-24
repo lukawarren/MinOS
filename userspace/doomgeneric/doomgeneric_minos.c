@@ -4,9 +4,12 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/time.h>
+
 #include "doomgeneric.h"
 #include "doomkeys.h"
+
 #include "minlib.h"
+#include "messages.h"
 
 const uint32_t framebuffer_width = 640;
 const uint32_t framebuffer_height = 480;
@@ -27,9 +30,13 @@ void DG_Init()
     keyboard_file = fopen("keyboard", "r");
     assert(keyboard_file);
 
-    struct Message message = {};
+    // Create window
+    struct CreateWindowMessage message = {};
     message.pid = 1;
-    strcpy((char*)message.data, "Hello, world!");
+    message.id = CREATE_WINOW_MESSAGE;
+    message.width = DOOMGENERIC_RESX;
+    message.height = DOOMGENERIC_RESY;
+    strcpy((char*)message.title, "Doom Generic");
     assert(add_messages(&message, 1) == 1);
 
     // Store initial time

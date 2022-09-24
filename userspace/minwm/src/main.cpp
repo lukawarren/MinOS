@@ -1,4 +1,5 @@
 #include "font.h"
+#include "messages.h"
 #include "common.h"
 #include "minlib.h"
 #include <string.h>
@@ -53,16 +54,28 @@ int main()
 {
     init_font("Gidole-Regular.sfn", 16);
     fill_rect({}, { screen_width, screen_height }, 0xffffffff);
-    draw_bar("Doom Shareware 1.0", "10:55");
-    Window({640/2-320/2, 480/2-200/2}, {320, 200}).draw_frame();
-    free_font();
 
     for(;;)
     {
         Message message;
         if (get_messages(&message, 1))
-            printf("[minwm] received message %s\n", message.data);
+        {
+            const int id = *(int*)message.data;
+
+            if (id == CREATE_WINOW_MESSAGE)
+            {
+                const auto* m = (CreateWindowMessage*)&message;
+
+                Window(
+                    { 640 / 2 - m->width / 2, 480 / 2- m->height / 2 },
+                    { m->width, m->height }
+                ).draw_frame();
+
+                draw_bar(m->title, "10:55");
+            }
+        }
     }
 
+    free_font();
     return 0;
 }
