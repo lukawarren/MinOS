@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "doomgeneric.h"
 #include "doomkeys.h"
+#include "minlib.h"
 
 const uint32_t framebuffer_width = 640;
 const uint32_t framebuffer_height = 480;
@@ -23,6 +24,11 @@ void DG_Init()
 {
     keyboard_file = fopen("keyboard", "r");
     assert(keyboard_file);
+
+    struct Message message = {};
+    message.pid = 1;
+    strcpy((char*)message.data, "Hello, world!");
+    assert(add_messages(&message, 1) == 1);
 }
 
 void DG_DrawFrame()

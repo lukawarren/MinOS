@@ -1,5 +1,8 @@
 #include "font.h"
 #include "common.h"
+#include "minlib.h"
+#include <string.h>
+#include <stdio.h>
 
 constexpr Unit screen_width = 640;
 constexpr Unit screen_height = 480;
@@ -54,7 +57,12 @@ int main()
     Window({640/2-320/2, 480/2-200/2}, {320, 200}).draw_frame();
     free_font();
 
-    volatile int hang = 1;
-    while(hang) { hang = 1; }
+    for(;;)
+    {
+        Message message;
+        if (get_messages(&message, 1))
+            printf("[minwm] received message %s\n", message.data);
+    }
+
     return 0;
 }

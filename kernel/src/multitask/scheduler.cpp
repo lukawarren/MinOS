@@ -33,6 +33,15 @@ namespace multitask
         processes[n_processes++] = process;
     }
 
+    Optional<Process*> get_process(const pid_t pid)
+    {
+        for (size_t i = 0; i < n_processes; ++i)
+            if (processes[i].thread_id == pid)
+                return &processes[i];
+
+        return {};
+    }
+
     void on_scheduler()
     {
         assert(n_processes > 0);

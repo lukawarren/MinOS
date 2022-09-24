@@ -7,6 +7,7 @@ namespace multitask
 {
     static size_t syscalls[512] = {};
 
+    // POSIX
     int brk(void *addr);
     uint64_t clock_gettime64(clockid_t clk_id, struct timespec* tp);
     int close(int fd);
@@ -23,6 +24,10 @@ namespace multitask
     int set_thread_area();
     int set_tid_address();
     ssize_t writev(int fd, const iovec* iov, int iovcnt);
+
+    // Custom
+    size_t add_messages(Message* messages, size_t count);
+    size_t get_messages(Message* messages, size_t count);
 
     void init_syscalls()
     {
@@ -46,6 +51,8 @@ namespace multitask
         syscalls[SYS_set_thread_area] = (size_t)&set_thread_area;
         syscalls[SYS_set_tid_address] = (size_t)&set_tid_address;
         syscalls[SYS_writev] = (size_t)&writev;
+        syscalls[SYS_add_messages] = (size_t)&add_messages;
+        syscalls[SYS_get_messages] = (size_t)&get_messages;
     }
 
     size_t on_syscall(const cpu::Registers registers)
@@ -253,5 +260,47 @@ namespace multitask
         }
 
         return (ssize_t)len;
+    }
+
+
+    // ---------- Custom syscalls below ---------------
+
+
+    size_t add_messages(Message* messages, size_t count)
+    {
+        size_t n_added = 0;
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            // Use the attached pid to find the target...
+            auto process = multitask::get_process(messages[i].pid);
+            if (!process) continue;
+
+            // ...then replace it with the sender
+            messages[i].pid = current_process->thread_id;
+            n_added += (*process)->add_message(
+                *read_from_user<Message>(&messages[i])
+            );
+        }
+
+        return n_added;
+    }
+
+    size_t get_messages(Message* messages, size_t count)
+    {
+        size_t n_gotten = 0;
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            const auto message = current_process->get_message();
+
+            if (message.contains_data)
+            {
+                *read_from_user<Message>(&messages[i]) = *message;
+                ++n_gotten;
+            }
+        }
+
+        return n_gotten;
     }
 }

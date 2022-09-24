@@ -8,6 +8,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/musl/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/musl/obj/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/musl/arch/i386)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/musl/arch/generic)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../userspace/minlib/include)
 
 # Add source files
 file(GLOB_RECURSE C_SRCS src/*.c src/*/*.c)
@@ -20,6 +21,9 @@ add_link_options("-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
 # For klib macro magic
 string(LENGTH "${CMAKE_SOURCE_DIR}/kernel/src/" SOURCE_PATH_SIZE)
 add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
+
+# For minlib macro magic
+add_definitions(-DKERNEL)
 
 # Kernel target
 add_executable(${PROJECT_NAME}.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})

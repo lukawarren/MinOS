@@ -1,5 +1,6 @@
 #pragma once
 #include "klib.h"
+#include "minlib.h"
 #include "memory/page_frame.h"
 #include "fs/fs.h"
 #include <unistd.h>
@@ -39,6 +40,17 @@ namespace multitask
         };
         OpenFile open_files[max_files];
         fd n_files = 0;
+
+        // IPC message system
+        const static size_t max_messages = 32;
+        Message messages[max_messages];
+        unsigned int n_messages = 0;
+
+        static_assert(sizeof(Message) == 128);
+        static_assert(sizeof(Message) * max_messages == PAGE_SIZE);
+        
+        bool add_message(const Message& message);
+        Optional<Message> get_message();
 
         // Scheduler variables
         size_t esp;

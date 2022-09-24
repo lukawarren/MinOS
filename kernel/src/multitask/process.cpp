@@ -103,4 +103,25 @@ namespace multitask
     {
         return !(fd >= n_files || fd < 0);
     }
+
+    bool Process::add_message(const Message& message)
+    {
+        if (n_messages >= max_messages) return false;
+        messages[n_messages++] = message;
+        return true;
+    }
+    
+    Optional<Message> Process::get_message()
+    {
+        // Return bottom message...
+        if (n_messages == 0) return {};
+        const auto message = messages[0];
+
+        // ...then shift all others down by one
+        for (size_t i = 0; i < n_messages-1; ++i)
+            messages[i] = messages[i+1];
+
+        n_messages--;
+        return message;
+    }
 }
