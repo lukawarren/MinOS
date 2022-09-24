@@ -1,5 +1,6 @@
 #include "multitask/syscalls.h"
 #include "multitask/scheduler.h"
+#include "interrupts/pit.h"
 #include "memory/memory.h"
 #include "fs/fs.h"
 
@@ -101,8 +102,11 @@ namespace multitask
         return -1;
     }
 
-    uint64_t clock_gettime64(clockid_t, struct timespec*)
+    uint64_t clock_gettime64(clockid_t id, struct timespec* tp)
     {
+        assert(id == 0);
+        tp->tv_sec = time_t(pit::time_ms / 1000);
+        tp->tv_nsec = long((pit::time_ms % 1000) * 100000);
         return 0;
     }
 

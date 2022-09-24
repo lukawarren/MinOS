@@ -3,6 +3,7 @@
 
 namespace pit
 {
+    uint64_t time_ms = 0;
     uint16_t frequency;
     uint16_t channel;
 
@@ -16,7 +17,7 @@ namespace pit
             MODE_OPERATING_MODE_0 | // Interrupt when reload value reaches 0
             MODE_BINARY_16_BIT      // Operate in binary mode
         );
-        set_frequency(CHANNEL_0_DATA, 600);
+        set_frequency(CHANNEL_0_DATA, 1000);
     }
 
     void set_frequency(const uint16_t _channel, const uint16_t hertz)
@@ -37,6 +38,7 @@ namespace pit
     {
         // In the current configuration, the PIT will only fire once,
         // so we need to "reload" it after each interrupt
+        time_ms += 1000 / frequency;
         set_frequency(channel, frequency);
     }
 }

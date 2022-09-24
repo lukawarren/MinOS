@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/time.h>
 #include "doomgeneric.h"
 #include "doomkeys.h"
 #include "minlib.h"
@@ -13,12 +14,13 @@ const uint32_t framebuffer_x = (framebuffer_width - DOOMGENERIC_RESX) / 2 + 5;
 const uint32_t framebuffer_y = (framebuffer_height - DOOMGENERIC_RESY) / 2 + 5;
 
 static uint32_t* framebuffer = (uint32_t*)0x30000000;
-static uint32_t time = 0;
+static uint32_t initial_time = 0;
 static char key_buffer[256] = {};
 static uint32_t key_index = 0;
 static FILE* keyboard_file;
 
 static unsigned char scancode_to_doom_key(unsigned char scancode);
+static uint32_t get_ms();
 
 void DG_Init()
 {
@@ -29,6 +31,9 @@ void DG_Init()
     message.pid = 1;
     strcpy((char*)message.data, "Hello, world!");
     assert(add_messages(&message, 1) == 1);
+
+    // Store initial time
+    initial_time = get_ms();
 }
 
 void DG_DrawFrame()
@@ -53,7 +58,7 @@ void DG_SleepMs(uint32_t ms) {}
 
 uint32_t DG_GetTicksMs()
 {
-    return ++time;
+    return get_ms() - initial_time;
 }
 
 int DG_GetKey(int* pressed, unsigned char* doomKey)
@@ -111,4 +116,11 @@ static unsigned char scancode_to_doom_key(unsigned char scancode)
     }
 
     return key;
+}
+
+static uint32_t get_ms()
+{
+    struct timeval val;
+    gettimeofday(&val, NULL);
+    return val.tv_sec * 1000 + val.tv_usec / 1000;
 }
