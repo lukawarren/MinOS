@@ -54,11 +54,19 @@ void DG_DrawFrame()
     }
 }
 
-void DG_SleepMs(uint32_t ms) {}
+void DG_SleepMs(uint32_t ms)
+{
+    return;
+    uint32_t current_ms = get_ms();
+    while (1) {
+        if (get_ms() - current_ms >= ms)
+            break;
+    }
+}
 
 uint32_t DG_GetTicksMs()
 {
-    return get_ms() - initial_time;
+    return 5 * (get_ms() - initial_time);
 }
 
 int DG_GetKey(int* pressed, unsigned char* doomKey)
@@ -122,5 +130,7 @@ static uint32_t get_ms()
 {
     struct timeval val;
     gettimeofday(&val, NULL);
-    return val.tv_sec * 1000 + val.tv_usec / 1000;
+
+    // should be "val.tv_sec * 1000", but produces stuttering
+    return val.tv_sec * 100 + val.tv_usec / 1000;
 }

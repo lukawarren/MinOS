@@ -8,7 +8,7 @@
 
 #include "minlib_messages.h"
 
-#define CUSTOM_BIT      (1 << 7)
+#define CUSTOM_BIT      (1 << 10)
 #define SYS_add_messages CUSTOM_BIT | 1
 #define SYS_get_messages CUSTOM_BIT | 2
 

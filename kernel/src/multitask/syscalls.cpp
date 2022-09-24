@@ -6,7 +6,7 @@
 
 namespace multitask
 {
-    static size_t syscalls[512] = {};
+    static size_t syscalls[2048] = {};
 
     // POSIX
     int brk(void *addr);
@@ -105,8 +105,9 @@ namespace multitask
     uint64_t clock_gettime64(clockid_t id, struct timespec* tp)
     {
         assert(id == 0);
-        tp->tv_sec = time_t(pit::time_ms / 1000);
-        tp->tv_nsec = long((pit::time_ms % 1000) * 100000);
+        auto* user_tp = read_from_user<struct timespec>(tp);
+        user_tp->tv_sec = time_t(pit::time_ms / 1000);
+        user_tp->tv_nsec = long((pit::time_ms % 1000) * 100000);
         return 0;
     }
 
