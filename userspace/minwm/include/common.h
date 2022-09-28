@@ -1,8 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-extern "C" { int main(); }
-
 typedef uint32_t Unit;
 typedef uint32_t Colour;
 

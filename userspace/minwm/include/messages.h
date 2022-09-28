@@ -11,7 +11,7 @@ data\
 } __attribute__((packed));\
 
 #define CREATE_WINOW_MESSAGE 1
-message(CREATE_WINOW_MESSAGE, CreateWindowMessage, char title[64]; uint32_t width; uint32_t height;);
+message(CREATE_WINOW_MESSAGE, CreateWindowMessage, char title[64]; uint32_t width; uint32_t height; uint32_t* framebuffer;);
 #ifdef __cplusplus
 static_assert(sizeof(CreateWindowMessage) <= 128);
 #endif

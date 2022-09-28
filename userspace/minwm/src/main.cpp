@@ -31,7 +31,7 @@ void draw_bar(const char* title, const char* time)
 struct Window
 {
     char title[32] = "Doom Shareware";
-
+    uint32_t* shared_framebuffer;
     Position position;
     Size viewport_size;
     Size size;
@@ -39,14 +39,25 @@ struct Window
     constexpr Unit thickness() const { return 5; }
     constexpr Colour background() const { return to_colour(0, 0, 0); }
 
-    Window(Position _position, Size _viewport_size) :
+    Window(Position _position, Size _viewport_size, uint32_t* framebuffer) :
         position(_position), viewport_size(_viewport_size),
-        size(viewport_size + thickness()*2) {}
+        size(viewport_size + thickness()*2),
+        shared_framebuffer(framebuffer) {}
 
     void draw_frame() const
     {
         fill_rect(position, size, 0);
         return;
+    }
+
+    void draw_framebuffer()
+    {
+        for (Unit y = 0; y < viewport_size.y; ++y)
+            memcpy(
+                framebuffer + (y + position.y + thickness()) * screen_width + position.x + thickness(),
+                shared_framebuffer + y * viewport_size.x,
+                viewport_size.x * sizeof(framebuffer[0])
+            );
     }
 };
 
@@ -55,10 +66,13 @@ int main()
     init_font("Gidole-Regular.sfn", 16);
     fill_rect({}, { screen_width, screen_height }, 0xffffffff);
 
+    Window* window = nullptr;
+
     for(;;)
     {
+        // Deal with messages
         Message message;
-        if (get_messages(&message, 1))
+        while (get_messages(&message, 1))
         {
             const int id = *(int*)message.data;
 
@@ -66,14 +80,20 @@ int main()
             {
                 const auto* m = (CreateWindowMessage*)&message;
 
-                Window(
+                window = new Window(
                     { 640 / 2 - m->width / 2, 480 / 2- m->height / 2 },
-                    { m->width, m->height }
-                ).draw_frame();
+                    { m->width, m->height },
+                    m->framebuffer
+                );
 
+                window->draw_frame();
                 draw_bar(m->title, "10:55");
             }
         }
+
+        // Render
+        if (window != nullptr)
+            window->draw_framebuffer();
     }
 
     free_font();

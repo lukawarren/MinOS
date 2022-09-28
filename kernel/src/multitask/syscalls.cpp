@@ -29,6 +29,7 @@ namespace multitask
     // Custom
     size_t add_messages(Message* messages, size_t count);
     size_t get_messages(Message* messages, size_t count);
+    int share_memory(size_t address, size_t size, pid_t pid);
 
     void init_syscalls()
     {
@@ -54,6 +55,7 @@ namespace multitask
         syscalls[SYS_writev] = (size_t)&writev;
         syscalls[SYS_add_messages] = (size_t)&add_messages;
         syscalls[SYS_get_messages] = (size_t)&get_messages;
+        syscalls[SYS_share_memory] = (size_t)&share_memory;
     }
 
     size_t on_syscall(const cpu::Registers registers)
@@ -307,5 +309,28 @@ namespace multitask
         }
 
         return n_gotten;
+    }
+
+    int share_memory(size_t address, size_t size, pid_t pid)
+    {
+        // Ensure all pages are owned by current process
+        if (!current_process->frame.owns_memory(address, size))
+            return -1;
+
+        // Get process (if any!)
+        auto process = multitask::get_process(pid);
+        if (!process) return -1;
+
+        // Map
+        const auto v_addr = memory::VirtualAddress(address / PAGE_SIZE) * PAGE_SIZE;
+        const auto p_addr = current_process->frame.virtual_address_to_physical(v_addr);
+        const auto pages = memory::PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
+        process.data->frame.map_pages(
+            p_addr,
+            v_addr,
+            USER_PAGE,
+            pages
+        );
+        return 0;
     }
 }

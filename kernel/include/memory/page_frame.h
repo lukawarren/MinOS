@@ -42,6 +42,7 @@ namespace memory
         void unmap_page(VirtualAddress vAddr);
         void unmap_pages(VirtualAddress vAddr, size_t pages);
 
+        bool owns_memory(VirtualAddress vAddr, size_t size) const;
         size_t virtual_address_to_physical(VirtualAddress vAddr) const;
         size_t get_cr3() const;
 

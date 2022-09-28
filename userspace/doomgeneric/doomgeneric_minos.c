@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <sys/mman.h>
 
 #include "doomgeneric.h"
 #include "doomkeys.h"
@@ -11,12 +12,7 @@
 #include "minlib.h"
 #include "messages.h"
 
-const uint32_t framebuffer_width = 640;
-const uint32_t framebuffer_height = 480;
-const uint32_t framebuffer_x = (framebuffer_width - DOOMGENERIC_RESX) / 2 + 5;
-const uint32_t framebuffer_y = (framebuffer_height - DOOMGENERIC_RESY) / 2 + 5;
-
-static uint32_t* framebuffer = (uint32_t*)0x30000000;
+static uint32_t* framebuffer;
 static uint32_t initial_time = 0;
 static char key_buffer[256] = {};
 static uint32_t key_index = 0;
@@ -30,12 +26,18 @@ void DG_Init()
     keyboard_file = fopen("keyboard", "r");
     assert(keyboard_file);
 
+    // Create framebuffer
+    size_t length = sizeof(uint32_t) * DOOMGENERIC_RESX * DOOMGENERIC_RESY;
+    framebuffer = malloc(length);
+    assert(share_memory(framebuffer, length, 1) == 0);
+
     // Create window
     struct CreateWindowMessage message = {};
     message.pid = 1;
     message.id = CREATE_WINOW_MESSAGE;
     message.width = DOOMGENERIC_RESX;
     message.height = DOOMGENERIC_RESY;
+    message.framebuffer = framebuffer;
     strcpy((char*)message.title, "Doom Generic");
     assert(add_messages(&message, 1) == 1);
 
@@ -54,16 +56,14 @@ void DG_DrawFrame()
     // Copy output over row-by-row from DG_ScreenBuffer
     for (uint32_t y = 0; y < DOOMGENERIC_RESY; ++y)
     {
-        uint32_t fb_offset = (framebuffer_y+y)*framebuffer_width + framebuffer_x;
-        uint32_t dg_offset = y*DOOMGENERIC_RESX;
-        uint32_t size = DOOMGENERIC_RESX*sizeof(framebuffer[0]);
-        memcpy(framebuffer + fb_offset, DG_ScreenBuffer + dg_offset, size);
+        const uint32_t offset = y * DOOMGENERIC_RESX;
+        const uint32_t size = DOOMGENERIC_RESX * sizeof(framebuffer[0]);
+        memcpy(framebuffer + offset, DG_ScreenBuffer + offset, size);
     }
 }
 
 void DG_SleepMs(uint32_t ms)
 {
-    return;
     uint32_t current_ms = get_ms();
     while (1) {
         if (get_ms() - current_ms >= ms)

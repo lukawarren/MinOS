@@ -76,6 +76,18 @@ namespace memory
             unmap_page(vAddr + i*PAGE_SIZE);
     }
 
+    bool PageFrame::owns_memory(VirtualAddress vAddr, size_t size) const
+    {
+        assert(is_page_aligned(vAddr));
+
+        // TODO: take into account shared memory, mmap'ed files, etc.
+        for (size_t p = vAddr / PAGE_SIZE; p < round_to_next_page_size(size) / PAGE_SIZE; ++p)
+            if (pageTables[p] != USER_PAGE)
+                return false;
+
+        return true;
+    }
+
     size_t PageFrame::virtual_address_to_physical(VirtualAddress vAddr) const
     {
         // Read entry from page table
