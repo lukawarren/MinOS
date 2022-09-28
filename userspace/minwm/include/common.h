@@ -5,30 +5,30 @@ typedef uint32_t Unit;
 typedef uint32_t Colour;
 
 template <typename T>
-struct Vector
+struct Vector2
 {
     T x = 0;
     T y = 0;
 
-    Vector operator+(const Vector& rhs) const { return { x + rhs.x, y + rhs.y }; }
-    Vector operator-(const Vector& rhs) const { return { x - rhs.x, y - rhs.y }; }
-    Vector operator*(const Vector& rhs) const { return { x * rhs.x, y * rhs.y }; }
-    Vector operator/(const Vector& rhs) const { return { x / rhs.x, y / rhs.y }; }
+    Vector2 operator+(const Vector2& rhs) const { return { x + rhs.x, y + rhs.y }; }
+    Vector2 operator-(const Vector2& rhs) const { return { x - rhs.x, y - rhs.y }; }
+    Vector2 operator*(const Vector2& rhs) const { return { x * rhs.x, y * rhs.y }; }
+    Vector2 operator/(const Vector2& rhs) const { return { x / rhs.x, y / rhs.y }; }
 
-    Vector operator+(const Unit& rhs) const { return { x + rhs, y + rhs }; }
-    Vector operator-(const Unit& rhs) const { return { x - rhs, y - rhs }; }
-    Vector operator*(const Unit& rhs) const { return { x * rhs, y * rhs }; }
-    Vector operator/(const Unit& rhs) const { return { x / rhs, y / rhs }; }
+    Vector2 operator+(const Unit& rhs) const { return { x + rhs, y + rhs }; }
+    Vector2 operator-(const Unit& rhs) const { return { x - rhs, y - rhs }; }
+    Vector2 operator*(const Unit& rhs) const { return { x * rhs, y * rhs }; }
+    Vector2 operator/(const Unit& rhs) const { return { x / rhs, y / rhs }; }
 
-    void operator+=(const Vector& rhs) { x += rhs.x; y += rhs.y; }
-    void operator-=(const Vector& rhs) { x -= rhs.x; y -= rhs.y; }
-    void operator*=(const Vector& rhs) { x *= rhs.x; y *= rhs.y; }
-    void operator/=(const Vector& rhs) { x /= rhs.x; y /= rhs.y; }
+    void operator+=(const Vector2& rhs) { x += rhs.x; y += rhs.y; }
+    void operator-=(const Vector2& rhs) { x -= rhs.x; y -= rhs.y; }
+    void operator*=(const Vector2& rhs) { x *= rhs.x; y *= rhs.y; }
+    void operator/=(const Vector2& rhs) { x /= rhs.x; y /= rhs.y; }
 
 };
 
-typedef Vector<Unit> Position;
-typedef Vector<Unit> Size;
+typedef Vector2<Unit> Position;
+typedef Vector2<Unit> Size;
 
 constexpr Colour to_colour(const uint8_t r, const uint8_t g, const uint8_t b)
 {

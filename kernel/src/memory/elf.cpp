@@ -71,7 +71,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
         else if (program_header->p_type == PT_GNU_RELRO)
         {
             // "The array element specifies the location and size of a segment which may be made
-            // read-only after relocation shave been processed."
+            // read-only after relocations have been processed."
             // Too bad.
             check(program_header->p_memsz == 0 && program_header->p_filesz == 0);
         }

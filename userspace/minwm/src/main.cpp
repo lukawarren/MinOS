@@ -2,15 +2,16 @@
 #include "messages.h"
 #include "common.h"
 #include "minlib.h"
+#include "vector.h"
+#include "window.h"
 #include <string.h>
 #include <stdio.h>
+#include <sys/time.h> // DO NOT STAGE
 
 constexpr Unit screen_width = 640;
 constexpr Unit screen_height = 480;
-
-constexpr Unit bar_height = 36;
-constexpr Unit bar_padding = 10;
-constexpr Colour bar_text_colour = to_colour(255, 255, 255);
+constexpr Size screen_size = { screen_width, screen_height };
+constexpr Colour background = to_colour(255, 255, 255);
 
 void fill_rect(Position position, Size size, Colour colour)
 {
@@ -19,83 +20,132 @@ void fill_rect(Position position, Size size, Colour colour)
             framebuffer[(position.y + y) * screen_width + position.x + x] = colour;
 }
 
-void draw_bar(const char* title, const char* time)
-{
-    fill_rect({}, { screen_width, bar_height }, 0);
-
-    draw_font("MinShell", bar_text_colour, bar_padding, bar_padding);
-    draw_font_centered(title, bar_text_colour, 0, 0, screen_width, bar_height);
-    draw_font(time, bar_text_colour, screen_width - bar_padding - 50, bar_padding);
-}
-
-struct Window
-{
-    char title[32] = "Doom Shareware";
-    uint32_t* shared_framebuffer;
-    Position position;
-    Size viewport_size;
-    Size size;
-
-    constexpr Unit thickness() const { return 5; }
-    constexpr Colour background() const { return to_colour(0, 0, 0); }
-
-    Window(Position _position, Size _viewport_size, uint32_t* framebuffer) :
-        position(_position), viewport_size(_viewport_size),
-        size(viewport_size + thickness()*2),
-        shared_framebuffer(framebuffer) {}
-
-    void draw_frame() const
-    {
-        fill_rect(position, size, 0);
-        return;
-    }
-
-    void draw_framebuffer()
-    {
-        for (Unit y = 0; y < viewport_size.y; ++y)
-            memcpy(
-                framebuffer + (y + position.y + thickness()) * screen_width + position.x + thickness(),
-                shared_framebuffer + y * viewport_size.x,
-                viewport_size.x * sizeof(framebuffer[0])
-            );
-    }
-};
+void poll_messages(Vector<Window>& windows);
+void blit_window_framebuffer(Window* window);
+void blit_window_border(Window* window);
+void blit_window(Window* window);
+void move_window(Window* window, Position position);
 
 int main()
 {
+    printf("[minwm] starting...\n");
     init_font("Gidole-Regular.sfn", 16);
-    fill_rect({}, { screen_width, screen_height }, 0xffffffff);
+    fill_rect({}, { screen_width, screen_height }, background);
 
-    Window* window = nullptr;
+    Vector<Window> windows;
 
     for(;;)
     {
         // Deal with messages
-        Message message;
-        while (get_messages(&message, 1))
+        poll_messages(windows);
+
+        // Re-draw window contents
+        windows.for_each([](auto* w) {
+            blit_window_framebuffer(w);
+        });
+
+        struct timeval val;
+        gettimeofday(&val, NULL);
+        static int bob = 0;
+        if (val.tv_sec == 1 && !bob)
         {
-            const int id = *(int*)message.data;
-
-            if (id == CREATE_WINOW_MESSAGE)
-            {
-                const auto* m = (CreateWindowMessage*)&message;
-
-                window = new Window(
-                    { 640 / 2 - m->width / 2, 480 / 2- m->height / 2 },
-                    { m->width, m->height },
-                    m->framebuffer
-                );
-
-                window->draw_frame();
-                draw_bar(m->title, "10:55");
-            }
+            bob = true;
+            move_window(windows[0], { 100, 100 });
         }
-
-        // Render
-        if (window != nullptr)
-            window->draw_framebuffer();
     }
 
     free_font();
     return 0;
+}
+
+void poll_messages(Vector<Window>& windows)
+{
+    Message message;
+    while (get_messages(&message, 1))
+    {
+        const int id = *(int*)message.data;
+
+        if (id == CREATE_WINOW_MESSAGE)
+        {
+            const auto* m = (CreateWindowMessage*)&message;
+
+            const Size size = { m->width, m->height };
+            const Position position = screen_size/2 - size/2;
+
+            windows.push(new Window(m->title, position, m->framebuffer, size));
+            blit_window(windows[windows.size()-1]);
+        }
+
+        else printf("[minwm] unknown message %d\n", id);
+    }
+}
+
+void blit_window_framebuffer(Window* window)
+{
+    const auto pos = window->framebuffer_position();
+
+    for (Unit row = 0; row < window->framebuffer_size.y; ++row)
+    {
+        const Unit y_offset = (pos.y + row) * screen_width;
+        const Unit local_offset = row * window->framebuffer_size.x;
+        const Unit size = window->framebuffer_size.x;
+
+        memcpy(
+            framebuffer + y_offset + pos.x,
+            window->framebuffer + local_offset,
+            size * sizeof(framebuffer[0])
+        );
+    }
+}
+
+void blit_window_border(Window* window)
+{
+    // For "skipping ahead" to the other side
+    const Position offset = window->framebuffer_size + window_thickness;
+    const Position offset_x = { offset.x, 0 };
+    const Position offset_y = { 0, offset.y };
+
+    // For avoiding overdraw with vertical bars
+    const Size overdraw_size = { 0, window_thickness };
+
+    // Horizontal; top
+    fill_rect(
+        window->position,
+        Size { window->size().x, window_thickness },
+        window_background
+    );
+
+    // Horizontal; bottom
+    fill_rect(
+        window->position + offset_y,
+        Size { window->size().x, window_thickness },
+        window_background
+    );
+
+    // Vertical; left
+    fill_rect(
+        window->position + overdraw_size,
+        Size { window_thickness, window->size().y } - overdraw_size,
+        window_background
+    );
+
+    // Vertical; right
+    fill_rect(
+        window->position + overdraw_size + offset_x,
+        Size { window_thickness, window->size().y } - overdraw_size,
+        window_background
+    );
+}
+
+void blit_window(Window* window)
+{
+    blit_window_framebuffer(window);
+    blit_window_border(window);
+}
+
+void move_window(Window* window, Position position)
+{
+    fill_rect(window->position, window->size(), background);
+    window->position = position;
+    blit_window(window);
 }

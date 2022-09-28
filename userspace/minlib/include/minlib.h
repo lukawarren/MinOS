@@ -39,19 +39,19 @@ int share_memory(size_t address, size_t size, pid_t pid)
 
 extern "C" { int main(); }
 
-inline void* operator new(size_t size)
+void* operator new(size_t size)
 {
     void* p = malloc(size);
     return p;
 }
 
-inline void* operator new[](size_t size)
+void* operator new[](size_t size)
 {
     void* p = malloc(size);
     return p;
 }
 
-inline void operator delete(void * p)
+void operator delete(void * p)
 {
     free(p);
 }
