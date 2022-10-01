@@ -21,3 +21,9 @@ message(SWITCH_WINOW_MESSAGE, SwitchWindowMessage,);
 #ifdef __cplusplus
 static_assert(sizeof(SwitchWindowMessage) <= 128);
 #endif
+
+#define SET_WINDOW_TITLE_MESSAGE 3
+message(SET_WINDOW_TITLE_MESSAGE, SetWindowTitleMessage, char title[32];);
+#ifdef __cplusplus
+static_assert(sizeof(SetWindowTitleMessage) <= 128);
+#endif
