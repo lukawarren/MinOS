@@ -1,4 +1,5 @@
 #include "compositor.h"
+#include "font.h"
 
 constexpr Colour background = to_colour(255, 255, 255);
 Colour* framebuffer = (Colour*) 0x30000000;
@@ -6,11 +7,20 @@ Colour* framebuffer = (Colour*) 0x30000000;
 Compositor::Compositor(const Size screen_size)
 {
     this->screen_size = screen_size;
-    fill_rect({}, screen_size, background);
+    blit_background();
+}
+
+void Compositor::display_bar(const char* message)
+{
+    const Unit height = 32;
+    const Colour colour = to_colour(0, 0, 0);
+    fill_rect({ 0, 0 }, { screen_size.x, height }, colour);
+    draw_font_centered(message, 0xffffffff, 0, 0, screen_size.x, height);
 }
 
 void Compositor::display_window(Window* window)
 {
+    blit_background();
     blit_window(window);
 }
 
@@ -19,11 +29,9 @@ void Compositor::redraw_window(Window* window)
     blit_window_framebuffer(window);
 }
 
-void Compositor::move_window(Window* window, Position position)
+void Compositor::blit_background()
 {
-    fill_rect(window->position, window->size(), background);
-    window->position = position;
-    blit_window(window);
+    fill_rect({}, screen_size, background);
 }
 
 void Compositor::blit_window_framebuffer(Window* window)

@@ -81,6 +81,17 @@ int DG_GetKey(int* pressed, unsigned char* doomKey)
     if (key_index == 0) return 0;
 
     char scancode = key_buffer[key_index--];
+
+    // Temporary minwm hack
+    if (scancode == 15)
+    {
+        struct SwitchWindowMessage message = {};
+        message.pid = 1;
+        message.id = SWITCH_WINOW_MESSAGE;
+        assert(add_messages(&message, 1) == 1);
+        return 0;
+    }
+
     *doomKey = scancode_to_doom_key(scancode & 0x7f);
     *pressed = !(scancode & 0x80);
 

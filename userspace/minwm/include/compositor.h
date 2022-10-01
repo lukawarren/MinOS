@@ -7,11 +7,13 @@ class Compositor
 public:
     Compositor(const Size screen_size);
 
+    void display_bar(const char* message);
     void display_window(Window* window);
     void redraw_window(Window* window);
-    void move_window(Window* window, Position position);
 
 private:
+    void blit_background();
+
     void blit_window_framebuffer(Window* window);
     void blit_window_border(Window* window);
     void blit_window(Window* window);

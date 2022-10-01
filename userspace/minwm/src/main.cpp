@@ -14,9 +14,11 @@ constexpr Unit screen_height = 480;
 constexpr Size screen_size = { screen_width, screen_height };
 
 Vector<Window> windows;
+int current_window = -1;
 Compositor c(screen_size);
 
 void poll_messages();
+void switch_to_current_window();
 
 int main()
 {
@@ -29,18 +31,8 @@ int main()
         poll_messages();
 
         // Re-draw window contents
-        windows.for_each([](auto* w) {
-            c.redraw_window(w);
-        });
-
-        struct timeval val;
-        gettimeofday(&val, NULL);
-        static int bob = 0;
-        if (val.tv_sec == 1 && !bob)
-        {
-            bob = true;
-            c.move_window(windows[0], { windows[0]->position.x + 50, windows[0]->position.y });
-        }
+        if (current_window != -1)
+            c.redraw_window(windows[current_window]);
     }
 
     free_font();
@@ -61,12 +53,40 @@ void poll_messages()
             const Size size = { m->width, m->height };
             const Position position = screen_size/2 - size/2;
 
+            // Create and centre window
             Window* window = new Window(m->title, position, m->framebuffer, size);
+            window->position = screen_size / 2 - size / 2;
+
+            // Make sure it's not too big
+            if ((window->position + window->size()).x >= screen_size.x ||
+                (window->position + window->size()).y >= screen_size.y)
+            {
+                delete window;
+                continue;
+            }
+
+            // Push to compositor
             windows.push(window);
-            c.display_window(windows[0]);
+            current_window = windows.size()-1;
+            switch_to_current_window();
+        }
+
+        else if (id == SWITCH_WINOW_MESSAGE)
+        {
+            if (windows.size() == 0) return;
+            ++current_window %= windows.size();
+            switch_to_current_window();
         }
 
         else printf("[minwm] unknown message %d\n", id);
     }
 }
 
+void switch_to_current_window()
+{
+    auto* window = windows[current_window];
+    char message[255];
+    snprintf(message, 255, "Workspace %d / %d - %s", current_window+1, windows.size(), window->title);
+    c.display_window(window);
+    c.display_bar(message);
+}
