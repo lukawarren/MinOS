@@ -7,14 +7,13 @@
 #include "window.h"
 #include <string.h>
 #include <stdio.h>
-#include <sys/time.h> // DO NOT STAGE
 
 constexpr Unit screen_width = 640;
 constexpr Unit screen_height = 480;
 constexpr Size screen_size = { screen_width, screen_height };
 
 Vector<Window> windows;
-int current_window = -1;
+size_t current_window = SIZE_MAX;
 Compositor c(screen_size);
 
 void poll_messages();
@@ -31,7 +30,7 @@ int main()
         poll_messages();
 
         // Re-draw window contents
-        if (current_window != -1)
+        if (current_window != SIZE_MAX)
             c.redraw_window(windows[current_window]);
     }
 
