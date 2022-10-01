@@ -41,6 +41,7 @@ SECTIONS
     {
         __init_array_start = .;
         KEEP (*(.ctor*))
+        KEEP (*(.init*))
         __init_array_end = .;
     }
 
@@ -48,6 +49,7 @@ SECTIONS
     {
         __fini_array_start = .;
         KEEP (*(.dtor*))
+        KEEP (*(.fini*))
         __fini_array_end = .;
     }
 

@@ -3,6 +3,12 @@
 #include <stddef.h>
 #include <assert.h>
 
+/*
+    This vector is very quick and dirty.
+    It should be stressed that elements
+    are not necessarily contiguous in memory,
+    making this more akin to a linked list!
+*/
 template<typename T>
 class Vector
 {

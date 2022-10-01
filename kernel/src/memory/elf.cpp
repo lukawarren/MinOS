@@ -73,7 +73,6 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             // "The array element specifies the location and size of a segment which may be made
             // read-only after relocations have been processed."
             // Too bad.
-            check(program_header->p_memsz == 0 && program_header->p_filesz == 0);
         }
 
         else if (program_header->p_type == PT_GNU_EH_FRAME)
@@ -123,7 +122,12 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
                 // 'note.gnu.build-id'. It's easier to just ignore it for now.
                 case SectionHeaderType::SHT_NOTE: break;
 
+                // We're not the standard library, so it's not our problem.
+                case SectionHeaderType::SHT_INIT_ARRAY: break;
+                case SectionHeaderType::SHT_FINI_ARRAY: break;
+
                 default:
+                    println("unknown type ", section_header->sh_type);
                     check(false);
             }
         }

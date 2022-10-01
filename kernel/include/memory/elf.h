@@ -119,6 +119,7 @@ namespace memory
         SHT_NOTE        = 7,  // E.g. note.gnu.build-id
         SHT_NOBITS      = 8,  // Not present in file
         SHT_REL         = 9,  // Relocation (no addend)
+        SHT_INIT_ARRAY  = 14, // Array of constructors
         SHT_FINI_ARRAY  = 15, // Array of destructors
     };
 

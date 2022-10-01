@@ -26,7 +26,7 @@ set (WARNINGS "-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align\
 
 # Using -O0 because it makes compiling way faster - will turn off for release builds
 set (COMMON_FLAGS "-ffreestanding -nostdlib --target=i686-pc-none-elf\
-                    -march=i686 -nostdinc -O0 -fcolor-diagnostics -g")
+                    -march=i686 -nostdinc -O0 -fcolor-diagnostics -fuse-init-array -g")
 
 set (CMAKE_CXX_FLAGS "-std=c++20 ${WARNINGS} ${COMMON_FLAGS} -fno-exceptions\
                     -fno-rtti -fno-use-cxa-atexit -fno-sized-deallocation\

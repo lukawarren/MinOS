@@ -34,5 +34,3 @@ constexpr Colour to_colour(const uint8_t r, const uint8_t g, const uint8_t b)
 {
     return 0xff000000 | Colour(r << 16) | Colour(g << 8) | Colour(b);
 }
-
-Colour* framebuffer = (Colour*) 0x30000000;
