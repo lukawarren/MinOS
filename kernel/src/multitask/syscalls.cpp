@@ -313,24 +313,27 @@ namespace multitask
 
     int share_memory(size_t address, size_t size, pid_t pid)
     {
-        // Ensure all pages are owned by current process
-        if (!current_process->frame.owns_memory(address, size))
-            return -1;
-
         // Get process (if any!)
         auto process = multitask::get_process(pid);
         if (!process) return -1;
 
-        // Map
-        const auto v_addr = memory::VirtualAddress(address / PAGE_SIZE) * PAGE_SIZE;
+        // Map...
+        using namespace memory;
+        const auto v_addr = VirtualAddress(address / PAGE_SIZE) * PAGE_SIZE;
         const auto p_addr = current_process->frame.virtual_address_to_physical(v_addr);
-        const auto pages = memory::PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
+        const auto full_size = PageFrame::round_to_next_page_size(size);
+
+        // ...ensuring all pages are owned by current process
+        if (!current_process->frame.owns_memory(v_addr, full_size))
+            return -1;
+
         process.data->frame.map_pages(
             p_addr,
             v_addr,
             USER_PAGE,
-            pages
+            full_size / PAGE_SIZE
         );
+
         return 0;
     }
 }
