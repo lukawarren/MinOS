@@ -18,6 +18,7 @@ Compositor c(screen_size);
 
 void poll_messages();
 void switch_to_current_window();
+void draw_bar_for_current_window();
 
 int main()
 {
@@ -53,7 +54,7 @@ void poll_messages()
             const Position position = screen_size/2 - size/2;
 
             // Create and centre window
-            Window* window = new Window(m->title, position, m->framebuffer, size);
+            Window* window = new Window(m->title, position, m->framebuffer, size, m->pid);
             window->position = screen_size / 2 - size / 2;
 
             // Make sure it's not too big
@@ -77,15 +78,35 @@ void poll_messages()
             switch_to_current_window();
         }
 
+        else if (id == SET_WINDOW_TITLE_MESSAGE)
+        {
+            const auto* m = (SetWindowTitleMessage*)&message;
+            for (size_t i = 0; i < windows.size(); ++i)
+            {
+                // Assume 1 window per process
+                if (windows[i]->pid == m->pid)
+                    strncpy(windows[i]->title, m->title, sizeof(windows[i]->title));
+
+                // Current title changed; redraw
+                if (current_window == i)
+                    draw_bar_for_current_window();
+            }
+        }
+
         else printf("[minwm] unknown message %d\n", id);
     }
 }
 
 void switch_to_current_window()
 {
+    c.display_window(windows[current_window]);
+    draw_bar_for_current_window();
+}
+
+void draw_bar_for_current_window()
+{
     auto* window = windows[current_window];
     char message[255];
     snprintf(message, 255, "Workspace %d / %d - %s", current_window+1, windows.size(), window->title);
-    c.display_window(window);
     c.display_bar(message);
 }

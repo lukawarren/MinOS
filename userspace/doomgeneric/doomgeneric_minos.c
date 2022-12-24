@@ -98,7 +98,15 @@ int DG_GetKey(int* pressed, unsigned char* doomKey)
     return 1;
 }
 
-void DG_SetWindowTitle(const char* title) {}
+void DG_SetWindowTitle(const char* title)
+{
+    struct SetWindowTitleMessage message = {};
+    message.pid = 1;
+    message.id = SET_WINDOW_TITLE_MESSAGE;
+    strcpy((char*)message.title, title);
+    assert(add_messages(&message, 1) == 1);
+
+}
 
 static unsigned char scancode_to_doom_key(unsigned char scancode)
 {

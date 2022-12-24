@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <unistd.h>
 #include "common.h"
 
 const Unit window_thickness = 5;
@@ -14,12 +15,16 @@ struct Window
     uint32_t* framebuffer;
     Size framebuffer_size;
 
-    Window(const char* title, Position position, uint32_t* framebuffer, Size size)
+    // Assume 1 window per process
+    pid_t pid;
+
+    Window(const char* title, Position position, uint32_t* framebuffer, Size size, pid_t pid)
     {
         strncpy(this->title, title, sizeof(this->title));
         this->position = position;
         this->framebuffer = framebuffer;
         this->framebuffer_size = size;
+        this->pid = pid;
     }
 
     constexpr Position framebuffer_position() const
