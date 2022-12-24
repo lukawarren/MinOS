@@ -23,7 +23,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
     // Load program headers
     for (size_t i = 0; i < header->e_phnum; ++i)
     {
-        size_t header_address = address + header->e_phoff + sizeof(ElfProgramHeader) * i;
+        const size_t header_address = address + header->e_phoff + sizeof(ElfProgramHeader) * i;
         auto* program_header = (ElfProgramHeader*)header_address;
 
         if (program_header->p_type == PT_LOAD)
@@ -36,9 +36,9 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
             check(PageFrame::is_page_aligned(program_header->p_vaddr));
             check(program_header->p_align == PAGE_SIZE);
 
-            size_t source = address + program_header->p_offset;
-            size_t file_size = program_header->p_filesz;
-            size_t memory_size = program_header->p_memsz;
+            const size_t source = address + program_header->p_offset;
+            const size_t file_size = program_header->p_filesz;
+            const size_t memory_size = program_header->p_memsz;
 
             auto destination = memory::allocate_for_user(
                 program_header->p_vaddr,
@@ -96,7 +96,7 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
     // Load section headers
     for (size_t i = 0; i < header->e_shnum; ++i)
     {
-        size_t header_address = address + header->e_shoff + sizeof(ElfSectionHeader) * i;
+        const size_t header_address = address + header->e_shoff + sizeof(ElfSectionHeader) * i;
         auto* section_header = (ElfSectionHeader*)header_address;
 
         if (section_header->sh_size > 0 && (section_header->sh_flags & SHF_ALLOC))

@@ -20,7 +20,8 @@ Checks: >
   -cert-dcl03-c,
   -misc-static-assert,
   -bugprone-branch-clone,
-  -misc-redundant-expression
+  -misc-redundant-expression,
+  -readability-simplify-boolean-expr
 CheckOptions:
   - { key: readability-function-cognitive-complexity.Threshold, value: 200 }
   - { key: readability-identifier-naming.NamespaceCase,       value: lower_case }

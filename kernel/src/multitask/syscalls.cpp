@@ -93,7 +93,7 @@ namespace multitask
     T* read_from_user(T* address)
     {
         auto& frame = multitask::current_process->frame;
-        size_t user_address = frame.virtual_address_to_physical((size_t)address);
+        const size_t user_address = frame.virtual_address_to_physical((size_t)address);
         return (T*)user_address;
     }
 
@@ -125,7 +125,7 @@ namespace multitask
 
     int llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, off_t* result, unsigned int whence)
     {
-        uint64_t offset = (uint64_t(offset_high) << 32) | offset_low;
+        const uint64_t offset = (uint64_t(offset_high) << 32) | offset_low;
 
         auto seek_result = current_process->seek_file(
             (fs::FileDescriptor)fd,

@@ -11,7 +11,7 @@ static inline uintptr_t __get_tp()
 
 	struct __pthread* self;
 	self = &falseThread;
-	return self;
+	return (uintptr_t) self;
 }
 
 #define MC_PC gregs[REG_EIP]

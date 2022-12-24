@@ -88,7 +88,7 @@ namespace interrupts
 
             case 1:
             {
-                uint8_t scancode = cpu::inb(0x60);
+                const uint8_t scancode = cpu::inb(0x60);
 
                 if (keyboard_buffer_keys < keyboard_buffer_size)
                     keyboard_buffer[keyboard_buffer_keys++] = scancode;

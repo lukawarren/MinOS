@@ -11,7 +11,7 @@ namespace memory
         memset(free_groups, 0, Allocator::size());
 
         // ...save for the ones that're free
-        size_t structures_end = (size_t) free_groups + Allocator::size();
+        const size_t structures_end = (size_t) free_groups + Allocator::size();
         free_pages(structures_end, size / PAGE_SIZE);
         println("created root allocator - free pages = ", size / PAGE_SIZE);
     }

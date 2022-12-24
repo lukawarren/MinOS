@@ -66,7 +66,7 @@ namespace memory
         size_t highest = 0;
         for (size_t i = 0; i < n_modules; ++i)
         {
-            size_t end = modules[i].address + modules[i].size;
+            const size_t end = modules[i].address + modules[i].size;
             highest = MAX(highest, end);
         }
         return highest;

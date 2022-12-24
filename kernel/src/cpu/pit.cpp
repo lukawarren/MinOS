@@ -23,7 +23,7 @@ namespace pit
     void set_frequency(const uint16_t _channel, const uint16_t hertz)
     {
         // The PIT's oscillator runs at about 1.193182 Mhz
-        uint16_t reload_value = (uint16_t)(1193180 / (uint32_t)hertz);
+        const uint16_t reload_value = (uint16_t)(1193180 / (uint32_t)hertz);
 
         // As per "MODE_ACCESS_LOW_HIGH" above
         cpu::outb(_channel, reload_value & 0xff);

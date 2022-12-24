@@ -92,7 +92,7 @@ namespace memory
     {
         // Read entry from page table
         const size_t offset = vAddr % PAGE_SIZE;
-        size_t table = pageTables[vAddr == 0 ? 0 : vAddr / PAGE_SIZE];
+        const size_t table = pageTables[vAddr == 0 ? 0 : vAddr / PAGE_SIZE];
         return (table & 0xfffff000) + offset;
     }
 

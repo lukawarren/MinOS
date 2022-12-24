@@ -11,8 +11,8 @@ namespace multitask
     Process::Process(memory::PageFrame page_frame, const size_t entrypoint) : frame(page_frame)
     {
         // Allocate stack (minus X for alignment) - assume virtual address = physical address as identity mapped
-        size_t stack_start_address = memory::allocate_for_user(stack_size, page_frame)->p_addr;
-        size_t stack_after_restore = stack_start_address + stack_size - 16;
+        const size_t stack_start_address = memory::allocate_for_user(stack_size, page_frame)->p_addr;
+        const size_t stack_after_restore = stack_start_address + stack_size - 16;
         size_t* stack = (size_t*) stack_after_restore;
 
         // Check we'll have 16-byte alignment
@@ -110,7 +110,7 @@ namespace multitask
         messages[n_messages++] = message;
         return true;
     }
-    
+
     Optional<Message> Process::get_message()
     {
         // Return bottom message...

@@ -20,7 +20,7 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 
     // Verify we're multiboot and parse it
     assert(eax == MULTIBOOT_BOOTLOADER_MAGIC);
-    memory::MultibootInfo info(multiboot_header);
+    const memory::MultibootInfo info(multiboot_header);
     assert(info.n_modules >= 1);
 
     // Setup interrupts

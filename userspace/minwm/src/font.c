@@ -60,7 +60,7 @@ void draw_font_centered(const char* message, uint32_t colour, unsigned int x, un
     );
 }
 
-void free_font()
+void free_font(void)
 {
     free(font);
     ssfn_free(&ctx);

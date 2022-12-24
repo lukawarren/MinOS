@@ -44,13 +44,13 @@ void _println(const char* file, const char* message, const uint64_t number);
 void _println(const char* file, const char* message, const uint64_t number, const char* message_two, const uint64_t number_two);
 
 #define MAX(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
+   ({ const __typeof__ (a) _a = (a); \
+       const __typeof__ (b) _b = (b); \
      _a > _b ? _a : _b; })
 
 #define MIN(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
+   ({ const __typeof__ (a) _a = (a); \
+       const __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 
 

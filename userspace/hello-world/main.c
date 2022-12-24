@@ -3,7 +3,7 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
-int main()
+int main(void)
 {
     // Open lua
     lua_State *L = luaL_newstate();
