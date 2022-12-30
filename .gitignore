@@ -28,3 +28,8 @@ problems.sh
 
 tools/
 bx_enh_dbg.ini
+
+toolchain/prefix
+toolchain/binutils-*
+toolchain/gcc-*
+userspace/musl/sysroot

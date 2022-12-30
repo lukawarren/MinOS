@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.1.3)
 project(doom C)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../userspace.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/../minlib.cmake")
 
+# Add sources
 file(GLOB_RECURSE C_SRCS *.c)
 
 # Ignore warnings
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-everything")
+add_definitions(-w)
 
+# Include minwm
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../minwm/include")
 
 add_executable(${PROJECT_NAME}.bin ${C_SRCS})

@@ -7,22 +7,36 @@ The third rewrite of MinOS
 * [Doom :-)](https://github.com/ozkl/doomgeneric)
 * [Scalable Screen Font 2.0](https://gitlab.com/bztsrc/scalable-font2/)
 
-## Building with Docker
-This will build Musl too.
-```
-docker build -t minos:3.0 .
-docker run --rm --volume $(pwd):/code minos:3.0
-```
+# Toolchain and userspace
+MinOS uses Musl as its standard library, and uses Clang to build it.
+For userspace, a GCC cross-compiler is used (i686-minos-gcc).
 
-## Builing musl
+## Dependencies
+On Fedora:
+* clang
+* gcc
+* g++
+* lld
+* nasm
+* binutils
+* cmake
+* xorriso
+* grub2-pc
+* grub2-tools-extra
+* clang-tools-extra
+
+## Building
+The full toolchain can be built like so:
 ```
-cd userspace/musl &&
-mkdir -p /tmp/musl-alias &&
-ln -sf `which ar` /tmp/musl-alias/i686-ar &&
-ln -sf `which ranlib` /tmp/musl-alias/i686-ranlib &&
-export PATH=$PATH:"/tmp/musl-alias/" &&
-CC=clang CFLAGS='--target=i686-pc-none-elf -march=i686 -DSYSCALL_NO_TLS' LDFLAGS='-fuse-ld=lld' ./configure --target=i686 &&
-make -j 16
+./scripts/build_musl.sh &&\
+./scripts/build_toolchain.sh
+```
+Then build the project:
+```
+mkdir build
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain/CMake/toolchain.cmake .. -G Ninja
+ninja
 ```
 
 ## Musl changes
@@ -36,8 +50,9 @@ make -j 16
 
 ## Attributions
 * Uses the [Gidole font](https://github.com/larsenwork/Gidole)
+* Toolchain built with patches from [Nightingale](https://github.com/tyler569/nightingale) and [SerenityOS](https://github.com/SerenityOS/serenity)
 
 ## History
 * MinOS 1 - mostly written in the summer of 2021, C and C++
 * MinOS 2 - written a few months ago (mid 2022), in Rust
-* MinOS 3 - written now (August 2022), back in C and C++
+* MinOS 3 - written now (from August 2022), back in C and C++

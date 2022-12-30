@@ -18,6 +18,11 @@ file(GLOB_RECURSE ASM_SRCS src/*.S src/*/*.S)
 # linker.ld
 add_link_options("-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
 
+# Make freestanding and disable Musl "shadowing" warning
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding -nostdlib -nostdinc -Wno-redundant-decls")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdlib -nostdinc -Wno-redundant-decls")
+add_link_options("-nostdlib")
+
 # For klib macro magic
 string(LENGTH "${CMAKE_SOURCE_DIR}/kernel/src/" SOURCE_PATH_SIZE)
 add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
@@ -29,6 +34,6 @@ add_definitions(-DKERNEL)
 add_executable(${PROJECT_NAME}.bin ${ASM_SRCS} ${C_SRCS} ${CPP_SRCS})
 
 # clang-tidy
-find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
-set(CLANG_TIDY_COMMAND "${CLANG_TIDY_EXE}" "--use-color")
-set_target_properties(kernel.bin PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
+#find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+#set(CLANG_TIDY_COMMAND "${CLANG_TIDY_EXE}" "--use-color")
+#set_target_properties(kernel.bin PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")

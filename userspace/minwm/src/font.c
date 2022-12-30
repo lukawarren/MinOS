@@ -3,8 +3,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <stddef.h>
 
 #define SSFN_IMPLEMENTATION
+#define _UINT64_T uint64_t
 #include <ssfn.h>
 
 void* font;

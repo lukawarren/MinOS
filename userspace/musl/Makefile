@@ -12,7 +12,7 @@ srcdir = .
 exec_prefix = /usr/local
 bindir = $(exec_prefix)/bin
 
-prefix = /usr/local/musl
+prefix = ./sysroot
 includedir = $(prefix)/include
 libdir = $(prefix)/lib
 syslibdir = /lib

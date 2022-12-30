@@ -10,20 +10,20 @@ struct Vector2
     T x = 0;
     T y = 0;
 
-    Vector2 operator+(const Vector2& rhs) const { return { x + rhs.x, y + rhs.y }; }
-    Vector2 operator-(const Vector2& rhs) const { return { x - rhs.x, y - rhs.y }; }
-    Vector2 operator*(const Vector2& rhs) const { return { x * rhs.x, y * rhs.y }; }
-    Vector2 operator/(const Vector2& rhs) const { return { x / rhs.x, y / rhs.y }; }
+    constexpr Vector2 operator+(const Vector2& rhs) const { return { x + rhs.x, y + rhs.y }; }
+    constexpr Vector2 operator-(const Vector2& rhs) const { return { x - rhs.x, y - rhs.y }; }
+    constexpr Vector2 operator*(const Vector2& rhs) const { return { x * rhs.x, y * rhs.y }; }
+    constexpr Vector2 operator/(const Vector2& rhs) const { return { x / rhs.x, y / rhs.y }; }
 
-    Vector2 operator+(const Unit& rhs) const { return { x + rhs, y + rhs }; }
-    Vector2 operator-(const Unit& rhs) const { return { x - rhs, y - rhs }; }
-    Vector2 operator*(const Unit& rhs) const { return { x * rhs, y * rhs }; }
-    Vector2 operator/(const Unit& rhs) const { return { x / rhs, y / rhs }; }
+    constexpr Vector2 operator+(const Unit& rhs) const { return { x + rhs, y + rhs }; }
+    constexpr Vector2 operator-(const Unit& rhs) const { return { x - rhs, y - rhs }; }
+    constexpr Vector2 operator*(const Unit& rhs) const { return { x * rhs, y * rhs }; }
+    constexpr Vector2 operator/(const Unit& rhs) const { return { x / rhs, y / rhs }; }
 
-    void operator+=(const Vector2& rhs) { x += rhs.x; y += rhs.y; }
-    void operator-=(const Vector2& rhs) { x -= rhs.x; y -= rhs.y; }
-    void operator*=(const Vector2& rhs) { x *= rhs.x; y *= rhs.y; }
-    void operator/=(const Vector2& rhs) { x /= rhs.x; y /= rhs.y; }
+    constexpr void operator+=(const Vector2& rhs) { x += rhs.x; y += rhs.y; }
+    constexpr void operator-=(const Vector2& rhs) { x -= rhs.x; y -= rhs.y; }
+    constexpr void operator*=(const Vector2& rhs) { x *= rhs.x; y *= rhs.y; }
+    constexpr void operator/=(const Vector2& rhs) { x /= rhs.x; y /= rhs.y; }
 
 };
 
