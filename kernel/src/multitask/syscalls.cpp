@@ -218,7 +218,7 @@ namespace multitask
         if (!current_process->is_fd_valid(fd)) return -EBADF;
         auto& file = current_process->open_files[fd];
 
-        size_t len = 0;
+        uint64_t len = 0;
         for (int i = 0; i < iovcnt; ++i)
         {
             const auto result = fs::read(
@@ -251,7 +251,7 @@ namespace multitask
         if (!current_process->is_fd_valid(fd)) return -EBADF;
         auto& file = current_process->open_files[fd];
 
-        size_t len = 0;
+        uint64_t len = 0;
         for (int i = 0; i < iovcnt; ++i)
         {
             auto result = fs::write(

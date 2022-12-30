@@ -9,15 +9,15 @@ namespace fs
         DeviceFile(
             Optional<uint64_t> (*on_read)(void*, uint64_t, uint64_t),
             Optional<uint64_t> (*on_write)(void*, uint64_t, uint64_t),
-            const char* name
+            const char* _name
         )
         {
             read = on_read;
             write = on_write;
 
             const auto max_length = sizeof(this->name)/sizeof(this->name[0]);
-            assert(strlen(name) <= max_length);
-            strncpy(this->name, name, max_length);
+            assert(strlen(_name) <= max_length);
+            strncpy(this->name, _name, max_length);
         }
 
         DeviceFile() {}

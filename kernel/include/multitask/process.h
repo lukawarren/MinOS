@@ -7,10 +7,9 @@
 
 namespace multitask
 {
-    using fd = fs::FileDescriptor;
-
     class Process
     {
+    using FD = fs::FileDescriptor;
     public:
         Process(memory::PageFrame page_frame, const size_t entrypoint);
         Process() {}
@@ -18,18 +17,18 @@ namespace multitask
         enum SeekMode { SET = 0, CURRENT = 1, END = 2 };
 
         // Files
-        Optional<fd> open_file(const fs::FileHandle handle);
-        Optional<fd> open_file(const char* path);
-        Optional<uint64_t> seek_file(const fd fd, const uint64_t offset, const SeekMode mode);
-        bool close_file(const fd fd);
-        bool is_fd_valid(const fd fd) const;
+        Optional<FD> open_file(const fs::FileHandle handle);
+        Optional<FD> open_file(const char* path);
+        Optional<uint64_t> seek_file(const FD fd, const uint64_t offset, const SeekMode mode);
+        bool close_file(const FD fd);
+        bool is_fd_valid(const FD fd) const;
 
         // Kernel + syscalls
         memory::PageFrame frame;
         pid_t thread_id;
 
         // Files
-        static constexpr fd max_files = 16;
+        static constexpr FD max_files = 16;
         struct OpenFile
         {
             fs::FileHandle handle;
@@ -39,7 +38,7 @@ namespace multitask
             }
         };
         OpenFile open_files[max_files];
-        fd n_files = 0;
+        FD n_files = 0;
 
         // IPC message system
         const static size_t max_messages = 32;
@@ -48,7 +47,7 @@ namespace multitask
 
         static_assert(sizeof(Message) == 128);
         static_assert(sizeof(Message) * max_messages == PAGE_SIZE);
-        
+
         bool add_message(const Message& message);
         Optional<Message> get_message();
 

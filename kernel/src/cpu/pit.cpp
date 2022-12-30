@@ -26,8 +26,8 @@ namespace pit
         const uint16_t reload_value = (uint16_t)(1193180 / (uint32_t)hertz);
 
         // As per "MODE_ACCESS_LOW_HIGH" above
-        cpu::outb(_channel, reload_value & 0xff);
-        cpu::outb(_channel, reload_value >> 8);
+        cpu::outb(_channel, uint8_t(reload_value & 0xff));
+        cpu::outb(_channel, uint8_t(reload_value >> 8));
 
         // Save for later
         frequency = hertz;

@@ -21,11 +21,11 @@ namespace memory
 
             Module() {}
 
-            Module(size_t start, size_t end, char* name)
+            Module(size_t start, size_t end, char* _name)
             {
                 address = start;
                 size = end - start;
-                strncpy(this->name, name, sizeof(this->name) / sizeof(this->name[0]));
+                strncpy(this->name, _name, sizeof(this->name) / sizeof(this->name[0]));
             }
         };
 
