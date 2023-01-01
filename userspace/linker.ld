@@ -37,27 +37,10 @@ SECTIONS
         *(.bss) *(.bss.*)
     }
 
-    .init_array : ALIGN(4K)
-    {
-        __init_array_start = .;
-        KEEP (*(.ctor*))
-        KEEP (*(.init*))
-        __init_array_end = .;
-    }
-
-    .fini_array : ALIGN(4K)
-    {
-        __fini_array_start = .;
-        KEEP (*(.dtor*))
-        KEEP (*(.fini*))
-        __fini_array_end = .;
-    }
-
     /* remove unnecessary bits */
     /DISCARD/ :
 	{
 		*(.comment)
-		*(.eh_frame)
 		*(.note.gnu.build-id)
 		*(.gnu.build.attributes)
 	}

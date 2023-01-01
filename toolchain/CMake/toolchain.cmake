@@ -20,12 +20,12 @@ set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <O
 set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES> -lgcc")
 
 # Flags
-set (WARNINGS "-Wall -Wextra -pedantic -Wpointer-arith -Wcast-align\
+set(WARNINGS "-Wall -Wextra -pedantic -Wpointer-arith -Wcast-align\
  -Wwrite-strings -Wredundant-decls -Winline\
  -Wno-long-long -Wconversion")
 
 # Using -O0 because it makes compiling way faster - will turn off for release builds
-set (COMMON_FLAGS "-O0 -g -ffreestanding -fdiagnostics-color=always")
+set(COMMON_FLAGS "-O0 -g -ffreestanding -fdiagnostics-color=always")
 
 set (CMAKE_CXX_FLAGS "-std=c++20 ${WARNINGS} ${COMMON_FLAGS} -fno-exceptions\
  -fno-rtti -fno-use-cxa-atexit -fno-sized-deallocation\
