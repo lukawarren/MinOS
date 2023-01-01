@@ -55,8 +55,6 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     // Jump to userspace
     memory::add_elf_from_module(info, "minwm.bin");
     memory::add_elf_from_module(info, "doom.bin");
-    memory::add_elf_from_module(info, "doom.bin");
-    memory::add_elf_from_module(info, "doom.bin");
     cpu::enable_interrupts();
 
     halt();
