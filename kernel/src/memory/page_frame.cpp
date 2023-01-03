@@ -81,8 +81,9 @@ namespace memory
         assert(is_page_aligned(vAddr));
 
         // TODO: take into account shared memory, mmap'ed files, etc.
-        for (size_t p = vAddr / PAGE_SIZE; p < round_to_next_page_size(size) / PAGE_SIZE; ++p)
-            if (pageTables[p] != USER_PAGE)
+        // NOTE: should be "0xfff" but creates bug
+        for (size_t p = 0; p < round_to_next_page_size(size) / PAGE_SIZE; ++p)
+            if ((pageTables[vAddr / PAGE_SIZE + p] & 0xf) != USER_PAGE)
                 return false;
 
         return true;

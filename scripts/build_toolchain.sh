@@ -15,7 +15,7 @@ PATH="$PREFIX/bin:$PATH"
 TARGET=i686-minos
 
 # Clean up old builds
-rm -rf build-binutils build-gcc binutils-${BINUTILS_VERSION} gcc-${GCC_VERSION}
+rm -rf binutils-build gcc-b binutils-${BINUTILS_VERSION} gcc-${GCC_VERSION}
 
 # Download tar files
 BINUTILS_TAR="binutils-${BINUTILS_VERSION}.tar.gz"

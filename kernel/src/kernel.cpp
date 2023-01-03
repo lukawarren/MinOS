@@ -53,8 +53,10 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     multitask::init_scheduler(memory::kernel_frame.get_cr3());
 
     // Jump to userspace
+    memory::add_elf_from_module(info, "dash.bin");
     memory::add_elf_from_module(info, "minwm.bin");
     memory::add_elf_from_module(info, "doom.bin");
+    println("Entering userspace...");
     cpu::enable_interrupts();
 
     halt();

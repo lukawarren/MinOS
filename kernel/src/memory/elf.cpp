@@ -33,24 +33,29 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
 
             // Sanity check (we're not a higher-half kernel!)
             check(program_header->p_vaddr >= memory::user_base_address);
-            check(PageFrame::is_page_aligned(program_header->p_vaddr));
             check(program_header->p_align == PAGE_SIZE);
+
+            // Start from the beginning of the page
+            const size_t header_address_aligned = (program_header->p_vaddr / PAGE_SIZE) * PAGE_SIZE;
+            check(PageFrame::is_page_aligned(header_address_aligned));
+            const size_t size_difference = program_header->p_paddr - header_address_aligned;
 
             const size_t source = address + program_header->p_offset;
             const size_t file_size = program_header->p_filesz;
             const size_t memory_size = program_header->p_memsz;
 
+            // Allocate memory
             auto destination = memory::allocate_for_user(
-                program_header->p_vaddr,
-                memory_size,
+                header_address_aligned,
+                memory_size + size_difference,
                 user_frame
             );
 
             if (!destination) return {};
 
             // If p_memsz exceeds p_filesz, then the remaining bits are to be zeroed
-            memset((void*)destination->p_addr, 0, memory_size);
-            memcpy((void*)destination->p_addr, (void*)source, file_size);
+            memset((void*)(destination->p_addr + size_difference), 0, memory_size);
+            memcpy((void*)(destination->p_addr + size_difference), (void*)source, file_size);
         }
 
         else if (program_header->p_type == PT_NOTE)
@@ -106,8 +111,6 @@ Optional<size_t> memory::load_elf_file(PageFrame& user_frame, const size_t addre
                 case SectionHeaderType::SHT_NOBITS:
                 {
                     // BSS - allocate memory and zero it - TODO: sanitise
-                    check(PageFrame::is_page_aligned(section_header->sh_addr));
-                    check(section_header->sh_addralign == PAGE_SIZE);
                     const PhysicalAddress a = user_frame.virtual_address_to_physical(section_header->sh_addr);
                     memset((void*)a, 0, section_header->sh_size);
                 }

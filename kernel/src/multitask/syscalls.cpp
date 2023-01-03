@@ -12,6 +12,7 @@ namespace multitask
     int brk(void *addr);
     uint64_t clock_gettime64(clockid_t clk_id, struct timespec* tp);
     int close(int fd);
+    pid_t getpid();
     int ioctl(int fd, unsigned long request, char* argp);
     int llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, off_t* result, unsigned int whence);
     int madvise(void* addr, size_t length, int advice);
@@ -40,6 +41,7 @@ namespace multitask
         syscalls[SYS_brk] = (size_t)&brk;
         syscalls[__NR_clock_gettime64] = (size_t)&clock_gettime64;
         syscalls[SYS_close] = (size_t)&close;
+        syscalls[SYS_getpid] = (size_t)&getpid;
         syscalls[SYS_ioctl] = (size_t)&ioctl;
         syscalls[SYS__llseek] = (size_t)&llseek;
         syscalls[SYS_madvise] = (size_t)&madvise;
@@ -116,6 +118,11 @@ namespace multitask
     int close(int fd)
     {
         return current_process->close_file(fd) ? 0 : -1;
+    }
+
+    pid_t getpid()
+    {
+        return multitask::current_process->thread_id;
     }
 
     int ioctl(int, unsigned long, char*)

@@ -26,7 +26,7 @@ void DG_Init()
     keyboard_file = fopen("keyboard", "r");
     assert(keyboard_file);
 
-    // Create framebuffer
+    // Create framebuffer and share it with PID 1 (minwm)
     size_t length = sizeof(uint32_t) * DOOMGENERIC_RESX * DOOMGENERIC_RESY;
     framebuffer = malloc(length);
     assert(share_memory(framebuffer, length, 1) == 0);
