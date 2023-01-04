@@ -32,6 +32,9 @@ namespace multitask
     size_t get_messages(Message* messages, size_t count);
     int share_memory(size_t address, size_t size, pid_t pid);
 
+    // For stubs
+    int nop();
+
     void init_syscalls()
     {
         // Null out table...
@@ -39,7 +42,7 @@ namespace multitask
 
         // ...then register what we have
         syscalls[SYS_brk] = (size_t)&brk;
-        syscalls[__NR_clock_gettime64] = (size_t)&clock_gettime64;
+        syscalls[SYS_clock_gettime64] = (size_t)&clock_gettime64;
         syscalls[SYS_close] = (size_t)&close;
         syscalls[SYS_getpid] = (size_t)&getpid;
         syscalls[SYS_ioctl] = (size_t)&ioctl;
@@ -58,6 +61,14 @@ namespace multitask
         syscalls[SYS_add_messages] = (size_t)&add_messages;
         syscalls[SYS_get_messages] = (size_t)&get_messages;
         syscalls[SYS_share_memory] = (size_t)&share_memory;
+
+        // Stubs
+        syscalls[SYS_getuid32] = (size_t)&nop;
+        syscalls[SYS_geteuid32] = (size_t)&nop;
+        syscalls[SYS_getgid32] = (size_t)&nop;
+        syscalls[SYS_getegid32] = (size_t)&nop;
+        syscalls[SYS_getppid] = (size_t)&nop;
+        syscalls[SYS_getpgrp] = (size_t)&nop;
     }
 
     size_t on_syscall(const cpu::Registers registers)
@@ -125,8 +136,10 @@ namespace multitask
         return multitask::current_process->thread_id;
     }
 
-    int ioctl(int, unsigned long, char*)
+    int ioctl(int fd, unsigned long, char*)
     {
+        println("TODO: ioctl for PID ", multitask::current_process->thread_id, " with fd ", fd);
+        assert(fd == 1);
         return 0;
     }
 
@@ -343,4 +356,6 @@ namespace multitask
 
         return 0;
     }
+
+    int nop() { return 0; }
 }
