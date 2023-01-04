@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1.3)
 project(minwm C CXX)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../minlib.cmake")
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/../minlib.cmake")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../scalable-font2")
 

@@ -33,19 +33,34 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     memory::smbios::parse();
     memory::init(info);
 
-    // Setup filesystem, installing keyboard device
+    // Setup filesystem, installing devices
     fs::init(info, [](fs::DeviceFileSystem& dfs)
     {
-        const auto on_read = [](void* data, uint64_t, uint64_t)
+        // Keyboard - assume length to be 1 and offset to be 0
         {
-            // Assume length to be 1
-            if (interrupts::keyboard_buffer_keys == 0) return Optional<uint64_t> { 0 };
-            memcpy(data, &interrupts::keyboard_buffer[interrupts::keyboard_buffer_keys-1], 1);
-            interrupts::keyboard_buffer_keys--;
-            return Optional<uint64_t> { 1 };
-        };
-        const auto on_write = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
-        dfs.install(fs::DeviceFile(on_read, on_write, "keyboard"));
+            const auto on_read = [](void* data, uint64_t, uint64_t)
+            {
+                if (interrupts::keyboard_buffer_keys == 0) return Optional<uint64_t> { 0 };
+                memcpy(data, &interrupts::keyboard_buffer[interrupts::keyboard_buffer_keys-1], 1);
+                interrupts::keyboard_buffer_keys--;
+                return Optional<uint64_t> { 1 };
+            };
+            const auto on_write = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
+            dfs.install(fs::DeviceFile(on_read, on_write, "keyboard"));
+        }
+
+        // UART - assume length to be 1 and offset to be 0
+        {
+            const auto on_read = [](void* data, uint64_t, uint64_t)
+            {
+                const Optional<char> input = uart::read_char();
+                if (!input) return Optional<uint64_t> { 0 };
+                *(char*)data = input.data;
+                return Optional<uint64_t> { 1 };
+            };
+            const auto on_write = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
+            dfs.install(fs::DeviceFile(on_read, on_write, "uart"));
+        }
     });
 
     // Registers syscalls, etc.
@@ -54,6 +69,7 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 
     // Jump to userspace
     memory::add_elf_from_module(info, "minwm.bin");
+    memory::add_elf_from_module(info, "minshell.bin");
     memory::add_elf_from_module(info, "doom.bin");
     println("Entering userspace...");
     cpu::enable_interrupts();

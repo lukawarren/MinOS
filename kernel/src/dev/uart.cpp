@@ -55,4 +55,10 @@ namespace uart
         }
     }
 
+    Optional<char> read_char()
+    {
+        const bool is_data = cpu::inb((uint16_t)com + 5) & 1;
+        if (is_data) return cpu::inb((uint16_t)com);
+        return Optional<char> {};
+    }
 }
