@@ -137,6 +137,10 @@ namespace interrupts
         println("ebp = ", registers.ebp);
         println("esi = ", registers.esi);
         println("edi = ", registers.edi);
+        if (multitask::current_process != nullptr)
+            println("task = ", multitask::current_process->thread_id);
+        else
+            println("task = kernel!");
         uart::write_string("----------------------------------- \n\n\n");
         halt();
         assert(false);

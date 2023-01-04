@@ -61,6 +61,7 @@ void poll_messages()
             if ((window->position + window->size()).x >= screen_size.x ||
                 (window->position + window->size()).y >= screen_size.y)
             {
+                printf("[minwm] failed to create window for PID %d - resolution too large\n", m->pid);
                 delete window;
                 continue;
             }
