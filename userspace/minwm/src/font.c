@@ -9,6 +9,9 @@
 #define _UINT64_T uint64_t
 #include <ssfn.h>
 
+#define FRAMEBUFFER_WIDTH 640
+#define FRAMEBUFFER_ADDRESS 0x30000000
+
 void* font;
 ssfn_t ctx = { 0 };
 
@@ -40,7 +43,7 @@ void draw_font(const char* message, uint32_t colour, unsigned int x, unsigned in
     for (unsigned int text_y = 0; text_y < (unsigned int)buffer->h; ++text_y)
     {
         // Copy row
-        uint8_t* out = (uint8_t*) 0x30000000 + (y+text_y) * 640 * 4 + x * 4;
+        uint8_t* out = (uint8_t*) FRAMEBUFFER_ADDRESS + 4 * ((y+text_y) * FRAMEBUFFER_WIDTH + x);
         uint8_t* in = buffer->ptr + text_y * buffer->p;
         memcpy(out, in, buffer->p);
     }

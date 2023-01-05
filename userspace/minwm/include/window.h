@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include "common.h"
 
-const Unit window_thickness = 5;
+const Unit window_thickness = 2;
 const Colour window_background = to_colour(0, 0, 0);
 
 struct Window

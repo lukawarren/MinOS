@@ -1,7 +1,8 @@
 #include "compositor.h"
 #include "font.h"
+#include <assert.h>
 
-constexpr Colour background = to_colour(255, 255, 255);
+constexpr Colour background = 0xffc0c0c0;
 Colour* framebuffer = (Colour*) 0x30000000;
 
 Compositor::Compositor(const Size screen_size)
@@ -54,40 +55,54 @@ void Compositor::blit_window_framebuffer(Window* window)
 
 void Compositor::blit_window_border(Window* window)
 {
-    // For "skipping ahead" to the other side
-    const Position offset = window->framebuffer_size + window_thickness;
-    const Position offset_x = { offset.x, 0 };
-    const Position offset_y = { 0, offset.y };
+    assert(window_thickness == 2);
 
-    // For avoiding overdraw with vertical bars
-    const Size overdraw_size = { 0, window_thickness };
-
-    // Horizontal; top
+    // Top left "corner"
+    fill_rect(
+        window->position + Size { 1, 0 },
+        Size { window->size().x-2, 1 },
+        0xffdfdfdf
+    );
     fill_rect(
         window->position,
-        Size { window->size().x, window_thickness },
-        window_background
+        Size { 1, window->size().y-1 },
+        0xffdfdfdf
     );
 
-    // Horizontal; bottom
+    // Bottom right "corner"
     fill_rect(
-        window->position + offset_y,
-        Size { window->size().x, window_thickness },
-        window_background
+        window->position + Size { 0, window->size().y-1 },
+        Size { window->size().x, 1 },
+        0xff000000
+    );
+    fill_rect(
+        window->position + Size { window->size().x-1, 0 },
+        Size { 1, window->size().y-1 },
+        0xff000000
     );
 
-    // Vertical; left
+    // Inner top left "corner"
     fill_rect(
-        window->position + overdraw_size,
-        Size { window_thickness, window->size().y } - overdraw_size,
-        window_background
+        window->position + Size { 2, 1 },
+        Size { window->size().x-3, 1 },
+        0xffffffff
+    );
+    fill_rect(
+        window->position + Size { 1, 1 },
+        Size { 1, window->size().y-2 },
+        0xffffffff
     );
 
-    // Vertical; right
+    // Inner bottom right "corner"
     fill_rect(
-        window->position + overdraw_size + offset_x,
-        Size { window_thickness, window->size().y } - overdraw_size,
-        window_background
+        window->position + Size { 1, window->size().y-2 },
+        Size { window->size().x-2, 1 },
+        0xff808080
+    );
+    fill_rect(
+        window->position + Size { window->size().x-2, 1 },
+        Size { 1, window->size().y-2 },
+        0xff808080
     );
 }
 
