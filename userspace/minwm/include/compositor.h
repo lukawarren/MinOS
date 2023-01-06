@@ -9,13 +9,17 @@ public:
 
     void display_bar(const char* message);
     void display_window(Window* window);
+
     void redraw_window(Window* window);
+    void redraw_window_framebuffer(Window* window);
+    void redraw_window_bar(Window* window);
 
 private:
     void blit_background();
 
     void blit_window_framebuffer(Window* window);
     void blit_window_border(Window* window);
+    void blit_window_bar(Window* window);
     void blit_window(Window* window);
 
     Size screen_size;

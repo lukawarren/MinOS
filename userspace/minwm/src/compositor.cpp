@@ -15,8 +15,8 @@ Compositor::Compositor(const Size screen_size)
 void Compositor::display_bar(const char* message)
 {
     const Unit height = 32;
-    draw_panel(framebuffer, screen_size.x, {}, { screen_size.x, height });
-    draw_font_centered(message, 0xff111111, 0, 0, screen_size.x, height);
+    draw_panel(framebuffer, screen_size.x, { 0, screen_size.y - height }, { screen_size.x, height });
+    draw_font_centered(message, 0xff111111, 0, screen_size.y - height, screen_size.x, height);
 }
 
 void Compositor::display_window(Window* window)
@@ -27,7 +27,17 @@ void Compositor::display_window(Window* window)
 
 void Compositor::redraw_window(Window* window)
 {
+    blit_window(window);
+}
+
+void Compositor::redraw_window_framebuffer(Window* window)
+{
     blit_window_framebuffer(window);
+}
+
+void Compositor::redraw_window_bar(Window* window)
+{
+    blit_window_bar(window);
 }
 
 void Compositor::blit_background()
@@ -55,10 +65,19 @@ void Compositor::blit_window_framebuffer(Window* window)
 
 void Compositor::blit_window_border(Window* window)
 {
-    // Border
-    draw_panel(framebuffer, screen_size.x, window->position, window->size(), true);
+    draw_panel(framebuffer, screen_size.x, window->position, window->size(), false);
+}
 
+void Compositor::blit_window_bar(Window* window)
+{
     // Bar background
+    fill_rect(
+        framebuffer,
+        screen_size.x,
+        window->position + window_thickness,
+        Size { window->size().x - window_thickness*2, bar_margin_top } ,
+        panel_background_colour
+    );
     draw_gradient(
         framebuffer,
         screen_size.x,
@@ -66,6 +85,13 @@ void Compositor::blit_window_border(Window* window)
         Size { window->size().x - window_thickness*2, bar_height - bar_margin_top - bar_margin_bottom } ,
         bar_start_colour,
         bar_end_colour
+    );
+    fill_rect(
+        framebuffer,
+        screen_size.x,
+        window->position + window_thickness + Size { 0, bar_height - bar_margin_bottom },
+        Size { window->size().x - window_thickness*2, bar_margin_bottom } ,
+        panel_background_colour
     );
 
     // Bar text
@@ -83,4 +109,5 @@ void Compositor::blit_window(Window* window)
 {
     blit_window_framebuffer(window);
     blit_window_border(window);
+    blit_window_bar(window);
 }

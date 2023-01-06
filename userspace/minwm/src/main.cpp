@@ -32,7 +32,7 @@ int main()
 
         // Re-draw window contents
         if (current_window != SIZE_MAX)
-            c.redraw_window(windows[current_window]);
+            c.redraw_window_framebuffer(windows[current_window]);
     }
 
     free_font();
@@ -90,7 +90,10 @@ void poll_messages()
 
                 // Current title changed; redraw
                 if (current_window == i)
+                {
                     draw_bar_for_current_window();
+                    c.redraw_window_bar(windows[i]);
+                }
             }
         }
 

@@ -6,6 +6,8 @@
     Also used by the compositor.
 */
 
+constexpr uint32_t panel_background_colour = 0xffc0c0c0;
+
 void fill_rect(
     uint32_t* framebuffer,
     const Unit framebuffer_width,
@@ -126,6 +128,37 @@ void draw_panel(
             framebuffer_width,
             position + Size { 2, 2 },
             Size { size.x - 4, size.y - 4 },
-            0xffc0c0c0
+            panel_background_colour
         );
+    else
+    {
+        fill_rect(
+            framebuffer,
+            framebuffer_width,
+            position + Size { 2, 2 },
+            Size { size.x - 4, 1 },
+            panel_background_colour
+        );
+        fill_rect(
+            framebuffer,
+            framebuffer_width,
+            position + Size { 2, size.y - 3 },
+            Size { size.x - 4, 1 },
+            panel_background_colour
+        );
+        fill_rect(
+            framebuffer,
+            framebuffer_width,
+            position + Size { 2, 3 },
+            Size { 1, size.y - 6 },
+            panel_background_colour
+        );
+        fill_rect(
+            framebuffer,
+            framebuffer_width,
+            position + Size { size.x - 3, 3 },
+            Size { 1, size.y - 6 },
+            panel_background_colour
+        );
+    }
 }
