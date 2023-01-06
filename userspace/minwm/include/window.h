@@ -5,8 +5,15 @@
 #include <unistd.h>
 #include "common.h"
 
-const Unit window_thickness = 2;
+const Unit bar_height = 20;
+const Unit window_thickness = 3;
+const Unit bar_margin_top = 1;
+const Unit bar_margin_bottom = 2;
+
 const Colour window_background = to_colour(0, 0, 0);
+const Colour bar_text_colour = to_colour(255, 255, 255);
+const Colour bar_start_colour = 0xff000080;
+const Colour bar_end_colour = 0xff1084d0;
 
 struct Window
 {
@@ -29,11 +36,11 @@ struct Window
 
     constexpr Position framebuffer_position() const
     {
-        return position + window_thickness;
+        return position + window_thickness + Size { 0, bar_height };
     }
 
     constexpr Position size() const
     {
-        return framebuffer_size + window_thickness * 2;
+        return framebuffer_size + window_thickness * 2 + Size { 0, bar_height };
     }
 };

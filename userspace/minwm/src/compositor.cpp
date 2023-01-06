@@ -1,8 +1,9 @@
 #include "compositor.h"
+#include "client/shared.h"
 #include "font.h"
 #include <assert.h>
 
-constexpr Colour background = 0xffc0c0c0;
+constexpr Colour background = to_colour(50, 50, 50);
 Colour* framebuffer = (Colour*) 0x30000000;
 
 Compositor::Compositor(const Size screen_size)
@@ -14,9 +15,8 @@ Compositor::Compositor(const Size screen_size)
 void Compositor::display_bar(const char* message)
 {
     const Unit height = 32;
-    const Colour colour = to_colour(0, 0, 0);
-    fill_rect({ 0, 0 }, { screen_size.x, height }, colour);
-    draw_font_centered(message, 0xffffffff, 0, 0, screen_size.x, height);
+    draw_panel(framebuffer, screen_size.x, {}, { screen_size.x, height });
+    draw_font_centered(message, 0xff111111, 0, 0, screen_size.x, height);
 }
 
 void Compositor::display_window(Window* window)
@@ -32,7 +32,7 @@ void Compositor::redraw_window(Window* window)
 
 void Compositor::blit_background()
 {
-    fill_rect({}, screen_size, background);
+    fill_rect(framebuffer, screen_size.x, {}, screen_size, background);
 }
 
 void Compositor::blit_window_framebuffer(Window* window)
@@ -55,54 +55,27 @@ void Compositor::blit_window_framebuffer(Window* window)
 
 void Compositor::blit_window_border(Window* window)
 {
-    assert(window_thickness == 2);
+    // Border
+    draw_panel(framebuffer, screen_size.x, window->position, window->size(), true);
 
-    // Top left "corner"
-    fill_rect(
-        window->position + Size { 1, 0 },
-        Size { window->size().x-2, 1 },
-        0xffdfdfdf
-    );
-    fill_rect(
-        window->position,
-        Size { 1, window->size().y-1 },
-        0xffdfdfdf
-    );
-
-    // Bottom right "corner"
-    fill_rect(
-        window->position + Size { 0, window->size().y-1 },
-        Size { window->size().x, 1 },
-        0xff000000
-    );
-    fill_rect(
-        window->position + Size { window->size().x-1, 0 },
-        Size { 1, window->size().y-1 },
-        0xff000000
+    // Bar background
+    draw_gradient(
+        framebuffer,
+        screen_size.x,
+        window->position + window_thickness + Size { 0, bar_margin_top },
+        Size { window->size().x - window_thickness*2, bar_height - bar_margin_top - bar_margin_bottom } ,
+        bar_start_colour,
+        bar_end_colour
     );
 
-    // Inner top left "corner"
-    fill_rect(
-        window->position + Size { 2, 1 },
-        Size { window->size().x-3, 1 },
-        0xffffffff
-    );
-    fill_rect(
-        window->position + Size { 1, 1 },
-        Size { 1, window->size().y-2 },
-        0xffffffff
-    );
-
-    // Inner bottom right "corner"
-    fill_rect(
-        window->position + Size { 1, window->size().y-2 },
-        Size { window->size().x-2, 1 },
-        0xff808080
-    );
-    fill_rect(
-        window->position + Size { window->size().x-2, 1 },
-        Size { 1, window->size().y-2 },
-        0xff808080
+    // Bar text
+    draw_font_centered(
+        window->title,
+        bar_text_colour,
+        window->position.x,
+        window->position.y + 2,
+        window->size().x,
+        bar_height
     );
 }
 
@@ -110,11 +83,4 @@ void Compositor::blit_window(Window* window)
 {
     blit_window_framebuffer(window);
     blit_window_border(window);
-}
-
-void Compositor::fill_rect(Position position, Size size, Colour colour)
-{
-    for (Unit y = 0; y < size.y; ++y)
-        for (Unit x = 0; x < size.x; ++x)
-            framebuffer[(position.y + y) * screen_size.x + position.x + x] = colour;
 }

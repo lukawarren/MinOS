@@ -18,7 +18,5 @@ private:
     void blit_window_border(Window* window);
     void blit_window(Window* window);
 
-    void fill_rect(Position position, Size size, Colour colour);
-
     Size screen_size;
 };

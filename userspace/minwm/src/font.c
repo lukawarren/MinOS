@@ -11,6 +11,7 @@
 
 #define FRAMEBUFFER_WIDTH 640
 #define FRAMEBUFFER_ADDRESS 0x30000000
+#define FAST_DRAW 0
 
 void* font;
 ssfn_t ctx = { 0 };
@@ -41,13 +42,26 @@ void draw_font(const char* message, uint32_t colour, unsigned int x, unsigned in
 {
     ssfn_buf_t* buffer = ssfn_text(&ctx, message, colour);
 
-    for (unsigned int text_y = 0; text_y < (unsigned int)buffer->h; ++text_y)
-    {
-        // Copy row
-        uint8_t* out = (uint8_t*) FRAMEBUFFER_ADDRESS + 4 * ((y+text_y) * FRAMEBUFFER_WIDTH + x);
-        uint8_t* in = buffer->ptr + text_y * buffer->p;
-        memcpy(out, in, buffer->p);
-    }
+    #if FAST_DRAW
+        for (unsigned int text_y = 0; text_y < (unsigned int)buffer->h; ++text_y)
+        {
+            // Copy row
+            uint8_t* out = (uint8_t*) FRAMEBUFFER_ADDRESS + 4 * ((y+text_y) * FRAMEBUFFER_WIDTH + x);
+            uint8_t* in = buffer->ptr + text_y * buffer->p;
+            memcpy(out, in, buffer->p);
+        }
+    #else
+        for (unsigned int text_y = 0; text_y < (unsigned int)buffer->h; ++text_y)
+        {
+            for (unsigned int text_x = 0; text_x < (unsigned int)buffer->w; ++text_x)
+            {
+                uint8_t* out = (uint8_t*) FRAMEBUFFER_ADDRESS + 4 * ((y+text_y) * FRAMEBUFFER_WIDTH + x + text_x);
+                uint8_t* in = buffer->ptr + text_y * buffer->p + text_x * 4;
+                if (*in != 0)
+                    memcpy(out, in, 4);
+            }
+        }
+    #endif
 
     free(buffer->ptr);
     free(buffer);
