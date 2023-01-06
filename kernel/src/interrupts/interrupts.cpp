@@ -3,6 +3,7 @@
 #include "interrupts/irq.h"
 #include "interrupts/pit.h"
 #include "interrupts/pic.h"
+#include "dev/keyboard.h"
 #include "dev/uart.h"
 #include "cpu/idt.h"
 #include "cpu/cpu.h"
@@ -89,12 +90,7 @@ namespace interrupts
             case 1:
             {
                 const uint8_t scancode = cpu::inb(0x60);
-
-                if (keyboard_buffer_keys < keyboard_buffer_size)
-                    keyboard_buffer[keyboard_buffer_keys++] = scancode;
-                else
-                    println("keyboard buffer is too full to accept scancode ", scancode);
-
+                keyboard::on_scancode(scancode);
                 break;
             }
 

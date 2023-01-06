@@ -7,6 +7,7 @@
 #include "memory/smbios.h"
 #include "memory/elf.h"
 #include "multiboot.h"
+#include "dev/keyboard.h"
 #include "dev/uart.h"
 #include "cpu/cpu.h"
 #include "fs/fs.h"
@@ -36,14 +37,13 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     // Setup filesystem, installing devices
     fs::init(info, [](fs::DeviceFileSystem& dfs)
     {
-        // Keyboard - assume length to be 1 and offset to be 0
+        // Keyboard - disregard offset
         {
-            const auto on_read = [](void* data, uint64_t, uint64_t)
+            const auto on_read = [](void* data, uint64_t, uint64_t length)
             {
-                if (interrupts::keyboard_buffer_keys == 0) return Optional<uint64_t> { 0 };
-                memcpy(data, &interrupts::keyboard_buffer[interrupts::keyboard_buffer_keys-1], 1);
-                interrupts::keyboard_buffer_keys--;
-                return Optional<uint64_t> { 1 };
+                auto len = MIN(keyboard::n_scancodes, length);
+                memcpy(data, &keyboard::scancodes, len);
+                return Optional<uint64_t> { len };
             };
             const auto on_write = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
             dfs.install(fs::DeviceFile(on_read, on_write, "keyboard"));

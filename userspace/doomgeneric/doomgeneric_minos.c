@@ -14,7 +14,9 @@
 
 static uint32_t* framebuffer;
 static uint32_t initial_time = 0;
-static char key_buffer[256] = {};
+
+static unsigned char keyboard_state[128] = {};
+static unsigned char key_buffer[256] = {};
 static uint32_t key_index = 0;
 static FILE* keyboard_file;
 
@@ -47,11 +49,17 @@ void DG_Init()
 
 void DG_DrawFrame()
 {
-    // Add input to queue
-    char scancode = 0;
-    read(fileno(keyboard_file), &scancode, 1);
-    if (scancode != -1 && scancode != 0 && key_index < 256)
-        key_buffer[++key_index] = scancode;
+    // Compare keyboard states and generate events
+    unsigned char new_state[128];
+    read(fileno(keyboard_file), &new_state, 128);
+    for (int i = 0; i < 128; ++i)
+    {
+        if (new_state[i] != keyboard_state[i] && key_index <= 255)
+        {
+            keyboard_state[i] = new_state[i];
+            key_buffer[key_index++] = i | (new_state[i] ? 0 : 0x80);
+        }
+    }
 
     // Copy output over row-by-row from DG_ScreenBuffer
     for (uint32_t y = 0; y < DOOMGENERIC_RESY; ++y)
@@ -64,6 +72,7 @@ void DG_DrawFrame()
 
 void DG_SleepMs(uint32_t ms)
 {
+    // TODO: ammend when kernel has sleep support
     uint32_t current_ms = get_ms();
     while (1) {
         if (get_ms() - current_ms >= ms)
@@ -80,17 +89,11 @@ int DG_GetKey(int* pressed, unsigned char* doomKey)
 {
     if (key_index == 0) return 0;
 
-    char scancode = key_buffer[key_index--];
-
-    // Temporary minwm hack
-    if (scancode == 15)
-    {
-        struct SwitchWindowMessage message = {};
-        message.pid = 1;
-        message.id = SWITCH_WINOW_MESSAGE;
-        assert(add_messages(&message, 1) == 1);
-        return 0;
-    }
+    // Grab oldest event
+    unsigned char scancode = key_buffer[0];
+    for (int i = 0; i < 255; ++i)
+        key_buffer[i] = key_buffer[i+1];
+    key_index--;
 
     *doomKey = scancode_to_doom_key(scancode & 0x7f);
     *pressed = !(scancode & 0x80);
@@ -105,7 +108,6 @@ void DG_SetWindowTitle(const char* title)
     message.id = SET_WINDOW_TITLE_MESSAGE;
     strcpy((char*)message.title, title);
     assert(add_messages(&message, 1) == 1);
-
 }
 
 static unsigned char scancode_to_doom_key(unsigned char scancode)
@@ -114,42 +116,21 @@ static unsigned char scancode_to_doom_key(unsigned char scancode)
 
     switch (scancode)
     {
-    case 28:
-        key = KEY_ENTER;
-        break;
-    case 1:
-        key = KEY_ESCAPE;
-        break;
-    case 30: // a
-        key = KEY_LEFTARROW;
-        break;
-    case 32: // d
-        key = KEY_RIGHTARROW;
-        break;
-    case 17: // w
-        key = KEY_UPARROW;
-        break;
-    case 31: // s
-        key = KEY_DOWNARROW;
-        break;
-    case 57: // space
-        key = KEY_FIRE;
-        break;
-    case 18: // e
-        key = KEY_USE;
-        break;
-    case 42:
-    case 54:
-        key = KEY_RSHIFT;
-        break;
-    case 21:
-        key = 'y';
-        break;
-    default:
-        break;
+        case 28: return KEY_ENTER;
+        case  1: return KEY_ESCAPE;
+        case 30: return KEY_LEFTARROW;  // a
+        case 32: return KEY_RIGHTARROW; // d
+        case 17: return KEY_UPARROW;    // w
+        case 31: return KEY_DOWNARROW;  // s
+        case 57: return KEY_FIRE;       // space
+        case 18: return KEY_USE;        // e
+        case 42:
+        case 54: return KEY_RSHIFT;
+        case 21: return 'y';
+        default: return 0;
     }
 
-    return key;
+    return 0;
 }
 
 static uint32_t get_ms()
