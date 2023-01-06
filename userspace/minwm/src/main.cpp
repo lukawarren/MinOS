@@ -23,7 +23,7 @@ void draw_bar_for_current_window();
 int main()
 {
     printf("[minwm] starting...\n");
-    init_font("Gidole-Regular.sfn", 16);
+    init_font("Perfect-DOS-VGA-437.sfn", 13);
 
     for(;;)
     {

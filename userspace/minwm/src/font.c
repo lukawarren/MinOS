@@ -30,9 +30,10 @@ void init_font(const char* path, int font_size)
     fclose(file);
 
     // Load
+    const int style = SSFN_STYLE_REGULAR | SSFN_STYLE_NOAA;
     memset(&ctx, 0, sizeof(ssfn_t));
     ssfn_load(&ctx, font);
-    ssfn_select(&ctx, SSFN_FAMILY_ANY, NULL, SSFN_STYLE_REGULAR, font_size);
+    ssfn_select(&ctx, SSFN_FAMILY_ANY, NULL, style, font_size);
     printf("[minwm] Loaded font %s\n", path);
 }
 

@@ -49,7 +49,7 @@ ninja
 `qemu-system-i386 -cdrom build/MinOS.iso -serial mon:stdio`
 
 ## Attributions
-* Uses the [Gidole font](https://github.com/larsenwork/Gidole)
+* Uses the [Perfect DOS VGA 437](https://www.dafont.com/perfect-dos-vga-437.font) font
 * Toolchain built with patches from [Nightingale](https://github.com/tyler569/nightingale) and [SerenityOS](https://github.com/SerenityOS/serenity)
 
 ## History
