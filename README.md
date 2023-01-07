@@ -24,6 +24,8 @@ On Fedora:
 * grub2-pc
 * grub2-tools-extra
 * clang-tools-extra
+* texinfo
+* wget
 
 ## Building
 The full toolchain can be built like so:
