@@ -41,8 +41,8 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
         {
             const auto on_read = [](void* data, uint64_t, uint64_t length)
             {
-                auto len = MIN(keyboard::n_scancodes, length);
-                memcpy(data, &keyboard::scancodes, len);
+                uint64_t len = MIN(keyboard::n_scancodes, length);
+                memcpy_large(data, &keyboard::scancodes, len);
                 return Optional<uint64_t> { len };
             };
             const auto on_write = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
@@ -70,7 +70,8 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     // Jump to userspace
     memory::add_elf_from_module(info, "minwm.bin");
     memory::add_elf_from_module(info, "minshell.bin");
-    memory::add_elf_from_module(info, "doom.bin");
+    //memory::add_elf_from_module(info, "doom.bin");
+    memory::add_elf_from_module(info, "snake.bin");
     println("Entering userspace...");
     cpu::enable_interrupts();
 

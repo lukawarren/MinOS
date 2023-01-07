@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
-#include "common.h"
+#include "client/types.h"
 
 const Unit bar_height = 20;
 const Unit window_thickness = 3;

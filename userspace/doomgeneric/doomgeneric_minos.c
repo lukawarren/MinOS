@@ -10,7 +10,7 @@
 #include "doomkeys.h"
 
 #include "minlib.h"
-#include "messages.h"
+#include "client/messages.h"
 
 static uint32_t* framebuffer;
 static uint32_t initial_time = 0;
@@ -41,7 +41,7 @@ void DG_Init()
     message.height = DOOMGENERIC_RESY;
     message.framebuffer = framebuffer;
     strcpy((char*)message.title, "Doom Generic");
-    assert(add_messages(&message, 1) == 1);
+    send_message(&message);
 
     // Store initial time
     initial_time = get_ms();
@@ -107,7 +107,7 @@ void DG_SetWindowTitle(const char* title)
     message.pid = 1;
     message.id = SET_WINDOW_TITLE_MESSAGE;
     strcpy((char*)message.title, title);
-    assert(add_messages(&message, 1) == 1);
+    send_message(&message);
 }
 
 static unsigned char scancode_to_doom_key(unsigned char scancode)

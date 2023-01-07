@@ -14,12 +14,23 @@
 #define SYS_share_memory CUSTOM_BIT | 3
 
 #ifndef KERNEL
+#include <assert.h>
+
+#ifdef __cplusplus
+#include "vector.h"
+#endif
 
 // Custom syscalls
 
 size_t add_messages(struct Message* messages, size_t count)
 {
     return __syscall2(SYS_add_messages, (long)messages, (long)count);
+}
+
+size_t send_message(struct Message* message)
+{
+    assert(add_messages(message, 1) == 1);
+    return 1;
 }
 
 size_t get_messages(struct Message* messages, size_t count)

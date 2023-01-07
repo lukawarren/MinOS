@@ -1,5 +1,5 @@
 #include "compositor.h"
-#include "client/shared.h"
+#include "client/drawing.h"
 #include "font.h"
 #include <assert.h>
 

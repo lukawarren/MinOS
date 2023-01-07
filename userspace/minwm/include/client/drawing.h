@@ -1,8 +1,8 @@
 #pragma once
-#include "common.h"
+#include "client/types.h"
 
 /*
-    Contains code designed to be used by "clients" (i.e. the windows themselves).
+    Contains drawing code designed to be used by "clients" (i.e. the windows themselves).
     Also used by the compositor.
 */
 
@@ -55,7 +55,8 @@ void draw_panel(
     const Unit framebuffer_width,
     const Position position,
     const Size size,
-    const bool fill = true
+    const bool fill = true,
+    const Colour fill_colour = panel_background_colour
 )
 {
     // Top left "corner"
@@ -128,7 +129,7 @@ void draw_panel(
             framebuffer_width,
             position + Size { 2, 2 },
             Size { size.x - 4, size.y - 4 },
-            panel_background_colour
+            fill_colour
         );
     else
     {
@@ -137,28 +138,28 @@ void draw_panel(
             framebuffer_width,
             position + Size { 2, 2 },
             Size { size.x - 4, 1 },
-            panel_background_colour
+            fill_colour
         );
         fill_rect(
             framebuffer,
             framebuffer_width,
             position + Size { 2, size.y - 3 },
             Size { size.x - 4, 1 },
-            panel_background_colour
+            fill_colour
         );
         fill_rect(
             framebuffer,
             framebuffer_width,
             position + Size { 2, 3 },
             Size { 1, size.y - 6 },
-            panel_background_colour
+            fill_colour
         );
         fill_rect(
             framebuffer,
             framebuffer_width,
             position + Size { size.x - 3, 3 },
             Size { 1, size.y - 6 },
-            panel_background_colour
+            fill_colour
         );
     }
 }
