@@ -50,10 +50,8 @@ public:
         }
     }
 
-    void pop(T* element)
+    void pop(const size_t index)
     {
-        auto index = get_index(element);
-
         // Free memory
         delete data[index];
 

@@ -25,6 +25,7 @@ struct Vector2
     constexpr void operator*=(const Vector2& rhs) { x *= rhs.x; y *= rhs.y; }
     constexpr void operator/=(const Vector2& rhs) { x /= rhs.x; y /= rhs.y; }
 
+    constexpr bool operator==(const Vector2& rhs) { return x == rhs.x && y == rhs.y; }
 };
 
 typedef Vector2<Unit> Position;

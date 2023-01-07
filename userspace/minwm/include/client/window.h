@@ -34,6 +34,15 @@ public:
         send_message((Message*)&message);
     }
 
+    void set_title(const char* title)
+    {
+        SetWindowTitleMessage message = {};
+        message.pid = 1;
+        message.id = SET_WINDOW_TITLE_MESSAGE;
+        strncpy((char*)message.title, title, sizeof(message.title));
+        send_message((Message*)&message);
+    }
+
     uint32_t* framebuffer;
 };
 
