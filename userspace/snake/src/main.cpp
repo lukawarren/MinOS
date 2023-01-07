@@ -59,6 +59,7 @@ int main()
         {
             window.set_title("Game over!");
             did_die = true;
+            break;
         }
 
         // Sleep - TODO: ammend if/when sleep syscall added
@@ -70,9 +71,11 @@ int main()
         };
         auto ms = get_ms();
         while (get_ms() - ms < 15)
-            if (!game_over())
-                input();
+            input();
     }
+
+    volatile int hang = 1;
+    while(hang) {}
 
     fclose(keyboard);
     return 0;
