@@ -35,6 +35,7 @@ The full toolchain can be built like so:
 ```
 Then build the project:
 ```
+# (after adding toolchain/prefix/bin to path)
 mkdir build
 cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain/CMake/toolchain.cmake .. -G Ninja

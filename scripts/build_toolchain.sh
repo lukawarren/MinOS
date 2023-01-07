@@ -36,6 +36,7 @@ patch -p1 -i ../minos-binutils-${BINUTILS_VERSION}.patch
 popd
 pushd $GCC_DIR
 patch -p1 -i ../minos-gcc-${GCC_VERSION}.patch
+./contrib/download_prerequisites # GCC deps
 popd
 
 # Build binutils
@@ -47,7 +48,7 @@ make install
 popd
 
 # Build gcc
-mkdir gcc-build
+mkdir -p gcc-build
 pushd gcc-build
 ../$GCC_DIR/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --with-sysroot="$SYSROOT"
 make $PARALLEL all-gcc && make $PARALLEL all-target-libgcc
