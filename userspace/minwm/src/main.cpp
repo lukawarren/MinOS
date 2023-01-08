@@ -8,8 +8,8 @@
 #include <string.h>
 #include <stdio.h>
 
-constexpr Unit screen_width = 640;
-constexpr Unit screen_height = 480;
+constexpr Unit screen_width = 1280;
+constexpr Unit screen_height = 720;
 constexpr Size screen_size = { screen_width, screen_height };
 
 Vector<Window> windows;

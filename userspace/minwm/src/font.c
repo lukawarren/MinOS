@@ -9,7 +9,7 @@
 #define _UINT64_T uint64_t
 #include <ssfn.h>
 
-#define FRAMEBUFFER_WIDTH 640
+#define FRAMEBUFFER_WIDTH 1280
 #define FRAMEBUFFER_ADDRESS 0x30000000
 #define FAST_DRAW 0
 

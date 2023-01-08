@@ -341,11 +341,16 @@ namespace multitask
         using namespace memory;
         const auto v_addr = VirtualAddress(address / PAGE_SIZE) * PAGE_SIZE;
         const auto p_addr = current_process->frame.virtual_address_to_physical(v_addr);
-        const auto full_size = PageFrame::round_to_next_page_size(size);
+        auto full_size = PageFrame::round_to_next_page_size(size);
 
-        // ...ensuring all pages are owned by current process
+        // ...ensuring all pages are owned by current process...
         if (!current_process->frame.owns_memory(v_addr, full_size))
             return -1;
+
+        // ...and adding an extra page padding in-case of rounding errors, where
+        // the supplied address was not page aligned
+        if (!PageFrame::is_page_aligned(address))
+            full_size += PAGE_SIZE;
 
         process.data->frame.map_pages(
             p_addr,

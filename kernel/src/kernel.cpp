@@ -70,8 +70,8 @@ void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
     // Jump to userspace
     memory::add_elf_from_module(info, "minwm.bin");
     memory::add_elf_from_module(info, "minshell.bin");
-    //memory::add_elf_from_module(info, "doom.bin");
-    memory::add_elf_from_module(info, "snake.bin");
+    memory::add_elf_from_module(info, "doom.bin");
+    //memory::add_elf_from_module(info, "snake.bin");
     println("Entering userspace...");
     cpu::enable_interrupts();
 
