@@ -12,18 +12,30 @@ constexpr Unit screen_width = 1280;
 constexpr Unit screen_height = 720;
 constexpr Size screen_size = { screen_width, screen_height };
 
-Vector<Window> windows;
-size_t current_window = SIZE_MAX;
+struct Workspace
+{
+    Vector<Window> windows;
+    Optional<size_t> current_window;
+};
+
+Vector<Workspace> workspaces;
+size_t current_workspace;
+
 Compositor c(screen_size);
 
 void poll_messages();
 void switch_to_current_window();
-void draw_bar_for_current_window();
+void draw_bar_for_current_workspace();
 
 int main()
 {
     printf("[minwm] starting...\n");
     init_font("Perfect-DOS-VGA-437.sfn", 13);
+
+    // Initial workspace
+    workspaces.push(new Workspace());
+    current_workspace = 0;
+    draw_bar_for_current_workspace();
 
     for(;;)
     {
@@ -31,8 +43,10 @@ int main()
         poll_messages();
 
         // Re-draw window contents
-        if (current_window != SIZE_MAX)
-            c.redraw_window_framebuffer(windows[current_window]);
+        auto workspace = workspaces[current_workspace];
+        workspace->windows.for_each([](Window* w) {
+            c.redraw_window_framebuffer(w);
+        });
     }
 
     free_font();
@@ -45,17 +59,27 @@ void poll_messages()
     while (get_messages(&message, 1))
     {
         const int id = *(int*)message.data;
+        auto workspace = workspaces[current_workspace];
 
         if (id == CREATE_WINOW_MESSAGE)
         {
             const auto* m = (CreateWindowMessage*)&message;
 
             const Size size = { m->width, m->height };
-            const Position position = screen_size/2 - size/2;
+            Position position = screen_size/2 - size/2;
+
+            static int bob = 0;
+            if (bob++ == 0)
+            {
+                position = Position { 100, 100 };
+            }
+            else if (bob++ == 2)
+            {
+                position = Position { 500, 720/2 - size.y/2 };
+            }
 
             // Create and centre window
             Window* window = new Window(m->title, position, m->framebuffer, size, m->pid);
-            window->position = screen_size / 2 - size / 2;
 
             // Make sure it's not too big
             if ((window->position + window->size()).x >= screen_size.x ||
@@ -67,32 +91,36 @@ void poll_messages()
             }
 
             // Push to compositor
-            windows.push(window);
-            current_window = windows.size()-1;
+            workspace->windows.push(window);
+            workspace->current_window = workspace->windows.size()-1;
             switch_to_current_window();
         }
 
         else if (id == SWITCH_WINOW_MESSAGE)
         {
-            if (windows.size() == 0) return;
-            ++current_window %= windows.size();
+            if (workspace->windows.size() == 0) return;
+
+            if (!workspace->current_window.contains_data)
+                workspace->current_window = 0;
+
+            ++(workspace->current_window.data) %= workspace->windows.size();
             switch_to_current_window();
         }
 
         else if (id == SET_WINDOW_TITLE_MESSAGE)
         {
             const auto* m = (SetWindowTitleMessage*)&message;
-            for (size_t i = 0; i < windows.size(); ++i)
+            for (size_t w = 0; w < workspaces.size(); ++w)
             {
-                // Assume 1 window per process
-                if (windows[i]->pid == m->pid)
-                    strncpy(windows[i]->title, m->title, sizeof(windows[i]->title));
-
-                // Current title changed; redraw
-                if (current_window == i)
+                for (size_t i = 0; i < workspaces[w]->windows.size(); ++i)
                 {
-                    draw_bar_for_current_window();
-                    c.redraw_window_bar(windows[i]);
+                    // Assume 1 window per process
+                    if (workspaces[w]->windows[i]->pid == m->pid)
+                        strncpy(workspaces[w]->windows[i]->title, m->title, sizeof(workspaces[w]->windows[i]->title));
+
+                    // Redraw if visible
+                    if (current_workspace == w)
+                        c.redraw_window_bar(workspace->windows[i]);
                 }
             }
         }
@@ -103,14 +131,14 @@ void poll_messages()
 
 void switch_to_current_window()
 {
-    c.display_window(windows[current_window]);
-    draw_bar_for_current_window();
+    c.display_window(workspaces[current_workspace]->windows[
+        *workspaces[current_workspace]->current_window
+    ]);
 }
 
-void draw_bar_for_current_window()
+void draw_bar_for_current_workspace()
 {
-    auto* window = windows[current_window];
     char message[255];
-    snprintf(message, 255, "Workspace %d / %d - %s", current_window+1, windows.size(), window->title);
+    snprintf(message, 255, "Workspace %d / %d", current_workspace+1, workspaces.size());
     c.display_bar(message);
 }

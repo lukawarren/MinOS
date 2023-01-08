@@ -17,6 +17,7 @@
 #include <assert.h>
 
 #ifdef __cplusplus
+#include "optional.h"
 #include "vector.h"
 #endif
 

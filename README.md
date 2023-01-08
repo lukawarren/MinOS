@@ -1,6 +1,8 @@
 # MinOS
 The third rewrite of MinOS
 
+<img alt="Screenshot of the window manager, with Snake and Doom running" src="screenshots/minwm.png" width="512px"/>
+
 # Ports
 * Musl 1.2.3
 * Lua 5.4.4

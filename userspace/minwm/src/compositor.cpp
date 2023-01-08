@@ -21,7 +21,6 @@ void Compositor::display_bar(const char* message)
 
 void Compositor::display_window(Window* window)
 {
-    blit_background();
     blit_window(window);
 }
 
