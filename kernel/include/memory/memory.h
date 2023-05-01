@@ -1,32 +1,16 @@
-#pragma once
-#ifndef MEMORY_H
-#define MEMORY_H
+#include "memory/allocator.h"
+#include "memory/page_frame.h"
+#include "memory/multiboot_info.h"
 
-#include <stdint.h>
-#include <stddef.h>
-
-#include "multiboot.h"
-#include "memory/pageFrame.h"
-
-#define USER_PAGING_OFFSET      0x40000000
-#define FRAMEBUFFER_OFFSET      0x30000000
-#define SBRK_BUFFER_MAX_SIZE    0x00100000
-
-namespace Memory
+namespace memory
 {
-    void Init(const multiboot_info_t* pMultiboot);
+    extern PageFrame kernel_frame;
+    extern Allocator allocator;
 
-    uint32_t GetMaxMemory(const multiboot_info_t* pMultiboot);
-    uint32_t RoundToNextPageSize(const uint32_t size);
+    void init(const MultibootInfo& info);
 
-    extern uint32_t userspaceBegin;
-    extern uint32_t maxGroups;
-    extern uint32_t maxPages;
-
-    extern "C"
-    {
-        extern uint32_t __kernel_end;
-    }
+    Optional<AddressPair> allocate_for_user(const Optional<VirtualAddress> address, const size_t size, PageFrame& page_frame, const size_t flags = USER_PAGE);
+    Optional<AddressPair> allocate_for_user(const size_t size, PageFrame& page_frame, const size_t flags = USER_PAGE);
+    Optional<size_t> allocate_for_kernel(const size_t size);
+    void free_for_user(const size_t address, const size_t size, PageFrame& page_frame);
 }
-
-#endif

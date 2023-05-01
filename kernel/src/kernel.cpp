@@ -1,83 +1,79 @@
-#include "kernel.h"
-#include "kstdlib.h"
-#include "cpu/cpu.h"
-#include "cpu/gdt.h"
-#include "cpu/pic.h"
-#include "io/uart.h"
-#include "io/pci.h"
-#include "io/ps2.h"
-#include "io/mouse.h"
-#include "io/keyboard.h"
-#include "cpu/cmos.h"
+#include "interrupts/interrupts.h"
+#include "memory/multiboot_info.h"
+#include "multitask/scheduler.h"
+#include "multitask/syscalls.h"
+#include "multitask/process.h"
 #include "memory/memory.h"
-#include "memory/modules.h"
-#include "multitask/elf.h"
-#include "io/gfx/framebuffer.h"
-#include "multitask/multitask.h"
-#include "filesystem/filesystem.h"
+#include "memory/smbios.h"
+#include "memory/elf.h"
+#include "multiboot.h"
+#include "dev/keyboard.h"
+#include "dev/uart.h"
+#include "cpu/cpu.h"
+#include "fs/fs.h"
+#include "klib.h"
 
-extern uint32_t __tss_stack; // TSS stack from linker
+extern "C" { void kmain(multiboot_info_t* multiboot_header, uint32_t eax); }
 
-extern "C" void kMain(multiboot_info_t* pMultibootInfo)
+void kmain(multiboot_info_t* multiboot_header, uint32_t eax)
 {
-    // Init UART
-    UART::Init();
-    UART::WriteString("MinOS initialising...\n");
+    uart::init();
 
-    // Print time
-    auto time = CMOS::GetTime();
-    UART::WriteString("[CMOS] Time is ");
-    UART::WriteNumber(time.hour);
-    UART::WriteString(":");
-    UART::WriteNumber(time.minute);
-    UART::WriteString("\n");
+    // Verify we're multiboot and parse it
+    assert(eax == MULTIBOOT_BOOTLOADER_MAGIC);
+    const memory::MultibootInfo info(multiboot_header);
+    assert(info.n_modules >= 1);
 
-    // TSS
-    CPU::TSS tss = CPU::CreateTSSEntry((uint32_t)&__tss_stack, 0x10);
+    // Setup interrupts
+    interrupts::load();
 
-    // Setup GDT, TSS, IDT and interrupts
-    uint64_t GDTEntries[6] =
+    // Setup GDT, TSS, IDT, etc.
+    cpu::init();
+
+    // Setup memory
+    memory::smbios::parse();
+    memory::init(info);
+
+    // Setup filesystem, installing devices
+    fs::init(info, [](fs::DeviceFileSystem& dfs)
     {
-        CPU::CreateGDTEntry(0,          0,          0),            // GDT entry at 0x0 cannot be used 
-        CPU::CreateGDTEntry(0x00000000, 0xFFFFF,    GDT_CODE_PL0), // Code      - 0x8
-        CPU::CreateGDTEntry(0x00000000, 0xFFFFF,    GDT_DATA_PL0), // Data      - 0x10
-        CPU::CreateGDTEntry(0x00000000, 0xFFFFF,    GDT_CODE_PL3), // User code - 0x18
-        CPU::CreateGDTEntry(0x00000000, 0xFFFFF,    GDT_DATA_PL3), // User data - 0x20
-        CPU::CreateGDTEntry((uint32_t)&tss, sizeof(tss), TSS_PL0)
-    };
+        // Keyboard - disregard offset
+        {
+            const auto on_read = [](void* data, uint64_t, uint64_t length)
+            {
+                uint64_t len = MIN(keyboard::n_scancodes, length);
+                memcpy_large(data, &keyboard::scancodes, len);
+                return Optional<uint64_t> { len };
+            };
+            const auto on_write = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
+            dfs.install(fs::DeviceFile(on_read, on_write, "keyboard"));
+        }
 
-    // TSS descriptor - offset from start of GDT OR'ed with 3 to enable RPL 3
-    const uint16_t tssDescriptor = (5 * sizeof(uint64_t)) | 3;
-    
-    CPU::Init(GDTEntries, sizeof(GDTEntries) / sizeof(GDTEntries[0]), tssDescriptor, PIC_MASK_NONE, PIC_MASK_NONE);
+        // UART - assume length to be 1 and offset to be 0
+        {
+            const auto on_read = [](void* data, uint64_t, uint64_t)
+            {
+                const Optional<char> input = uart::read_char();
+                if (!input) return Optional<uint64_t> { 0 };
+                *(char*)data = input.data;
+                return Optional<uint64_t> { 1 };
+            };
+            const auto on_write = [](void*, uint64_t, uint64_t) { return Optional<uint64_t>{}; };
+            dfs.install(fs::DeviceFile(on_read, on_write, "uart"));
+        }
+    });
 
-    // Check multiboot, quickly grab GRUB modules, then configure memory
-    if ((pMultibootInfo->flags & 6) == false) UART::WriteString("Multiboot error!");
-    Modules::Init(pMultibootInfo);
-    Memory::Init(pMultibootInfo);
+    // Registers syscalls, etc.
+    multitask::init_syscalls();
+    multitask::init_scheduler(memory::kernel_frame.get_cr3());
 
-    // Sanity check it all and reserve memory before it's snatched again!
-    Modules::PostInit();
+    // Jump to userspace
+    memory::add_elf_from_module(info, "minwm.bin");
+    memory::add_elf_from_module(info, "minshell.bin");
+    memory::add_elf_from_module(info, "doom.bin");
+    memory::add_elf_from_module(info, "snake.bin");
+    println("Entering userspace...");
+    cpu::enable_interrupts();
 
-    // Setup filesystem
-    Filesystem::Init();
-    
-    // Free modules, as filesystem has its own copy of all files
-    Modules::Free();
-
-    // Setup devices
-    PCI::Init();
-    Framebuffer::Init(pMultibootInfo);
-    PS2::Init();
-    Mouse::Init();
-    Keyboard::Init();
-    
-    // Setup tasks
-    Multitask::Init();
-    Multitask::CreateTask("wm/wm.bin");
-
-    // Enable interrupts
-    CPU::EnableInterrupts();
-
-    for (;;) asm("nop"); // Hang
+    halt();
 }

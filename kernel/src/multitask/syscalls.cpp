@@ -1,611 +1,366 @@
 #include "multitask/syscalls.h"
-#include "multitask/multitask.h"
-#include "filesystem/filesystem.h"
-#include "multitask/mman.h"
+#include "multitask/scheduler.h"
+#include "interrupts/pit.h"
 #include "memory/memory.h"
-#include "io/uart.h"
-#include "io/gfx/framebuffer.h"
-#include "cpu/cmos.h"
-#include "cpu/pic.h"
-#include "kstdlib.h"
+#include "fs/fs.h"
 
-#define	S_IFDIR	    0040000 // Directory	
-#define	S_IFCHR		0020000 // Character device
-#define	S_IFBLK		0060000 // Block device
-#define	S_IFREG		0100000 // Regular
-#define	S_IFLNK		0120000 // Symbolic link
-#define	S_IFSOCK	0140000 // Socket
-#define	S_IFIFO		0010000 // FIFO / pipe
-
-typedef uint32_t uid_t;
-typedef uint32_t gid_t;
-typedef int pid_t;
-typedef char* caddr_t;
-typedef int id_t;
-typedef uint32_t ino_t;
-typedef int64_t off_t;
-typedef uint32_t blkcnt_t;
-typedef uint32_t blksize_t;
-typedef uint32_t dev_t;
-typedef uint16_t mode_t;
-typedef uint32_t nlink_t;
-typedef int64_t time_t;
-typedef uint32_t useconds_t;
-typedef int32_t suseconds_t;
-typedef uint32_t clock_t;
-
-struct stat
+namespace multitask
 {
-    dev_t     st_dev;     /* ID of device containing file */
-    ino_t     st_ino;     /* inode number */
-    mode_t    st_mode;    /* protection */
-    nlink_t   st_nlink;   /* number of hard links */
-    uid_t     st_uid;     /* user ID of owner */
-    gid_t     st_gid;     /* group ID of owner */
-    dev_t     st_rdev;    /* device ID (if special file) */
-    off_t     st_size;    /* total size, in bytes */
-    blksize_t st_blksize; /* blocksize for file system I/O */
-    blkcnt_t  st_blocks;  /* number of 512B blocks allocated */
-    time_t    st_atime;   /* time of last access */
-    time_t    st_mtime;   /* time of last modification */
-    time_t    st_ctime;   /* time of last status change */
-};
+    static size_t syscalls[2048] = {};
 
-struct timeval
-{
-    time_t      tv_sec;     /* seconds */
-    suseconds_t tv_usec;    /* microseconds */
-};
+    // POSIX
+    int brk(void *addr);
+    uint64_t clock_gettime64(clockid_t clk_id, struct timespec* tp);
+    int close(int fd);
+    pid_t getpid();
+    int ioctl(int fd, unsigned long request, char* argp);
+    int llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, off_t* result, unsigned int whence);
+    int madvise(void* addr, size_t length, int advice);
+    int mkdir(const char* path, mode_t mode);
+    void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
+    int mprotect(void* addr, size_t length, int prot);
+    int munmap(void* addr, size_t len);
+    int open(const char* pathname, int flags, mode_t mode);
+    ssize_t read(int fd, void* buf, size_t count);
+    ssize_t readv(int fd, const struct iovec* iov, int iovcnt);
+    int set_thread_area();
+    int set_tid_address();
+    ssize_t writev(int fd, const iovec* iov, int iovcnt);
 
-#define STDIN   0
-#define STDOUT  1
-#define STDERR  2
+    // Custom
+    size_t add_messages(Message* messages, size_t count);
+    size_t get_messages(Message* messages, size_t count);
+    int share_memory(size_t address, size_t size, pid_t pid);
 
-// Open flags
-#define FILEIO_O_RDONLY           0x0
-#define FILEIO_O_WRONLY           0x1
-#define FILEIO_O_RDWR             0x2
-#define FILEIO_O_APPEND           0x8
-#define FILEIO_O_CREAT          0x200
-#define FILEIO_O_TRUNC          0x400
-#define FILEIO_O_EXCL           0x800
-#define FILEIO_O_SUPPORTED	(FILEIO_O_RDONLY | FILEIO_O_WRONLY| \
-				 FILEIO_O_RDWR   | FILEIO_O_APPEND| \
-				 FILEIO_O_CREAT  | FILEIO_O_TRUNC| \
-				 FILEIO_O_EXCL)
+    // For stubs
+    int nop();
 
-// mode_t bits
-#define FILEIO_S_IFREG        0100000
-#define FILEIO_S_IFDIR         040000
-#define FILEIO_S_IFCHR         020000
-#define FILEIO_S_IRUSR           0400   // User has read permission
-#define FILEIO_S_IWUSR           0200
-#define FILEIO_S_IXUSR           0100
-#define FILEIO_S_IRWXU           0700
-#define FILEIO_S_IRGRP            040
-#define FILEIO_S_IWGRP            020   // Group has write permission
-#define FILEIO_S_IXGRP            010   // Group has execute permission
-#define FILEIO_S_IRWXG            070
-#define FILEIO_S_IROTH             04
-#define FILEIO_S_IWOTH             02
-#define FILEIO_S_IXOTH             01
-#define FILEIO_S_IRWXO             07
-#define FILEIO_S_SUPPORTED         (FILEIO_S_IFREG|FILEIO_S_IFDIR|  \
-				    FILEIO_S_IRWXU|FILEIO_S_IRWXG|  \
-                                    FILEIO_S_IRWXO)
-
-namespace Multitask
-{
-    static void     _exit(int status);
-    static int      close(int fd);
-    static int      fstat(int fd, struct stat* st);
-    static int      getpid();
-    static int      isatty(int fd);
-    static int      kill(int pid, int sig);
-    static int      open(const char *pathname, int flags, mode_t mode);
-    static caddr_t  sbrk(int incr);
-    static int      write(int file, const void* ptr, size_t len);
-    static int      gettimeofday(struct timeval* p, void* tz);
-    static void*    mmap(struct sMmapArgs* args);
-    static int      munmap(void* addr, size_t length);
-    static int      mprotect(void* addr, size_t len, int prot);
-    static int      getpagesize();
-    static int      getscreenwidth();
-    static int      getscreenheight();
-    static int      swapscreenbuffer();
-    static int      block();
-    static int      sendmessage(Message* message, int pid);
-    static int      getmessage(Message* message);
-    static int      removemessage(uint32_t filter);
-    static int      loadprogram(char const* path);
-    static int      unblock(int pid);
-    static int      blockuntil(uint32_t filter);
-    static int      sendmessageuntil(Message* message, int pid, uint32_t filter);
-    static int      usleep(useconds_t usec);
-    static int      getusedmemory();
-    static int      gettotalmemory();
-    
-    int OnSyscall(const Interrupts::StackFrameRegisters sRegisters)
+    void init_syscalls()
     {
-        // Get syscall id
-        const uint32_t id = sRegisters.eax;
+        // Null out table...
+        memset(&syscalls[0], 0, sizeof(syscalls));
 
-        int returnStatus = 0;
-        switch (id)
+        // ...then register what we have
+        syscalls[SYS_brk] = (size_t)&brk;
+        syscalls[SYS_clock_gettime64] = (size_t)&clock_gettime64;
+        syscalls[SYS_close] = (size_t)&close;
+        syscalls[SYS_getpid] = (size_t)&getpid;
+        syscalls[SYS_ioctl] = (size_t)&ioctl;
+        syscalls[SYS__llseek] = (size_t)&llseek;
+        syscalls[SYS_madvise] = (size_t)&madvise;
+        syscalls[SYS_mkdir] = (size_t)&mkdir;
+        syscalls[SYS_mmap2] = (size_t)&mmap;
+        syscalls[SYS_mprotect] = (size_t)&mprotect;
+        syscalls[SYS_munmap] = (size_t)&munmap;
+        syscalls[SYS_open] = (size_t)&open;
+        syscalls[SYS_read] = (size_t)&read;
+        syscalls[SYS_readv] = (size_t)&readv;
+        syscalls[SYS_set_thread_area] = (size_t)&set_thread_area;
+        syscalls[SYS_set_tid_address] = (size_t)&set_tid_address;
+        syscalls[SYS_writev] = (size_t)&writev;
+        syscalls[SYS_add_messages] = (size_t)&add_messages;
+        syscalls[SYS_get_messages] = (size_t)&get_messages;
+        syscalls[SYS_share_memory] = (size_t)&share_memory;
+
+        // Stubs
+        syscalls[SYS_getuid32] = (size_t)&nop;
+        syscalls[SYS_geteuid32] = (size_t)&nop;
+        syscalls[SYS_getgid32] = (size_t)&nop;
+        syscalls[SYS_getegid32] = (size_t)&nop;
+        syscalls[SYS_getppid] = (size_t)&nop;
+        syscalls[SYS_getpgrp] = (size_t)&nop;
+    }
+
+    size_t on_syscall(const cpu::Registers registers)
+    {
+        const size_t id = registers.eax;
+        const size_t location = syscalls[id];
+
+        if (location == 0)
         {
-            case 0:
-                _exit((int)sRegisters.ebx);
-            break;
-
-            case 1:
-                returnStatus = close((int)sRegisters.ebx);
-            break;
-
-            case 4:
-                returnStatus = fstat((int)sRegisters.ebx, (struct stat*)sRegisters.ecx);
-            break;
-
-            case 5:
-                returnStatus = getpid();
-            break;
-
-            case 6:
-                returnStatus = isatty((int)sRegisters.ebx);
-            break;
-
-            case 7:
-                returnStatus = kill((int)sRegisters.ebx, (int)sRegisters.ecx);
-            break;
-
-            case 10:
-                returnStatus = open((const char*)sRegisters.ebx, (int)sRegisters.ecx, (mode_t)sRegisters.edx);
-            break;
-
-            case 12:
-                returnStatus = (int) sbrk((int)sRegisters.ebx);
-            break;
-
-            case 17:
-                returnStatus = write((int)sRegisters.ebx, (const void*)sRegisters.ecx, (size_t)sRegisters.edx);
-            break;
-
-            case 18:
-                returnStatus = gettimeofday((struct timeval*)sRegisters.ebx, (void*)sRegisters.ecx);
-            break;
-
-            case 19:
-                returnStatus = (int) mmap((struct sMmapArgs*)sRegisters.ebx);
-            break;
-
-            case 20:
-                returnStatus = (int) munmap((void*)sRegisters.ebx, (size_t)sRegisters.ecx);
-            break;
-
-            case 21:
-                returnStatus = (int)mprotect((void*)sRegisters.ebx, (size_t)sRegisters.ecx, (int)sRegisters.edx);
-            break;
-
-            case 22:
-                returnStatus = (int) getpagesize();
-            break;
-
-            case 23:
-                returnStatus = getscreenwidth();
-            break;
-
-            case 24:
-                returnStatus = getscreenheight();
-            break;
-
-            case 25:
-                returnStatus = swapscreenbuffer();
-            break;
-            
-            case 26:
-                returnStatus = block();
-            break;
-                
-            case 27:
-                returnStatus = sendmessage((Message*)sRegisters.ebx, (int)sRegisters.ecx);
-            break;
-            
-            case 28:
-                returnStatus = getmessage((Message*)sRegisters.ebx);
-            break;
-            
-            case 29:
-                returnStatus = removemessage((uint32_t)sRegisters.ebx);
-            break;
-            
-            case 30:
-                returnStatus = loadprogram((const char*)sRegisters.ebx);
-            break;
-
-            case 31:
-                returnStatus = unblock((int)sRegisters.ebx);
-            break;
-
-            case 32:
-                returnStatus = blockuntil(sRegisters.ebx);
-            break;
-
-            case 33:
-                returnStatus = sendmessageuntil((Message*)sRegisters.ebx, (int)sRegisters.ecx, sRegisters.edx);
-            break;
-            
-            case 34:
-                returnStatus = usleep((useconds_t)sRegisters.ebx);
-            break;
-
-            case 35:
-                returnStatus = getusedmemory();
-            break;
-            
-            case 36:
-                returnStatus = gettotalmemory();
-            break;
-
-            default:
-                UART::WriteString("[Syscall] Unexpected syscall ");
-                UART::WriteNumber(id);
-                UART::WriteString(" by task ");
-                UART::WriteString(Multitask::GetCurrentTask()->m_sName);
-                UART::WriteString("\n");
-                
-                RemoveCurrentTask();
-                OnTaskSwitch(false);
-                Interrupts::bSwitchTasks = true;
-                bSaveTaskBeforeSwitching = false;
-            break;
-        }
-
-        PIC::EndInterrupt(0x80);
-        return returnStatus;
-    }
-
-    static void _exit(int status)
-    {
-        UART::WriteString("[Syscall] Task ");
-        UART::WriteString(GetCurrentTask()->m_sName);
-        UART::WriteString(" exited with code ");
-        if (status < 0) UART::WriteString("-");
-        UART::WriteNumber((unsigned int)status);
-        UART::WriteString("\n");
-
-        RemoveCurrentTask();
-        OnTaskSwitch(false);
-        Interrupts::bSwitchTasks = true;
-        bSaveTaskBeforeSwitching = false;
-    }
-
-    static int close(int)
-    {
-        return 0;
-    }
-
-    static int fstat(int fd, struct stat* st)
-    {
-        // TODO: Sanitise memory location
-        struct stat* kernelMappedSt = (struct stat*) Multitask::GetCurrentTask()->m_PageFrame.VirtualToPhysicalAddress((uint32_t)st);
-
-        if(fd == STDOUT || fd == STDIN || fd == STDERR) kernelMappedSt->st_mode = S_IFCHR; // Character device
-        else
-        {
-            // Block device
-            kernelMappedSt->st_mode = S_IFBLK;
-            kernelMappedSt->st_size = Filesystem::GetFile(fd)->m_Size;
-        }
-
-        return 0;
-    }
-
-    static int getpid()
-    {
-        return Multitask::GetCurrentTask()->m_PID;
-    }
-
-    static int isatty(int fd)
-    {
-        return
-        (fd == Filesystem::FileDescriptors::stderr  ) ||
-        (fd == Filesystem::FileDescriptors::stdin   ) ||
-        (fd == Filesystem::FileDescriptors::stdout  );
-    }
-
-    static int kill(int pid, int sig)
-    {
-        UART::WriteString("[Syscall] Task ");
-        UART::WriteString(GetCurrentTask()->m_sName);
-        UART::WriteString(" killed task ");
-        UART::WriteNumber(pid);
-        UART::WriteString(" with status ");
-        UART::WriteNumber(sig);
-        UART::WriteString("\n");
-
-        Multitask::RemoveTaskWithID(pid);
-        return 0;
-    }
-
-    static int open(const char *pathname, int flags, mode_t mode __attribute__((unused)))
-    {
-        auto task = Multitask::GetCurrentTask();
-        
-        // Get path
-        char const* path = (const char*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)pathname);
-
-        // Flags
-        assert(flags == (FILEIO_O_RDWR | FILEIO_O_CREAT | FILEIO_O_TRUNC));
-
-        // (Mode specifies what permissions should be applied, should the file be created)
-
-        return Filesystem::GetFile(path)->m_iNode;
-    }
-
-    static caddr_t sbrk(int incr)
-    {
-        assert(incr > 0 && incr != 0);
-
-        // Allocate memory to process - sbrk is sort of a relic - normally this memory has to be contiguous!
-        // Mac OSX solves this by giving a fixed 4mb pool for each process's sbrk calls, and crashing after that,
-        // so that's what I do too (well I don't know about the 4mb but you get the idea).
-        auto task = Multitask::GetCurrentTask();
-        
-        if (task->m_pSbrkBuffer == nullptr)
-        {
-            task->m_PageFrame.AllocateMemory(SBRK_BUFFER_MAX_SIZE, USER_PAGE, 0x50000000);
-        }
-
-        const uint32_t oldAddress = (uint32_t)task->m_pSbrkBuffer + task->m_nSbrkBytesUsed;
-        task->m_nSbrkBytesUsed += (uint32_t) incr;
-
-        // If memory has overflown, kill the process
-        if (task->m_nSbrkBytesUsed >= SBRK_BUFFER_MAX_SIZE)
-        {
-            UART::WriteString("[Syscall] Task ");
-            UART::WriteString(GetCurrentTask()->m_sName);
-            UART::WriteString(" filled sbrk buffer\n");
-            UART::WriteString("\n");
-            RemoveCurrentTask();
-            OnTaskSwitch(false);
-            Interrupts::bSwitchTasks = true;
-            bSaveTaskBeforeSwitching = false;
-        }
-
-        return (caddr_t) oldAddress;
-    }
-
-    static int write(int file, const void* ptr, size_t len)
-    {
-        // TODO: Sanitise memory locations
-        assert(file == STDOUT || file == STDERR);
-
-        // Get string
-        const auto task = Multitask::GetCurrentTask();
-        const char* string = (const char*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)ptr);
-
-        // Print
-        for (size_t i = 0; i < len; ++i)
-            UART::WriteChar(string[i]);
-
-        return 0;
-    }
-
-    static int gettimeofday(struct timeval* p, void*)
-    {
-        auto task = Multitask::GetCurrentTask();
-
-        timeval* data = (struct timeval*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)p);
-        data->tv_sec = CMOS::GetTime().GetSecondsInDay();
-
-        return 0;
-    }
-
-    static void* mmap(struct sMmapArgs* args)
-    {
-        // TODO: Sanitise memory locations
-        Task* task = Multitask::GetCurrentTask();
-        struct sMmapArgs* kArgs = (struct sMmapArgs*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)args);
-
-        assert(kArgs->length > 0);
-
-        // Jury rigged for malloc's mmap
-        if (kArgs->fd == -1)
-        {
-            // Prot
-            assert(kArgs->prot == PROT_NONE);
-
-            // Flags
-            assert(kArgs->flags == (MAP_PRIVATE| MAP_NORESERVE | MAP_ANONYMOUS));
-
-            // File descriptor and offset
-            assert(kArgs->offset == 0 && kArgs->fd == -1);
-
-            // Address can be NULL, in which case we're free to do what we like
-            assert(kArgs->addr == NULL);
-
-            // Jury rig the flags to avoid mprotect
-            return task->m_PageFrame.AllocateMemory(kArgs->length, USER_PAGE);
-        }
-
-        // File mmap
-        else
-        {
-            assert(kArgs->offset == 0);
-            assert(kArgs->addr == NULL);
-
-            // (ignore flags, protection, length, and everything else for now)
-
-            Filesystem::File* file = Filesystem::GetFile(kArgs->fd);
-            
-            // Map into memory
-            uint32_t address = (uint32_t) task->m_PageFrame.AllocateMemory(file->m_Size, USER_PAGE);
-            for (uint32_t i = 0; i < Memory::RoundToNextPageSize(file->m_Size) / PAGE_SIZE; ++i)
-            {
-                // Last argument tells page frame to not reflect mapping in bitmap as pages are already marked as used in kernel
-                task->m_PageFrame.SetPage((uint32_t)file->m_pData + i*PAGE_SIZE, address + i*PAGE_SIZE, USER_PAGE, false);
-            }
-
-            return (void*)address;
-        }
-    }
-
-    static int munmap(void* addr, size_t length)
-    {
-        Task* task = Multitask::GetCurrentTask();
-        
-        const uint32_t virtualAddress = (uint32_t) addr;
-        const uint32_t physicalAddress = task->m_PageFrame.VirtualToPhysicalAddress(virtualAddress);
-
-        // Reflection in the kernel is handled within the page frame allocator itself (see mmap for files above)
-        task->m_PageFrame.FreeMemory(physicalAddress, virtualAddress, length);
-        return 0;
-    }
-
-    static int mprotect(void* addr __attribute__((unused)), size_t len __attribute__((unused)), int prot __attribute__((unused)))
-    {
-        /*
-            // TODO: Sanitise memory locations
-            auto task = Multitask::GetCurrentTask();
-            
-            // Virtual vs physical address will likely cause us problems
-            assert((uint32_t)addr < USER_PAGING_OFFSET);
-
-            // Check alignment and what-not
-            assert((uint32_t)addr % PAGE_SIZE == 0 && len % PAGE_SIZE == 0);
-
-            // Flags
-            assert(prot == (PROT_READ | PROT_WRITE));
-
-            for (int i = 0; i < len / PAGE_SIZE; ++i)
-                task->m_PageFrame.SetPage((uint32_t)addr + i*PAGE_SIZE, (uint32_t)addr + i*PAGE_SIZE, USER_PAGE);
-        */
-
-        // See mmap, we've jury rigged it!
-        return 0;
-    }
-
-    static int getpagesize()
-    {
-        return PAGE_SIZE;
-    }
-
-    static int getscreenwidth()
-    {
-        return Framebuffer::graphicsDevice->m_Width;
-    }
-    
-    static int getscreenheight()
-    {
-        return Framebuffer::graphicsDevice->m_Height;
-    }
-
-    static int swapscreenbuffer()
-    {
-        Framebuffer::graphicsDevice->SwapBuffers();
-        return 0;
-    }
-    
-    static int block()
-    {
-        auto task = Multitask::GetCurrentTask();
-        
-        if (!task->HasMessages())
-        {
-            task->Block();
-            Interrupts::bSwitchTasks = true;
-            bSaveTaskBeforeSwitching = true;
-        }
-        
-        return 0;
-    }
-    
-    static int sendmessage(Message* message, int pid)
-    {
-        Task* task = Multitask::GetCurrentTask();
-        Message* pMessage = (Message*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)message);
-        
-        Task* destTask = Multitask::GetTaskWithID(pid);
-        if (destTask == nullptr)
-        {
+            println("Unknown syscall ", id);
             assert(false);
-            UART::WriteString("[Syscall] Erroneous message from process ");
-            UART::WriteString(task->m_sName);
-            UART::WriteString(": ");
-            UART::WriteNumber(message->data[0]);
-            UART::WriteString("\n");
+            halt();
         }
-        destTask->AddMesage(task->m_PID, pMessage->data);
-        
-        return 0;
+
+        int ret;
+        asm volatile ("\
+            pushl %1; \
+            pushl %2; \
+            pushl %3; \
+            pushl %4; \
+            pushl %5; \
+            call *%6; \
+            popl %%ebx; \
+            popl %%ebx; \
+            popl %%ebx; \
+            popl %%ebx; \
+            popl %%ebx;" : "=a" (ret) : "r" (registers.edi), "r" (registers.esi),
+                            "r" (registers.edx), "r" (registers.ecx), "r" (registers.ebx),
+                            "r" (location));
+
+        return (size_t) ret;
     }
-    
-    static int getmessage(Message* message)
+
+    template<typename T>
+    T* read_from_user(T* address)
     {
-        Task* task = Multitask::GetCurrentTask();
-        Message* pMessage = (Message*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)message);
-        
-        if (task->m_nMessages)
-        {
-            Multitask::GetCurrentTask()->GetMessage(pMessage);
-            return 1;
-        }
-        
-        return 0;
+        auto& frame = multitask::current_process->frame;
+        const size_t user_address = frame.virtual_address_to_physical((size_t)address);
+        return (T*)user_address;
     }
-    
-    static int removemessage(uint32_t filter)
+
+    int brk(void*)
     {
-        Multitask::GetCurrentTask()->RemoveMessage(filter);
-        return 0;
+        // Musl is pretty insistent on using brk instead of mmap but if we
+        // just return an error code, it'll give up and use mmap anyway!
+        return -1;
     }
-    
-    static int loadprogram(char const* path)
+
+    uint64_t clock_gettime64(clockid_t id, struct timespec* tp)
     {
-        Task* task = Multitask::GetCurrentTask();
-        char const* pMessage = (char const*) task->m_PageFrame.VirtualToPhysicalAddress((uint32_t)path);
-        Multitask::CreateTask(pMessage);
+        assert(id == 0);
+        auto* user_tp = read_from_user<struct timespec>(tp);
+        user_tp->tv_sec = time_t(pit::time_ms / 1000);
+        user_tp->tv_nsec = long((pit::time_ms % 1000) * 100000);
         return 0;
     }
 
-    static int unblock(int pid)
+    int close(int fd)
     {
-        Multitask::GetTaskWithID(pid)->Unblock();
-        Interrupts::bSwitchTasks = true;
-        bSaveTaskBeforeSwitching = true;
+        return current_process->close_file(fd) ? 0 : -1;
+    }
+
+    pid_t getpid()
+    {
+        return multitask::current_process->thread_id;
+    }
+
+    int ioctl(int fd, unsigned long, char*)
+    {
+        println("TODO: ioctl for PID ", multitask::current_process->thread_id, " with fd ", fd);
+        assert(fd == 1);
         return 0;
     }
-    
-    static int blockuntil(uint32_t filter)
+
+    int llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, off_t* result, unsigned int whence)
     {
-        auto task = Multitask::GetCurrentTask();
-        task->Block(filter);
-        Interrupts::bSwitchTasks = true;
-        bSaveTaskBeforeSwitching = true;
+        const uint64_t offset = (uint64_t(offset_high) << 32) | offset_low;
+
+        auto seek_result = current_process->seek_file(
+            (fs::FileDescriptor)fd,
+            offset,
+            (Process::SeekMode)whence
+        );
+        if (!seek_result) return -1;
+
+        *read_from_user<off_t>(result) = (off_t)seek_result.data;
         return 0;
     }
-    
-    static int sendmessageuntil(Message* message, int pid, uint32_t filter)
+
+    int madvise(void*, size_t, int)
     {
-        sendmessage(message, pid);
-        blockuntil(filter);
+        // "Advises" the kernel how the memory is expected to be read,
+        // allowing read-ahead to be better informed. We don't care
+        // about this advice.
         return 0;
     }
-    
-    static int usleep(useconds_t usec)
+
+    int mkdir(const char*, mode_t)
     {
-        Multitask::GetCurrentTask()->SleepForMicroseconds((uint32_t)usec);
-        Interrupts::bSwitchTasks = true;
-        bSaveTaskBeforeSwitching = true;
+        return -1;
+    }
+
+    // NOTE: the way we call our syscalls means flags (the last argument) wasn't
+    //       pushed. Be careful to rectify that should it be needed!
+    void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t)
+    {
+        // If addr is NULL, then we get to choose :)
+        assert(addr == 0);
+
+        // Actual permission of pages - see mprotect for PROT_NONE hack
+        assert(prot == (PROT_READ | PROT_WRITE) || prot == PROT_NONE);
+
+        // Check flags - anonymous = no fd, and requires offset be 0
+        assert(flags == (MAP_PRIVATE | MAP_ANONYMOUS));
+        assert(fd == -1);
+
+        const auto memory = memory::allocate_for_user(length, multitask::current_process->frame);
+        return memory.contains_data ? (void*) memory->v_addr : (void*) MAP_FAILED;
+    }
+
+    int mprotect(void*, size_t, int prot)
+    {
+        // Musl likes to allocate pages ahead of time with PROT_NONE, then "enable"
+        // them later here. That's a bit too much effort right now, so instead we
+        // always map them as READ | WRITE, meaning we've nothing to do here.
+        assert(prot == (PROT_READ | PROT_WRITE));
         return 0;
     }
-    
-    static int getusedmemory()
+
+    int munmap(void* addr, size_t len)
     {
-        return Memory::kPageFrame.GetUsedPages() * PAGE_SIZE;
+        // TODO: sanitise (trivial to unmap kernel code for the kernel itself as I'm writing this)
+        memory::free_for_user((size_t)addr, len, multitask::current_process->frame);
+        return 0;
     }
-    
-    static int gettotalmemory()
+
+    int open(const char* pathname, int flags, mode_t)
     {
-        return Memory::maxPages * PAGE_SIZE;
+        assert(flags == O_LARGEFILE);
+        const auto result = current_process->open_file(
+            read_from_user<const char>(pathname)
+        );
+        if (result.contains_data) return result.data;
+        return -EBADF;
     }
+
+    ssize_t read(int fd, void* buf, size_t count)
+    {
+        if (!current_process->is_fd_valid(fd)) return -EBADF;
+        auto& file = current_process->open_files[fd];
+
+        const auto result = fs::read(
+            file.handle,
+            read_from_user<void>(buf),
+            file.offset,
+            count
+        );
+
+        if (!result) return -1;
+
+        file.offset += result.data;
+        return (ssize_t)result.data;
+    }
+
+    ssize_t readv(int fd, const struct iovec* iov, int iovcnt)
+    {
+        if (!current_process->is_fd_valid(fd)) return -EBADF;
+        auto& file = current_process->open_files[fd];
+
+        uint64_t len = 0;
+        for (int i = 0; i < iovcnt; ++i)
+        {
+            const auto result = fs::read(
+                file.handle,
+                read_from_user<void>(iov[i].iov_base),
+                file.offset,
+                iov[i].iov_len
+            );
+
+            if (!result) continue;
+            len += result.data;
+            file.offset += result.data;
+        }
+
+        return (ssize_t)len;
+    }
+
+    int set_thread_area()
+    {
+        return 0;
+    }
+
+    int set_tid_address()
+    {
+        return current_process->thread_id;
+    }
+
+    ssize_t writev(int fd, const iovec* iov, int iovcnt)
+    {
+        if (!current_process->is_fd_valid(fd)) return -EBADF;
+        auto& file = current_process->open_files[fd];
+
+        uint64_t len = 0;
+        for (int i = 0; i < iovcnt; ++i)
+        {
+            auto result = fs::write(
+                file.handle,
+                read_from_user<void>(iov[i].iov_base),
+                file.offset,
+                iov[i].iov_len
+            );
+
+            if (!result) continue;
+            len += result.data;
+            file.offset += result.data;
+        }
+
+        return (ssize_t)len;
+    }
+
+
+    // ---------- Custom syscalls below ---------------
+
+
+    size_t add_messages(Message* messages, size_t count)
+    {
+        size_t n_added = 0;
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            // Use the attached pid to find the target...
+            auto process = multitask::get_process(messages[i].pid);
+            if (!process) continue;
+
+            // ...then replace it with the sender
+            messages[i].pid = current_process->thread_id;
+            n_added += (*process)->add_message(
+                *read_from_user<Message>(&messages[i])
+            );
+        }
+
+        return n_added;
+    }
+
+    size_t get_messages(Message* messages, size_t count)
+    {
+        size_t n_gotten = 0;
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            const auto message = current_process->get_message();
+
+            if (message.contains_data)
+            {
+                *read_from_user<Message>(&messages[i]) = *message;
+                ++n_gotten;
+            }
+        }
+
+        return n_gotten;
+    }
+
+    int share_memory(size_t address, size_t size, pid_t pid)
+    {
+        // Get process (if any!)
+        auto process = multitask::get_process(pid);
+        if (!process) return -1;
+
+        // Map...
+        using namespace memory;
+        const auto v_addr = VirtualAddress(address / PAGE_SIZE) * PAGE_SIZE;
+        const auto p_addr = current_process->frame.virtual_address_to_physical(v_addr);
+        auto full_size = PageFrame::round_to_next_page_size(size);
+
+        // ...ensuring all pages are owned by current process...
+        if (!current_process->frame.owns_memory(v_addr, full_size))
+            return -1;
+
+        // ...and adding an extra page padding in-case of rounding errors, where
+        // the supplied address was not page aligned
+        if (!PageFrame::is_page_aligned(address))
+            full_size += PAGE_SIZE;
+
+        process.data->frame.map_pages(
+            p_addr,
+            v_addr,
+            USER_PAGE,
+            full_size / PAGE_SIZE
+        );
+
+        return 0;
+    }
+
+    int nop() { return 0; }
 }

@@ -1,79 +1,109 @@
 #include "memory/memory.h"
-#include "io/uart.h"
 #include "cpu/cpu.h"
-#include "kstdlib.h"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
+extern size_t kernel_end;
 
-namespace Memory
+namespace memory
 {
-    uint32_t userspaceBegin;
-    uint32_t maxGroups;
-    uint32_t maxPages;
-    uint32_t nFramebufferPages;
-    uint32_t framebufferAddress;
+    PageFrame kernel_frame;
+    Allocator allocator;
 
-    void Init(const multiboot_info_t* pMultiboot)
+    void init(const MultibootInfo& info)
     {
-        // Get memory bounds
-        uint32_t upperBound = GetMaxMemory(pMultiboot);
-        maxPages = upperBound / PAGE_SIZE;
-        maxGroups = maxPages / 32;
+        // Figure out where to put memory - preferably well after the kernel
+        // and all the multiboot stuff
+        size_t memory_start = MAX(info.memory_begin, (size_t) &kernel_end);
+        memory_start = MAX(memory_start, info.get_highest_module_address());
+        memory_start = PageFrame::round_to_next_page_size(memory_start);
 
-        // Allocate space for page tables, page directories and what-not
-        uint32_t* pageDirectories = &__kernel_end; // Linker has aligned to nearest 4k
-        uint32_t* pageTables = pageDirectories + NUM_DIRECTORIES;
-        uint32_t* pageBitmaps = pageTables + NUM_TABLES*NUM_DIRECTORIES;
+        // Setup paging
+        kernel_frame = PageFrame(memory_start, info.framebuffer_address, info.framebuffer_size, true);
 
-        // Create page frame
-        kPageFrame = PageFrame(pageDirectories, pageTables, pageBitmaps);
+        // Map in heap
+        const size_t heap_address = memory_start + PageFrame::size();
+        const size_t heap_size = PageFrame::round_to_next_page_size(Allocator::size());
+        kernel_frame.map_pages(heap_address, heap_address, KERNEL_PAGE, heap_size / PAGE_SIZE);
 
-        // Bitmap would be number of pages / 32 = 1024 * 1024 / 32 = 32,768 32-bit entries: 1mb
-        userspaceBegin = (uint32_t)(pageBitmaps + NUM_DIRECTORIES*NUM_TABLES/32);
+        // Create heap
+        allocator = Allocator(heap_address, info.memory_end - memory_start);
 
-        // Clear pages and setup page directories
-        for (uint32_t i = 0; i < NUM_DIRECTORIES; ++i)
-            kPageFrame.InitPageDirectory(i * DIRECTORY_SIZE);
-
-        // Identity-map kernel pages
-        for (uint32_t i = 0; i < userspaceBegin / PAGE_SIZE; ++i)
-            kPageFrame.SetPage(i * PAGE_SIZE, i * PAGE_SIZE, KERNEL_PAGE);
-
-        // Enable paging
-        kPageFrame.UsePaging();
-        CPU::EnablePaging();
-    }
-
-    uint32_t GetMaxMemory(const multiboot_info_t* pMultiboot)
-    {
-        /*
-            Attempt to find a "reasonable" contiguous region of memory.
-            To that end, enumerate the multiboot's memory map and settle
-            on the 2nd (ish) chunck, starting from 0x1000000 (16mb) and
-            extending to just before the memory mapped PCI devices (if any)
-        */
-
-        multiboot_memory_map_t* pMemoryMap = (multiboot_memory_map_t*)pMultiboot->mmap_addr;
-       
-        while ((uint32_t)pMemoryMap < pMultiboot->mmap_addr + pMultiboot->mmap_length)
+        // Reserve modules then map them in
+        for (size_t i = 0; i < info.n_modules; ++i)
         {
-            if (pMemoryMap->addr == 0x100000)
-            {
-                return (uint32_t)(pMemoryMap->addr + pMemoryMap->len);
-            }
-            pMemoryMap = (multiboot_memory_map_t*) ((uint32_t)pMemoryMap + pMemoryMap->size + sizeof(pMemoryMap->size));
+            const auto aligned_address = size_t(info.modules[i].address / PAGE_SIZE) * PAGE_SIZE;
+            const auto pages = PageFrame::round_to_next_page_size(info.modules[i].size) / PAGE_SIZE;
+
+            allocator.reserve_pages(
+                aligned_address,
+                pages
+            );
+
+            kernel_frame.map_pages(
+                aligned_address,
+                aligned_address,
+                KERNEL_PAGE_READ_ONLY,
+                pages
+            );
         }
 
-        return 0;
+        // Enable paging
+        cpu::set_cr3(kernel_frame.get_cr3());
+        cpu::enable_paging();
     }
 
-    uint32_t RoundToNextPageSize(const uint32_t size)
+    Optional<AddressPair> allocate_for_user(
+        const Optional<VirtualAddress> address,
+        const size_t size,
+        PageFrame& page_frame,
+        const uint32_t flags
+    )
     {
-        const uint32_t remainder = size % PAGE_SIZE;
-        return (remainder == 0) ? size : size + PAGE_SIZE - remainder;
+        // Allocate
+        auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
+        auto data = allocator.allocate_pages(pages);
+        if (!data.contains_data) return {};
+
+        // Map into memory
+        if (address.contains_data)
+        {
+            assert(*address >= memory::user_base_address);
+            page_frame.map_pages(*data, *address, flags, pages);
+        }
+        else
+            page_frame.map_pages(*data, *data, flags, pages);
+
+        // Map into kernel too then zero out
+        kernel_frame.map_pages(*data, *data, KERNEL_PAGE, pages);
+        memset((void*)*data, 0, pages * PAGE_SIZE);
+
+        return address.contains_data ? AddressPair { .p_addr = *data, .v_addr = *address} :
+            AddressPair { *data, *data };
     }
 
-}
+    Optional<AddressPair> allocate_for_user(const size_t size, PageFrame& page_frame, const size_t flags)
+    {
+        return allocate_for_user({}, size, page_frame, flags);
+    }
 
-#pragma GCC diagnostic pop
+    Optional<size_t> allocate_for_kernel(const size_t size)
+    {
+        auto pages = PageFrame::round_to_next_page_size(size) / PAGE_SIZE;
+        auto data = allocator.allocate_pages(pages);
+        if (!data) return {};
+
+        // Zero out
+        kernel_frame.map_pages(*data, *data, KERNEL_PAGE, pages);
+        memset((void*)*data, 0, pages * PAGE_SIZE);
+        return data;
+    }
+
+    void free_for_user(const size_t address, const size_t size, PageFrame& page_frame)
+    {
+        // Free from allocator...
+        allocator.free_pages(address, size / PAGE_SIZE);
+
+        // ...then unmap
+        page_frame.unmap_pages(address, size / PAGE_SIZE);
+        kernel_frame.unmap_pages(address, size / PAGE_SIZE);
+    }
+}

@@ -1,89 +1,63 @@
 # MinOS
-A x86 operating system written in modern(ish) C++, a bit of C, and Assembly.<br/>
-<img alt="Screenshot of the window manager, with Snake and Notepad running" src="screenshots/window%20manager.png" width="512px"/>
+The third rewrite of MinOS
 
-# please refer to the "rewrite-three" branch for current changes - currently rewriting everything with Musl, more idiomatic C++ and a more POSIX-y feel
+<img alt="Screenshot of the window manager, with Snake and Doom running" src="screenshots/minwm.png"/>
 
-## Features
-* Userspace with newlibc standard library (with old sbrk-style malloc replaced with liballoc)
-* Pre-emptive multitaksing
+# Ports
+* Musl 1.2.3
+* Lua 5.4.4
+* [Doom :-)](https://github.com/ozkl/doomgeneric)
+* [Scalable Screen Font 2.0](https://gitlab.com/bztsrc/scalable-font2/)
 
-## Depdendencies
-If you want to build with Docker, then as it would turn out, all you need is:
-* Docker
+# Toolchain and userspace
+MinOS uses Musl as its standard library, and uses Clang to build it.
+For userspace, a GCC cross-compiler is used (i686-minos-gcc).
 
-Building natively requires:
-* A working i686 cross compiler ([see here for prebuilt binaries](https://github.com/lordmilko/i686-elf-tools))
-* Grub 2.0
-* NASM
-* Make
-* CMake
-* CPIO
+## Dependencies
+On Fedora:
+* clang
+* gcc
+* g++
+* lld
+* nasm
+* binutils
+* cmake
+* xorriso
+* grub2-pc
+* grub2-tools-extra
+* clang-tools-extra
+* texinfo
+* wget
 
-## Building with Docker
-First download the project and build the toolchain with:
+## Building
+The full toolchain can be built like so:
 ```
-git clone https://github.com/TheUltimateKerbonaut/MinOS
-cd MinOS
-docker build -t minos/toolchain:1.0 .
+./scripts/build_musl.sh &&\
+./scripts/build_toolchain.sh
 ```
-Then compile the kernel:
+Then build the project:
 ```
-docker run --rm  --volume /path/to/minos:/code minos/toolchain:1.0 bash -c "cd code && mkdir -p build && cd build && cmake .. && cmake --build ."
-```
-
-## Building natively
-```
-git clone https://github.com/lukawarren/MinOS
-cd MinOS
-mkdir -p build && cd build
-cmake .. && cmake --build .
-```
-
-## Adding GRUB
-After building the kernel binary file, run (in Docker if you must):
-```
-mkdir -p build/isodir/boot/grub
-cp build/kernel/kernel.bin build/isodir/boot/MinOS.bin
-cp build/initramfs.cpio build/isodir/boot/
-cp kernel/grub.cfg build/isodir/boot/grub/grub.cfg
-grub-mkrescue -o build/MinOS.iso build/isodir
-```
-
-## Running
-Just build the project and either run the iso in the build directory as a virtual machine or burn to a disk with something like:
-```
-sudo dd if=/path/to/MinOS.iso of=/dev/sdx && sync
-```
-
-On Qemu:
-```
-qemu-system-i386 -cdrom build/MinOS.iso -serial stdio -vga std
-```
-
-## Newlibc (standard library)
-For convenience, newlibc is already built, as it is a lengthy process and requires very specific versions of sotware (Automake 1.11 and Autoconf 2.65 to be exact).
-If you really must build it for yourself, the following should work:
-
-```
-# 1) Link i686-elf toolchain to "i686-minos"
-cd /path/to/toolchain/
-ln i686-elf-ar i686-myos-ar
-ln i686-elf-as i686-myos-as
-ln i686-elf-gcc i686-myos-gcc
-ln i686-elf-gcc i686-myos-cc
-ln i686-elf-ranlib i686-myos-ranlib
-cd /path/back/to/min/os/ 
-
-# 2) Make build folder and build
-cd lib/newlib-4.1.0
-mkdir -p build
+# (after adding toolchain/prefix/bin to path)
+mkdir build
 cd build
-../configure --prefix=/minos --target=i686-minos
-make -j4 all
-
-# 3) Install to /tmp/minos then move to project
-make DESTDIR=/tmp install
-rm -r ../../i686-minos/
-cp -r /tmp/minos/i686-minos/ ../../i686-minos/
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain/CMake/toolchain.cmake .. -G Ninja
+ninja
 ```
+
+## Musl changes
+* src/thread/i386/__set_thread_area.s has been commented out, and a stub provided in __init_tls.c instead (which avoids manipulating segment registers)
+* arch/i386/pthred_arch.h has been stubbed out (for the same reason as above)
+* crt/crt1.c supports the change above with a false pthread
+* this all means that TLS is not supported yet
+
+## Running with Qemu
+`qemu-system-i386 -cdrom build/MinOS.iso -serial mon:stdio`
+
+## Attributions
+* Uses the [Perfect DOS VGA 437](https://www.dafont.com/perfect-dos-vga-437.font) font
+* Toolchain built with patches from [Nightingale](https://github.com/tyler569/nightingale) and [SerenityOS](https://github.com/SerenityOS/serenity)
+
+## History
+* MinOS 1 - mostly written in the summer of 2021, C and C++
+* MinOS 2 - written a few months ago (mid 2022), in Rust
+* MinOS 3 - written now (from August 2022), back in C and C++

@@ -1,113 +1,109 @@
 #include "interrupts/interrupts.h"
-#include "multitask/multitask.h"
-#include "multitask/syscalls.h"
-#include "io/gfx/framebuffer.h"
-#include "io/keyboard.h"
-#include "io/mouse.h"
-#include "io/uart.h"
-#include "cpu/pic.h"
+#include "multitask/scheduler.h"
+#include "interrupts/irq.h"
+#include "interrupts/pit.h"
+#include "interrupts/pic.h"
+#include "dev/keyboard.h"
+#include "dev/uart.h"
+#include "cpu/idt.h"
 #include "cpu/cpu.h"
-#include "cpu/pit.h"
-#include "kstdlib.h"
+#include "fs/fs.h"
+#include "klib.h"
 
-namespace Interrupts
+namespace interrupts
 {
-    void Init(CPU::IDT* idt)
+    uint8_t keyboard_buffer[keyboard_buffer_size];
+    size_t keyboard_buffer_keys = 0;
+
+    void load()
     {
-        using namespace CPU;
+        using namespace cpu;
 
         // Build empty IDT
         constexpr int offset = 0x20; // PIC has an offset that must be accounted for
-        for (size_t i = 0; i < 256; ++i) idt[i] = CreateIDTEntry((uint32_t) &BlankIRQ, 0x8, ENABLED_R0_INTERRUPT);
-        
-        // Standard interrupts (except PIT)
-        idt[offset+1]  = CreateIDTEntry((uint32_t) IRQ1,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+2]  = CreateIDTEntry((uint32_t) IRQ2,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+3]  = CreateIDTEntry((uint32_t) IRQ3,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+4]  = CreateIDTEntry((uint32_t) IRQ4,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+5]  = CreateIDTEntry((uint32_t) IRQ5,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+6]  = CreateIDTEntry((uint32_t) IRQ6,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+7]  = CreateIDTEntry((uint32_t) IRQ7,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+8]  = CreateIDTEntry((uint32_t) IRQ8,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+9]  = CreateIDTEntry((uint32_t) IRQ9,  0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+10] = CreateIDTEntry((uint32_t) IRQ10, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+11] = CreateIDTEntry((uint32_t) IRQ11, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+12] = CreateIDTEntry((uint32_t) IRQ12, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+13] = CreateIDTEntry((uint32_t) IRQ13, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+14] = CreateIDTEntry((uint32_t) IRQ14, 0x8, ENABLED_R0_INTERRUPT);
-        idt[offset+15] = CreateIDTEntry((uint32_t) IRQ15, 0x8, ENABLED_R0_INTERRUPT);
+        for (size_t i = 0; i < 256; ++i) idt[i] = create_idt_entry((uint32_t) &blank_irq, 0x8, ENABLED_R0_INTERRUPT);
+
+        // Standard interrupts
+        idt[offset+0]  = create_idt_entry((uint32_t) irq_0,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+1]  = create_idt_entry((uint32_t) irq_1,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+2]  = create_idt_entry((uint32_t) irq_2,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+3]  = create_idt_entry((uint32_t) irq_3,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+4]  = create_idt_entry((uint32_t) irq_4,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+5]  = create_idt_entry((uint32_t) irq_5,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+6]  = create_idt_entry((uint32_t) irq_6,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+7]  = create_idt_entry((uint32_t) irq_7,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+8]  = create_idt_entry((uint32_t) irq_8,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+9]  = create_idt_entry((uint32_t) irq_9,  0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+10] = create_idt_entry((uint32_t) irq_10, 0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+11] = create_idt_entry((uint32_t) irq_11, 0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+12] = create_idt_entry((uint32_t) irq_12, 0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+13] = create_idt_entry((uint32_t) irq_13, 0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+14] = create_idt_entry((uint32_t) irq_14, 0x8, ENABLED_R0_INTERRUPT);
+        idt[offset+15] = create_idt_entry((uint32_t) irq_15, 0x8, ENABLED_R0_INTERRUPT);
 
         // Exceptions
-        idt[0]   = CreateIDTEntry((uint32_t) IRQException0,   0x8, ENABLED_R0_INTERRUPT);
-        idt[1]   = CreateIDTEntry((uint32_t) IRQException1,   0x8, ENABLED_R0_INTERRUPT);
-        idt[2]   = CreateIDTEntry((uint32_t) IRQException2,   0x8, ENABLED_R0_INTERRUPT);
-        idt[3]   = CreateIDTEntry((uint32_t) IRQException3,   0x8, ENABLED_R0_INTERRUPT);
-        idt[4]   = CreateIDTEntry((uint32_t) IRQException4,   0x8, ENABLED_R0_INTERRUPT);
-        idt[5]   = CreateIDTEntry((uint32_t) IRQException5,   0x8, ENABLED_R0_INTERRUPT);
-        idt[6]   = CreateIDTEntry((uint32_t) IRQException6,   0x8, ENABLED_R0_INTERRUPT);
-        idt[7]   = CreateIDTEntry((uint32_t) IRQException7,   0x8, ENABLED_R0_INTERRUPT);
-        idt[8]   = CreateIDTEntry((uint32_t) IRQException8,   0x8, ENABLED_R0_INTERRUPT);
-        idt[9]   = CreateIDTEntry((uint32_t) IRQException9,   0x8, ENABLED_R0_INTERRUPT);
-        idt[10]  = CreateIDTEntry((uint32_t) IRQException10,  0x8, ENABLED_R0_INTERRUPT);
-        idt[11]  = CreateIDTEntry((uint32_t) IRQException11,  0x8, ENABLED_R0_INTERRUPT);
-        idt[12]  = CreateIDTEntry((uint32_t) IRQException12,  0x8, ENABLED_R0_INTERRUPT);
-        idt[13]  = CreateIDTEntry((uint32_t) IRQException13,  0x8, ENABLED_R0_INTERRUPT);
-        idt[14]  = CreateIDTEntry((uint32_t) IRQException14,  0x8, ENABLED_R0_INTERRUPT);
-        idt[15]  = CreateIDTEntry((uint32_t) IRQException15,  0x8, ENABLED_R0_INTERRUPT);
-        idt[16]  = CreateIDTEntry((uint32_t) IRQException16,  0x8, ENABLED_R0_INTERRUPT);
-        idt[17]  = CreateIDTEntry((uint32_t) IRQException17,  0x8, ENABLED_R0_INTERRUPT);
-        idt[18]  = CreateIDTEntry((uint32_t) IRQException18,  0x8, ENABLED_R0_INTERRUPT);
-        idt[19]  = CreateIDTEntry((uint32_t) IRQException19,  0x8, ENABLED_R0_INTERRUPT);
-        idt[20]  = CreateIDTEntry((uint32_t) IRQException20,  0x8, ENABLED_R0_INTERRUPT);
-        idt[21]  = CreateIDTEntry((uint32_t) IRQException21,  0x8, ENABLED_R0_INTERRUPT);
-        idt[22]  = CreateIDTEntry((uint32_t) IRQException22,  0x8, ENABLED_R0_INTERRUPT);
-        idt[23]  = CreateIDTEntry((uint32_t) IRQException23,  0x8, ENABLED_R0_INTERRUPT);
-        idt[24]  = CreateIDTEntry((uint32_t) IRQException24,  0x8, ENABLED_R0_INTERRUPT);
-        idt[25]  = CreateIDTEntry((uint32_t) IRQException25,  0x8, ENABLED_R0_INTERRUPT);
-        idt[26]  = CreateIDTEntry((uint32_t) IRQException26,  0x8, ENABLED_R0_INTERRUPT);
-        idt[27]  = CreateIDTEntry((uint32_t) IRQException27,  0x8, ENABLED_R0_INTERRUPT);
-        idt[28]  = CreateIDTEntry((uint32_t) IRQException28,  0x8, ENABLED_R0_INTERRUPT);
-        idt[29]  = CreateIDTEntry((uint32_t) IRQException29,  0x8, ENABLED_R0_INTERRUPT);
-        idt[30]  = CreateIDTEntry((uint32_t) IRQException30,  0x8, ENABLED_R0_INTERRUPT);
+        idt[0]   = create_idt_entry((uint32_t) irq_exception_0,   0x8, ENABLED_R0_INTERRUPT);
+        idt[1]   = create_idt_entry((uint32_t) irq_exception_1,   0x8, ENABLED_R0_INTERRUPT);
+        idt[2]   = create_idt_entry((uint32_t) irq_exception_2,   0x8, ENABLED_R0_INTERRUPT);
+        idt[3]   = create_idt_entry((uint32_t) irq_exception_3,   0x8, ENABLED_R0_INTERRUPT);
+        idt[4]   = create_idt_entry((uint32_t) irq_exception_4,   0x8, ENABLED_R0_INTERRUPT);
+        idt[5]   = create_idt_entry((uint32_t) irq_exception_5,   0x8, ENABLED_R0_INTERRUPT);
+        idt[6]   = create_idt_entry((uint32_t) irq_exception_6,   0x8, ENABLED_R0_INTERRUPT);
+        idt[7]   = create_idt_entry((uint32_t) irq_exception_7,   0x8, ENABLED_R0_INTERRUPT);
+        idt[8]   = create_idt_entry((uint32_t) irq_exception_8,   0x8, ENABLED_R0_INTERRUPT);
+        idt[9]   = create_idt_entry((uint32_t) irq_exception_9,   0x8, ENABLED_R0_INTERRUPT);
+        idt[10]  = create_idt_entry((uint32_t) irq_exception_10,  0x8, ENABLED_R0_INTERRUPT);
+        idt[11]  = create_idt_entry((uint32_t) irq_exception_11,  0x8, ENABLED_R0_INTERRUPT);
+        idt[12]  = create_idt_entry((uint32_t) irq_exception_12,  0x8, ENABLED_R0_INTERRUPT);
+        idt[13]  = create_idt_entry((uint32_t) irq_exception_13,  0x8, ENABLED_R0_INTERRUPT);
+        idt[14]  = create_idt_entry((uint32_t) irq_exception_14,  0x8, ENABLED_R0_INTERRUPT);
+        idt[15]  = create_idt_entry((uint32_t) irq_exception_15,  0x8, ENABLED_R0_INTERRUPT);
+        idt[16]  = create_idt_entry((uint32_t) irq_exception_16,  0x8, ENABLED_R0_INTERRUPT);
+        idt[17]  = create_idt_entry((uint32_t) irq_exception_17,  0x8, ENABLED_R0_INTERRUPT);
+        idt[18]  = create_idt_entry((uint32_t) irq_exception_18,  0x8, ENABLED_R0_INTERRUPT);
+        idt[19]  = create_idt_entry((uint32_t) irq_exception_19,  0x8, ENABLED_R0_INTERRUPT);
+        idt[20]  = create_idt_entry((uint32_t) irq_exception_20,  0x8, ENABLED_R0_INTERRUPT);
+        idt[21]  = create_idt_entry((uint32_t) irq_exception_21,  0x8, ENABLED_R0_INTERRUPT);
+        idt[22]  = create_idt_entry((uint32_t) irq_exception_22,  0x8, ENABLED_R0_INTERRUPT);
+        idt[23]  = create_idt_entry((uint32_t) irq_exception_23,  0x8, ENABLED_R0_INTERRUPT);
+        idt[24]  = create_idt_entry((uint32_t) irq_exception_24,  0x8, ENABLED_R0_INTERRUPT);
+        idt[25]  = create_idt_entry((uint32_t) irq_exception_25,  0x8, ENABLED_R0_INTERRUPT);
+        idt[26]  = create_idt_entry((uint32_t) irq_exception_26,  0x8, ENABLED_R0_INTERRUPT);
+        idt[27]  = create_idt_entry((uint32_t) irq_exception_27,  0x8, ENABLED_R0_INTERRUPT);
+        idt[28]  = create_idt_entry((uint32_t) irq_exception_28,  0x8, ENABLED_R0_INTERRUPT);
+        idt[29]  = create_idt_entry((uint32_t) irq_exception_29,  0x8, ENABLED_R0_INTERRUPT);
+        idt[30]  = create_idt_entry((uint32_t) irq_exception_30,  0x8, ENABLED_R0_INTERRUPT);
 
-        // PIT
-        idt[offset+0]  = CreateIDTEntry((uint32_t) Multitask::IRQ0,  0x8, ENABLED_R0_INTERRUPT);
+        idt[0x80] = create_idt_entry((uint32_t) irq_128,  0x8, ENABLED_R3_INTERRUPT);
 
-        // 0x80 interrupts
-        idt[0x80] = CreateIDTEntry((uint32_t)Multitask::IRQ80, 0x8, ENABLED_R3_INTERRUPT);
+        // Set PIC masks and PIT
+        pic::init(PIC_MASK_PIT_AND_KEYBOARD, PIC_MASK_ALL);
+        pit::init();
     }
-    
-    void OnInterrupt(const uint32_t irq, const StackFrameRegisters registers)
+
+    void on_interrupt(const uint32_t irq, const cpu::Registers)
     {
         switch (irq)
         {
-            case 0x0: // PIT
-                assert(false); // Shouldn't be using the generic interrupt handler!
-            break;
+            case 0: pit::reload(); break;
 
-            case 0x1: // Keyboard
-                Keyboard::OnInterrupt();
-            break;
-
-            case 0xC: // Mouse
-                Mouse::OnInterrupt();
-            break;
+            case 1:
+            {
+                const uint8_t scancode = cpu::inb(0x60);
+                keyboard::on_scancode(scancode);
+                break;
+            }
 
             default:
-                UART::WriteString("[IRQ] Unrecognised IRQ ");
-                UART::WriteNumber(irq);
-                UART::WriteString(" ----- esp ");
-                UART::WriteNumber(registers.esp);
-                UART::WriteString("\n");
-            break;
-        }
+                assert(false);
+        };
 
-        PIC::EndInterrupt((uint8_t)irq);
+        pic::end_interrupt((uint8_t)irq);
     }
 
-    void OnException(const uint32_t irq, const StackFrameRegisters registers)
+    void on_exception(const uint32_t irq, const cpu::Registers registers)
     {
-        static char const* exceptions[32] =
+        static char const* reasons[32] =
         {
             "Divide by zero",               "Debug",
             "Non-maskable interrupt",       "Breakpoint",
@@ -124,60 +120,25 @@ namespace Interrupts
             "Reserved",                     "Reserved",
             "Reserved",                     "Reserved",
             "Reserved",                     "Reserved",
-            "Security exception",
+            "Security exception_",
         };
 
-        UART::WriteString("\n-----------------------\n");
-
-        UART::WriteString("[Error] ");
-        UART::WriteString(exceptions[irq]);
-        UART::WriteString(" exception occured - IRQ ");
-        UART::WriteNumber(irq);
-        UART::WriteString("\n");
-
-        const auto PrintValue = [](const char* name, const uint32_t value)
-        {
-            UART::WriteString(name);
-            UART::WriteString(": ");
-            UART::WriteNumber(value);
-            UART::WriteString("\n");
-        };
-
-        PrintValue("eax", registers.eax);
-        PrintValue("ecx", registers.ecx);
-        PrintValue("edx", registers.edx);
-        PrintValue("ebx", registers.ebx);
-        PrintValue("esp", registers.esp);
-        PrintValue("ebp", registers.ebp);
-        PrintValue("esi", registers.esi);
-
-        PrintValue("Number of tasks", Multitask::nTasks);
-        const bool bUserTask = Multitask::nTasks > 0 && Multitask::GetCurrentTask()->m_Type == Multitask::TaskType::USER;
-        if (bUserTask)
-        {
-            UART::WriteString("Current userland task: ");
-            UART::WriteString(Multitask::GetCurrentTask()->m_sName);
-            UART::WriteString("\n");
-
-            // Terminate task and switch tasks after we exit C++
-            Multitask::RemoveCurrentTask();
-            Multitask::OnTaskSwitch(false);
-            Interrupts::bSwitchTasks = true;
-        }
-
-        UART::WriteString("-----------------------\n");
-
-        // Kernel errors cause a blue screen then halt the CPu
-        if (!bUserTask || Multitask::nTasks == 0)
-        {
-            using namespace Framebuffer;
-            for (uint32_t y = 0; y < graphicsDevice->m_Height; ++y)
-                for (uint32_t x = 0; x < graphicsDevice->m_Width; ++x)
-                    graphicsDevice->SetPixel(x, y, GetColour(0, 0, 255));
-
-            while (true) asm("hlt");
-        }
-
-        PIC::EndInterrupt((uint8_t) irq);
+        uart::write_string("\n\n---------- CPU exception ---------- \n");
+        println(reasons[irq]);
+        println("eax = ", registers.eax);
+        println("ebx = ", registers.ebx);
+        println("ecx = ", registers.ecx);
+        println("edx = ", registers.edx);
+        println("esp = ", registers.esp);
+        println("ebp = ", registers.ebp);
+        println("esi = ", registers.esi);
+        println("edi = ", registers.edi);
+        if (multitask::current_process != nullptr)
+            println("task = ", multitask::current_process->thread_id);
+        else
+            println("task = kernel!");
+        uart::write_string("----------------------------------- \n\n\n");
+        halt();
+        assert(false);
     }
 }

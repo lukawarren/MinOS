@@ -1,76 +1,88 @@
 #pragma once
-#ifndef CPU_H
-#define CPU_H
+#include "gdt.h"
+#include "idt.h"
+#include "tss.h"
 
-#include <stdint.h>
-#include <stddef.h>
-
-#include "cpu/tss.h"
-#include "cpu/idt.h"
-
-namespace CPU
+namespace cpu
 {
-    void Init(const uint64_t* gdt, const uint32_t nEntries, const uint16_t tssDescriptor, const uint8_t mask1, const uint8_t mask2);
-    void EnableInterrupts();
+    extern IDT idt[256];
+    extern GDT gdt[6];
+    extern TSS tss;
 
-    uint64_t CreateGDTEntry(const uint32_t base, const uint32_t limit, const uint16_t flag); // Could really be made constexpr
-    TSS CreateTSSEntry(const uint32_t stackPointer0, const uint32_t dataSegmentDescriptor0);
-    IDT CreateIDTEntry(const uint32_t entrypoint, const uint16_t selector, const uint8_t attributes);
+    void init();
+
+    struct Registers
+    {
+        uint32_t edi;
+        uint32_t esi;
+        uint32_t ebp;
+        uint32_t esp;
+        uint32_t ebx;
+        uint32_t edx;
+        uint32_t ecx;
+        uint32_t eax;
+    };
+
+    extern "C"
+    {
+        void load_gdt(const GDT* gdt, const size_t size);
+        void load_tss(const uint16_t descriptor);
+        void load_idt(const IDTDescriptor* descriptor);
+        void flush_tlb();
+        void enable_paging();
+        void enable_fpu();
+        void init_fpu_storage(char* storage);
+    }
+
+    inline void enable_interrupts()
+    {
+        asm volatile("sti");
+    }
 
     inline void outb(uint16_t port, uint8_t data)
     {
-        asm volatile ( "outb %0, %1" : : "a"(data), "d"(port) );
+        asm volatile( "outb %0, %1" : : "a"(data), "d"(port));
     }
 
     inline uint8_t inb(uint16_t port)
     {
         uint8_t ret;
-        asm volatile ( "inb %1, %0"
+        asm volatile("inb %1, %0"
                     : "=a"(ret)
-                    : "Nd"(port) );
+                    : "Nd"(port));
         return ret;
     }
 
     inline void outw(uint16_t port, uint16_t data)
     {
-        asm volatile ( "out %0, %1" : : "a"(data), "d"(port) );
+        asm volatile("out %0, %1" : : "a"(data), "d"(port));
     }
 
     inline uint16_t inw(uint16_t port)
     {
         uint16_t ret;
-        asm volatile ( "in %1, %0"
+        asm volatile("in %1, %0"
                     : "=a"(ret)
-                    : "Nd"(port) );
+                    : "Nd"(port));
         return ret;
     }
 
     inline void outl(uint16_t port, uint32_t data)
     {
-        asm volatile ( "outl %0, %1" : : "a"(data), "d"(port) );
+        asm volatile("outl %0, %1" : : "a"(data), "d"(port));
     }
 
     inline uint32_t inl(uint16_t port)
     {
         uint32_t ret;
-        asm volatile ( "inl %1, %0"
+        asm volatile("inl %1, %0"
                     : "=a"(ret)
-                    : "Nd"(port) );
+                    : "Nd"(port));
         return ret;
     }
 
-    extern "C"
+    inline void set_cr3(size_t cr3)
     {
-        extern void LoadGDT(const uint64_t* gdt, const size_t size);
-        extern void LoadIDT(const IDTDescriptor* descriptor);
-        extern void LoadTSS(const uint16_t descriptor);
-
-        extern void FlushTLB();
-        extern void EnablePaging();
-        extern void LoadPageDirectories(const uint32_t pageDirectoryAddress);
-
-        extern uint32_t GetCR3();
+        asm volatile("mov %0, %%cr3" :: "r"(cr3));
     }
 }
-
-#endif

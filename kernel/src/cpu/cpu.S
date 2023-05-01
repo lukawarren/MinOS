@@ -1,11 +1,10 @@
 section text
 
-gdtr DW 0 ; Store limit
-     DD 0 ; Store base
+gdtr DW 0 ; limit
+     DD 0 ; base
 
-global LoadGDT
-LoadGDT:
-
+global load_gdt
+load_gdt:
     push eax
 
     ; Load GDT
@@ -18,10 +17,8 @@ LoadGDT:
     ; Reload CS register to change
     ; code selector to 0x8 via a
     ; far jump
-    jmp 0x08:ReloadCS
-
-ReloadCS:
-
+    jmp 0x08:reload_cs
+reload_cs:
     ; Now we have the right code
     ; selector, change data selectors
     mov ax, 0x10
@@ -34,19 +31,9 @@ ReloadCS:
     pop eax
     ret
 
-global LoadIDT
-LoadIDT:
-    ; Disable interrupts (just in case),
-    ; load the IDT, then return
-    cli
-    push eax
-    mov eax, [esp + 8]
-    lidt [eax]
-    pop eax
-    ret
 
-global LoadTSS
-LoadTSS:
+global load_tss
+load_tss:
     push ax
     mov ax, [esp + 6] ; Get descriptor
 
@@ -56,21 +43,35 @@ LoadTSS:
     pop ax
     ret
 
-global FlushTLB
-FlushTLB:
+
+global load_idt
+load_idt:
+    ; Disable interrupts (just in case),
+    ; load the IDT, then return
+    cli
+    push eax
+    mov eax, [esp + 8]
+    lidt [eax]
+    pop eax
+    ret
+
+
+global flush_tlb
+flush_tlb:
     ; On i486 and newer, the "invlpg" instruction
     ; makes much more sense, as what is below is
     ; overkill for most uses. However completely
-    ; reloading cl3 does at least alleviate
-    ; my paranoia
+    ; reloading cl3 should suffice for now until
+    ; we run into any performance bottlenecks...
     push eax
     mov eax, cr3
     mov cr3, eax
     pop eax
     ret
 
-global EnablePaging
-EnablePaging:
+
+global enable_paging
+enable_paging:
     ; Modify cr0 to enable paging
     push ebp
     mov ebp, esp
@@ -81,19 +82,42 @@ EnablePaging:
     pop ebp
     ret
 
-global LoadPageDirectories
-LoadPageDirectories:
-    ; Put the address of the page
-    ; directories into cr3
-    push ebp
-    mov ebp, esp
-    mov eax, [esp + 8]
-    mov cr3, eax
-    mov esp, ebp
-    pop ebp
+
+global enable_fpu
+enable_fpu:
+    push eax
+
+    ; OSFXSR: enable FXSAVE and FXRSTOR
+    mov eax, cr4
+    or eax, (1 << 9)
+    mov cr4, eax
+
+    mov eax, cr0
+    or  eax,  (1 << 1) ; MP: make FWAIT synchronous
+    and eax, ~(1 << 2) ; EM: disable x87 FPU emulation
+    and eax, ~(1 << 3) ; TS: disable FPU operations causing a #NM exception
+    or  eax,  (1 << 4) ; ET: use 1 for 387 or later
+    or  eax,  (1 << 5) ; NE: use CPU exceptions instead of interrupts
+    mov cr0, eax
+
+    ; Set FPU to a known state
+    fninit
+
+    pop eax
     ret
 
-global GetCR3
-GetCR3:
-    mov eax, cr3
+
+global init_fpu_storage
+init_fpu_storage:
+    fxsave [kernel_temp_fpu_storage]
+    fninit
+    push eax
+    mov eax, [esp+8]
+    fxsave [eax]
+    pop eax
+    fxrstor [kernel_temp_fpu_storage]
     ret
+
+section data
+align 16
+kernel_temp_fpu_storage: times 512 db 0

@@ -1,0 +1,31 @@
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  linuxkernel-*,
+  misc-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -readability-magic-numbers,
+  -bugprone-easily-swappable-parameters,
+  -readability-identifier-length,
+  -readability-braces-around-statements,
+  -readability-implicit-bool-conversion,
+  -bugprone-sizeof-expression,
+  -readability-named-parameter,
+  -performance-no-int-to-ptr,
+  -cert-dcl03-c,
+  -misc-static-assert,
+  -bugprone-branch-clone,
+  -misc-redundant-expression,
+  -readability-simplify-boolean-expr
+CheckOptions:
+  - { key: readability-function-cognitive-complexity.Threshold, value: 200 }
+  - { key: readability-identifier-naming.NamespaceCase,       value: lower_case }
+  - { key: readability-identifier-naming.ClassCase,           value: CamelCase  }
+  - { key: readability-identifier-naming.StructCase,          value: CamelCase  }
+  - { key: readability-identifier-naming.FunctionCase,        value: lower_case }
+  - { key: readability-identifier-naming.VariableCase,        value: lower_case }

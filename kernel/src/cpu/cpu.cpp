@@ -1,76 +1,42 @@
 #include "cpu/cpu.h"
-#include "cpu/pic.h"
-#include "cpu/pit.h"
-#include "interrupts/interrupts.h"
+#include "cpu/tss.h"
+#include "cpu/idt.h"
+#include "klib.h"
 
-namespace CPU
+extern uint32_t kernel_end; // From linker
+
+namespace cpu
 {
-    static IDT idt[256];
+    IDT idt[256];
+    GDT gdt[6];
+    TSS tss;
 
-    void Init(const uint64_t* gdt, const uint32_t nEntries, const uint16_t tssDescriptor, const uint8_t mask1, const uint8_t mask2)
+    void init()
     {
-        // Load GDT
-        LoadGDT(gdt, sizeof(uint64_t)*nEntries);
+        // Create TSS - subtract a bit from where the kernel ends
+        // so the first push won't page fault
+        tss = create_tss((size_t)&kernel_end-4, 0x10);
 
-        // Load TSS
-        LoadTSS(tssDescriptor);
+        // Create GDT
+        gdt[0] = create_gdt_entry(0,            0,           0);            // GDT entry at 0x0 cannot be used
+        gdt[1] = create_gdt_entry(0x00000000,   0xFFFFF,     GDT_CODE_PL0); // Code      - 0x8
+        gdt[2] = create_gdt_entry(0x00000000,   0xFFFFF,     GDT_DATA_PL0); // Data      - 0x10
+        gdt[3] = create_gdt_entry(0x00000000,   0xFFFFF,     GDT_CODE_PL3); // User code - 0x18
+        gdt[4] = create_gdt_entry(0x00000000,   0xFFFFF,     GDT_DATA_PL3); // User data - 0x20
+        gdt[5] = create_gdt_entry((size_t)&tss, sizeof(tss), TSS_PL0);
 
-        // Init PIC with masks
-        PIC::Init(mask1, mask2);
+        // TSS descriptor - offset from start of GDT OR'ed with 3 to enable RPL 3
+        const uint16_t tss_descriptor = (5 * sizeof(uint64_t)) | 3;
 
-        // Init interrupts and build IDT
-        Interrupts::Init(idt);
+        // Load above to CPU...
+        load_gdt(gdt, sizeof(cpu::GDT) * sizeof(gdt) / sizeof(gdt[0]));
+        load_tss(tss_descriptor);
 
-        // Load IDT
-        IDTDescriptor idtDescriptor(idt);
-        LoadIDT(&idtDescriptor);
+        // ...and interrupts too
+        const IDTDescriptor descriptor(idt);
+        load_idt(&descriptor);
 
-        // Setup PIT
-        PIT::Init();
-    }
-
-    uint64_t CreateGDTEntry(const uint32_t base, const uint32_t limit, const uint16_t flag)
-    {
-        uint64_t descriptor = 0;
-    
-        // Create the high 32 bit segment
-        descriptor  =  limit       & 0x000F0000;         // set limit bits 19:16
-        descriptor |= (flag <<  8) & 0x00F0FF00;         // set type, p, dpl, s, g, d/b, l and avl fields
-        descriptor |= (base >> 16) & 0x000000FF;         // set base bits 23:16
-        descriptor |=  base        & 0xFF000000;         // set base bits 31:24
-    
-        // Shift by 32 to allow for low part of segment
-        descriptor <<= 32;
-    
-        // Create the low 32 bit segment
-        descriptor |= base  << 16;                       // set base bits 15:0
-        descriptor |= limit  & 0x0000FFFF;               // set limit bits 15:0
-
-        return descriptor;
-    }
-
-    TSS CreateTSSEntry(const uint32_t stackPointer0, const uint32_t dataSegmentDescriptor0)
-    {
-        TSS tss = {};
-        tss.ss0 = dataSegmentDescriptor0;
-        tss.esp0 = stackPointer0;
-        tss.iomap_base = sizeof(TSS);
-        return tss;
-    }
-
-    IDT CreateIDTEntry(const uint32_t entrypoint, const uint16_t selector, const uint8_t attributes)
-    {
-        IDT idtEntry = IDT();
-        idtEntry.offsetLower = entrypoint & 0xFFFF;
-        idtEntry.selector = selector;
-        idtEntry.zero = 0;
-        idtEntry.typeAttribute = attributes;
-        idtEntry.offsetHigher = (uint16_t)((entrypoint & 0xFFFF0000) >> 16);
-        return idtEntry;
-    }
-
-    void EnableInterrupts()
-    {
-        asm("sti");
+        // Setup FPU
+        enable_fpu();
     }
 }

@@ -1,11 +1,12 @@
-; Declare constants for the multiboot header.
+global _start
+
 MBALIGN  equ  1 << 0            ; align loaded modules on page boundaries
 MEMINFO  equ  1 << 1            ; provide memory map
 GFXINFO  equ  1 << 2			; provide video mode table
 FLAGS    equ  MBALIGN | MEMINFO | GFXINFO ; this is the Multiboot 'flag' field
 MAGIC    equ  0x1BADB002        ; 'magic number' lets bootloader find the header
 CHECKSUM equ -(MAGIC + FLAGS)   ; checksum of above, to prove we are multiboot
- 
+
 ; Multiboot
 section .multiboot
 align 4
@@ -14,33 +15,33 @@ align 4
 	dd CHECKSUM
 	dd 0, 0, 0, 0, 0
 	dd 0  ; set graphics mode
-	dd 1024, 768, 32 ; width, height, depth
+	dd 1280, 720, 32 ; width, height, depth
 
 ; Stack
 section .bss
 align 16
 stack_bottom:
-resb 16384 ; 16 KiB
+    resb 65536 ; 64 KiB
 stack_top:
- 
 
 section .text
-global _start:function (_start.end - _start)
+bits 32
+
 _start:
 
-	; Stack
-	mov esp, stack_top
-	
-	; Call C code (double push is for 16-byte stack alignment)
-	push ebx
-	push ebx
-	extern kMain
-	call kMain
-	pop ebx
-	pop ebx
+    ; set up stack
+    mov esp, stack_top
 
-	; Hang
-	cli
-.hang:	hlt
-	jmp .hang
-.end:
+    ; call main kernel (modifying esp
+    ; for 16 byte stack alignment)
+    sub esp, 12
+    push eax ; multiboot eax magic
+    push ebx ; multiboot header address
+    extern kmain
+    call kmain
+    pop ebx
+    pop eax
+    add esp, 12
+
+    ; halt if all else fails
+    hlt
