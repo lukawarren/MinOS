@@ -16,8 +16,8 @@ message(CREATE_WINOW_MESSAGE, CreateWindowMessage, char title[32]; uint32_t widt
 static_assert(sizeof(CreateWindowMessage) <= 128);
 #endif
 
-#define SWITCH_WINOW_MESSAGE 2
-message(SWITCH_WINOW_MESSAGE, SwitchWindowMessage,);
+#define SWITCH_WINDOW_MESSAGE 2
+message(SWITCH_WINDOW_MESSAGE, SwitchWindowMessage,);
 #ifdef __cplusplus
 static_assert(sizeof(SwitchWindowMessage) <= 128);
 #endif

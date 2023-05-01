@@ -11,6 +11,7 @@
 constexpr Unit screen_width = 1280;
 constexpr Unit screen_height = 720;
 constexpr Size screen_size = { screen_width, screen_height };
+constexpr Unit bottom_bar_height = 32;
 
 struct Workspace
 {
@@ -21,10 +22,19 @@ struct Workspace
 Vector<Workspace> workspaces;
 size_t current_workspace;
 
-Compositor c(screen_size);
+Compositor c(screen_size, bottom_bar_height);
 
+// Event loop
 void poll_messages();
 void switch_to_current_window();
+
+// Window placement
+const Unit min_window_margin = 10;
+Unit total_window_width(const Vector<Window>& windows);
+bool new_workspace_needed();
+Position get_new_window_position(const Size new_window_size);
+
+// Drawing
 void draw_bar_for_current_workspace();
 
 int main()
@@ -65,20 +75,12 @@ void poll_messages()
         {
             const auto* m = (CreateWindowMessage*)&message;
 
+            // Work out new position - may mutate current_workspace :)
             const Size size = { m->width, m->height };
-            Position position = screen_size/2 - size/2;
+            const Position position = get_new_window_position(size);
+            workspace = workspaces[current_workspace];
 
-            static int bob = 0;
-            if (bob++ == 0)
-            {
-                position = Position { 100, 100 };
-            }
-            else if (bob++ == 2)
-            {
-                position = Position { 500, 720/2 - size.y/2 };
-            }
-
-            // Create and centre window
+            // Create window
             Window* window = new Window(m->title, position, m->framebuffer, size, m->pid);
 
             // Make sure it's not too big
@@ -96,7 +98,7 @@ void poll_messages()
             switch_to_current_window();
         }
 
-        else if (id == SWITCH_WINOW_MESSAGE)
+        else if (id == SWITCH_WINDOW_MESSAGE)
         {
             if (workspace->windows.size() == 0) return;
 
@@ -134,6 +136,71 @@ void switch_to_current_window()
     c.display_window(workspaces[current_workspace]->windows[
         *workspaces[current_workspace]->current_window
     ]);
+}
+
+Unit total_window_width(const Vector<Window>& windows)
+{
+    Unit total_width = 0;
+    for (size_t i = 0; i < windows.size(); ++i)
+        total_width += windows[i]->size().x;
+    return total_width;
+}
+
+// Determines if the current workspace has space for the new window
+bool new_workspace_needed()
+{
+    const auto& windows = workspaces[current_workspace]->windows;
+    return (total_window_width(windows) + min_window_margin * (windows.size()+1) >=
+            screen_size.x);
+}
+
+Position get_new_window_position(const Size new_window_size)
+{
+    const auto& windows = workspaces[current_workspace]->windows;
+    const bool new_workspace = new_workspace_needed();
+    const auto centre_height = [&]() {
+        return (screen_size.y - bar_height) / 2 - new_window_size.y / 2;
+    };
+
+    if (new_workspace || windows.size() == 0)
+    {
+        if (new_workspace)
+        {
+            current_workspace++;
+            workspaces.push(new Workspace());
+            c.blit_background();
+            draw_bar_for_current_workspace();
+        }
+
+        return Position {
+            screen_size.x / 2 - new_window_size.x / 2,
+            centre_height()
+        };
+    }
+    else
+    {
+        // Work out how much margin to have on side of all the windows
+        const Unit total_width = total_window_width(windows) + new_window_size.x;
+        const Unit margin = (screen_size.x - total_width) / (windows.size()+2);
+        Unit consumed_width = margin;
+
+        for (size_t i = 0; i < windows.size(); ++i)
+        {
+            windows[i]->position.x = consumed_width;
+            consumed_width += windows[i]->size().x;
+            consumed_width += margin;
+        }
+
+        // Re-draw all affected windows (new window hasn't been drawn yet)
+        c.blit_background();
+        draw_bar_for_current_workspace();
+        for (size_t i = 0; i < windows.size(); ++i)
+        {
+            c.redraw_window(windows[i]);
+        }
+
+        return { consumed_width, centre_height() };
+    }
 }
 
 void draw_bar_for_current_workspace()

@@ -6,15 +6,16 @@
 constexpr Colour background = to_colour(50, 50, 50);
 Colour* framebuffer = (Colour*) 0x30000000;
 
-Compositor::Compositor(const Size screen_size)
+Compositor::Compositor(const Size screen_size, const Unit bottom_bar_height)
 {
     this->screen_size = screen_size;
+    this->bottom_bar_height = bottom_bar_height;
     blit_background();
 }
 
 void Compositor::display_bar(const char* message)
 {
-    const Unit height = 32;
+    auto height = bottom_bar_height;
     draw_panel(framebuffer, screen_size.x, { 0, screen_size.y - height }, { screen_size.x, height });
     draw_font_centered(message, 0xff111111, 0, screen_size.y - height, screen_size.x, height);
 }

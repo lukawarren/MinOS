@@ -74,9 +74,6 @@ int main()
             input();
     }
 
-    volatile int hang = 1;
-    while(hang) {}
-
     fclose(keyboard);
     return 0;
 }
