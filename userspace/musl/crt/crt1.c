@@ -14,6 +14,7 @@ int __libc_start_main(int (*)(), int, char **,
 /* MinOS */
 #include "pthread_impl.h"
 struct pthread falseThread;
+void* memset(void* ptr, int value, size_t num);
 /* MinOS */
 
 void _start_c(long *p)
