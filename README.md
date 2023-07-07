@@ -28,6 +28,7 @@ On Fedora:
 * clang-tools-extra
 * texinfo
 * wget
+* patch
 
 ## Building
 The full toolchain can be built like so:
